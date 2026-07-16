@@ -692,7 +692,6 @@ public sealed class GuestRoomScaleMasterWindow : EditorWindow
                 $"activeInHierarchy={trace.ActiveInHierarchy} " +
                 $"currentRoomId='{trace.CurrentRoomId}' " +
                 $"actorRoomState='{trace.ActorRoomStateRoomId}' " +
-                $"projectedCurrentVisualScaleRoom='{trace.ProjectedCurrentVisualScaleRoomId}' " +
                 $"projectedRoomProfile='{trace.ProjectedRoomProfileRoomId}' " +
                 $"parentRoomContent='{trace.ParentRoomContentRoomName}' " +
                 $"walkerRoomProfile='{trace.WalkerRoomProfileRoomId}' " +

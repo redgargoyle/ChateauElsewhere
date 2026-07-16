@@ -72,7 +72,7 @@ public class CharacterRegressionTests
     private const string AnimationFolder = "Assets/Animation";
 
     [Test]
-    public void RoomPeopleAreEditableDepthScaledSceneObjects()
+    public void RoomPeopleAreEditableAnimatedSceneObjects()
     {
         string sceneText = File.ReadAllText(GameplayScenePath);
         string walkerText = File.ReadAllText(WalkerPath);
@@ -94,8 +94,10 @@ public class CharacterRegressionTests
         Assert.That(animatorDriverText, Does.Contain("IsFacingUp"), "The shared character animation driver should also expose persistent facing booleans for directional idle states.");
         Assert.That(animatorDriverText, Does.Contain("!Application.isPlaying && !animator.isInitialized"), "Edit-time validation must not query Animator parameters before Unity initializes the Animator.");
         Assert.That(animatorDriverText, Does.Contain("DetermineDirection"), "Player and NPCs should share averaged direction selection.");
-        Assert.That(walkerText, Does.Contain("Mathf.InverseLerp(nearY, farY"), "Walkers should scale/tint from front to back of the painted room.");
-        Assert.That(walkerText, Does.Contain("rectTransform.localScale = scale"), "Perspective scale should affect the whole character card.");
+        Assert.That(walkerText, Does.Contain("Mathf.InverseLerp(nearY, farY"), "Walkers should retain front-to-back tint depth.");
+        Assert.That(walkerText, Does.Not.Contain("rectTransform.localScale"), "Walker movement and tint must not resize the character card.");
+        Assert.That(walkerText, Does.Contain("ApplyPresentationFacing"), "Walker facing should remain a presentation concern without changing body size.");
+        Assert.That(walkerText, Does.Contain("facingVisual.localRotation"), "UI walker mirroring should use presentation rotation instead of scale magnitude.");
         Assert.That(walkerText, Does.Contain("targetGraphic.raycastTarget = false"), "Characters must not block door hitboxes.");
 
         Assert.That(sceneText, Does.Contain("m_Name: People"));

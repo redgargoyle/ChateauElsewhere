@@ -19,7 +19,6 @@ public readonly struct GuestRoomResolutionTrace
         bool activeInHierarchy,
         string currentRoomId,
         string actorRoomStateRoomId,
-        string projectedCurrentVisualScaleRoomId,
         string projectedRoomProfileRoomId,
         string parentRoomContentRoomName,
         string walkerRoomProfileRoomId,
@@ -36,7 +35,6 @@ public readonly struct GuestRoomResolutionTrace
         ActiveInHierarchy = activeInHierarchy;
         CurrentRoomId = currentRoomId;
         ActorRoomStateRoomId = actorRoomStateRoomId;
-        ProjectedCurrentVisualScaleRoomId = projectedCurrentVisualScaleRoomId;
         ProjectedRoomProfileRoomId = projectedRoomProfileRoomId;
         ParentRoomContentRoomName = parentRoomContentRoomName;
         WalkerRoomProfileRoomId = walkerRoomProfileRoomId;
@@ -54,7 +52,6 @@ public readonly struct GuestRoomResolutionTrace
     public readonly bool ActiveInHierarchy;
     public readonly string CurrentRoomId;
     public readonly string ActorRoomStateRoomId;
-    public readonly string ProjectedCurrentVisualScaleRoomId;
     public readonly string ProjectedRoomProfileRoomId;
     public readonly string ParentRoomContentRoomName;
     public readonly string WalkerRoomProfileRoomId;
@@ -350,7 +347,6 @@ public sealed class GuestScaleParticipant : MonoBehaviour
         string cleanSelectedRoom = GuestRoomScaleCalibration.CleanRoomId(selectedRoom);
         string cleanCurrentRoomId = GuestRoomScaleCalibration.CleanRoomId(currentRoomId);
         bool hasActorRoom = TryResolveActorRoomId(out string actorRoomId);
-        bool hasProjectedCurrentRoom = TryResolveProjectedCurrentVisualScaleRoomId(out string projectedCurrentRoomId);
         bool hasProjectedProfileRoom = TryResolveProjectedProfileRoomId(out string projectedProfileRoomId);
         bool hasParentRoom = TryResolveParentRoomId(out string parentRoomId);
         bool hasWalkerRoom = TryResolveWalkerRoomId(out string walkerRoomId);
@@ -369,7 +365,6 @@ public sealed class GuestScaleParticipant : MonoBehaviour
             gameObject.activeInHierarchy,
             cleanCurrentRoomId,
             hasActorRoom ? actorRoomId : string.Empty,
-            hasProjectedCurrentRoom ? projectedCurrentRoomId : string.Empty,
             hasProjectedProfileRoom ? projectedProfileRoomId : string.Empty,
             hasParentRoom ? parentRoomId : string.Empty,
             hasWalkerRoom ? walkerRoomId : string.Empty,
@@ -387,12 +382,6 @@ public sealed class GuestScaleParticipant : MonoBehaviour
         if (TryResolveParentRoomId(out roomId))
         {
             source = "ParentRoomContent";
-            return true;
-        }
-
-        if (TryResolveProjectedCurrentVisualScaleRoomId(out roomId))
-        {
-            source = "ProjectedCurrentVisualScaleRoom";
             return true;
         }
 
@@ -446,22 +435,6 @@ public sealed class GuestScaleParticipant : MonoBehaviour
     private bool TryResolveExplicitCurrentRoomId(out string roomId)
     {
         roomId = GuestRoomScaleCalibration.CleanRoomId(currentRoomId);
-        return !string.IsNullOrWhiteSpace(roomId);
-    }
-
-    private bool TryResolveProjectedCurrentVisualScaleRoomId(out string roomId)
-    {
-        roomId = string.Empty;
-        RoomProjectedEntity projectedEntity = ResolveProjectedEntity();
-
-        if (projectedEntity == null ||
-            !projectedEntity.IsProjectionActive ||
-            string.IsNullOrWhiteSpace(projectedEntity.CurrentVisualScaleRoomId))
-        {
-            return false;
-        }
-
-        roomId = GuestRoomScaleCalibration.CleanRoomId(projectedEntity.CurrentVisualScaleRoomId);
         return !string.IsNullOrWhiteSpace(roomId);
     }
 

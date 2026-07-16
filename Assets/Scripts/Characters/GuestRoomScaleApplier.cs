@@ -541,7 +541,6 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
         }
 
         if (TryResolveParentRoomId(guestObject, out roomId) ||
-            TryResolveProjectedCurrentVisualScaleRoomId(guestObject, out roomId) ||
             TryResolveProjectedProfileRoomId(guestObject, out roomId) ||
             TryResolveWalkerRoomId(guestObject, out roomId) ||
             TryResolveActorRoomId(guestObject, out roomId) ||
@@ -838,26 +837,6 @@ public sealed class GuestRoomScaleApplier : MonoBehaviour
             guestObject.name.Contains("Walker_GEH", System.StringComparison.OrdinalIgnoreCase))
         {
             roomId = "Grand Entrance Hall";
-            return true;
-        }
-
-        return false;
-    }
-
-    private static bool TryResolveProjectedCurrentVisualScaleRoomId(GameObject guestObject, out string roomId)
-    {
-        roomId = string.Empty;
-        RoomProjectedEntity projectedEntity = ResolveProjectedEntity(guestObject);
-
-        if (projectedEntity == null)
-        {
-            return false;
-        }
-
-        if (projectedEntity.IsProjectionActive &&
-            !string.IsNullOrWhiteSpace(projectedEntity.CurrentVisualScaleRoomId))
-        {
-            roomId = projectedEntity.CurrentVisualScaleRoomId;
             return true;
         }
 

@@ -1814,7 +1814,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (projection != null && projection.IsProjectionActive)
         {
-            int coatSortingOffset = projection.VisualProfile != null ? projection.VisualProfile.CoatSortingOffset : 1;
+            const int coatSortingOffset = 1;
             coatRenderer.sortingLayerName = projection.GetSortingLayerName();
             coatRenderer.sortingOrder = projection.GetSortingOrder(coatSortingOffset);
             coatRenderer.spriteSortPoint = SpriteSortPoint.Pivot;

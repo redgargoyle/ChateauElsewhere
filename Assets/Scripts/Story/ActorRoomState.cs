@@ -23,7 +23,6 @@ public class ActorRoomState : MonoBehaviour
     [SerializeField] private bool restrictVisibilityToCurrentRoom = true;
     [SerializeField] private RoomNavigationManager navigationManager;
     [SerializeField] private bool followRoomStageMotion = true;
-    [SerializeField] private bool scaleWithRoomStageMotion = true;
 
     private Renderer[] renderers = new Renderer[0];
     private Graphic[] graphics = new Graphic[0];
@@ -39,20 +38,11 @@ public class ActorRoomState : MonoBehaviour
     private bool hasRoomStageLocalBinding;
     private Vector2 roomStageLocalPoint;
     private float boundWorldZ;
-    private Vector3 boundLocalScale = Vector3.one;
-    private float boundRoomStageScale = 1f;
-    private RoomPerspectiveProfile boundRoomPerspectiveProfile;
     private string boundRoomId;
     private bool subscribedToRoomChanges;
     private bool hasDiagnosticApplyState;
     private bool lastDiagnosticShouldBeVisible;
     private bool lastDiagnosticShouldBeInteractable;
-    private bool isUsingButlerCharacterScaleRules;
-    private float currentButlerCharacterScale = 1f;
-    private float currentButlerCharacterDepth01;
-    private string currentButlerCharacterScaleSource = string.Empty;
-    [SerializeField, HideInInspector] private Vector3 authoredActorLocalScale = Vector3.one;
-    [SerializeField, HideInInspector] private bool hasAuthoredActorLocalScale;
 
     public string ActorId => string.IsNullOrWhiteSpace(actorId) ? name : actorId;
     public string CurrentRoomId => currentRoomId;
@@ -62,10 +52,6 @@ public class ActorRoomState : MonoBehaviour
     public bool IsSeated => isSeated;
     public bool IsVisibleInCurrentRoom => ShouldBeVisible();
     public RoomProjectedEntity Projection => GetRoomProjection();
-    public bool IsUsingButlerCharacterScaleRules => isUsingButlerCharacterScaleRules;
-    public float CurrentButlerCharacterScale => currentButlerCharacterScale;
-    public float CurrentButlerCharacterDepth01 => currentButlerCharacterDepth01;
-    public string CurrentButlerCharacterScaleSource => currentButlerCharacterScaleSource;
 
     private void Reset()
     {
@@ -77,7 +63,6 @@ public class ActorRoomState : MonoBehaviour
     {
         ResolveReferences();
         RefreshComponentCache();
-        CaptureAuthoredActorScaleIfNeeded();
         SubscribeToRoomChanges();
         ApplyState();
     }
@@ -86,7 +71,6 @@ public class ActorRoomState : MonoBehaviour
     {
         ResolveReferences();
         RefreshComponentCache();
-        CaptureAuthoredActorScaleIfNeeded();
         SubscribeToRoomChanges();
         ApplyState();
     }
@@ -125,26 +109,8 @@ public class ActorRoomState : MonoBehaviour
         }
 
         currentRoomId = cleanRoomId;
-        SyncGuestScaleParticipantRoomId(cleanRoomId);
         ApplyState();
         GetRoomProjection()?.ApplyProjection();
-    }
-
-    private void SyncGuestScaleParticipantRoomId(string cleanRoomId)
-    {
-        GuestScaleParticipant participant = GetComponent<GuestScaleParticipant>();
-
-        if (participant == null)
-        {
-            participant = GetComponentInChildren<GuestScaleParticipant>(true);
-        }
-
-        if (participant == null)
-        {
-            participant = GetComponentInParent<GuestScaleParticipant>(true);
-        }
-
-        participant?.SetCurrentRoomId(cleanRoomId);
     }
 
     public void SetAvailableInCurrentChapter(bool value)
@@ -188,65 +154,6 @@ public class ActorRoomState : MonoBehaviour
             animator.Rebind();
             animator.Update(0f);
         }
-    }
-
-    public void SetScaleWithRoomStageMotion(bool value)
-    {
-        scaleWithRoomStageMotion = value;
-    }
-
-    public void ResetAuthoredActorScaleForEditor()
-    {
-        CaptureAuthoredActorScale(true);
-    }
-
-    public bool TryGetButlerCharacterScaleSample(
-        PointClickPlayerMovement source,
-        out PointClickPlayerMovement.ButlerCharacterScaleSample sample)
-    {
-        sample = default;
-
-        if (source == null ||
-            !TryGetRoomLocalFootPoint(out string roomId, out Vector2 roomLocalFootPoint))
-        {
-            return false;
-        }
-
-        return source.TryEvaluateButlerCharacterScale(roomId, roomLocalFootPoint, out sample);
-    }
-
-    [Obsolete("Guest body scale is now applied by GuestRoomScaleApplier.")]
-    public bool ApplyButlerCharacterScaleNow(PointClickPlayerMovement source, float debugScaleMultiplier = 1f)
-    {
-        if (HasActiveProjection())
-        {
-            ClearButlerCharacterScaleDebug();
-            return false;
-        }
-
-        Transform targetTransform = actorObject != null ? actorObject.transform : transform;
-
-        if (targetTransform == null || targetTransform is RectTransform || HasActiveGuestScaleParticipant(targetTransform))
-        {
-            ClearButlerCharacterScaleDebug();
-            return false;
-        }
-
-        CaptureAuthoredActorScaleIfNeeded();
-
-        if (!TryGetButlerCharacterScaleSample(source, out PointClickPlayerMovement.ButlerCharacterScaleSample sample))
-        {
-            ClearButlerCharacterScaleDebug();
-            return false;
-        }
-
-        Vector3 baseScale = hasRoomStageLocalBinding ? boundLocalScale : authoredActorLocalScale;
-        targetTransform.localScale = BuildButlerActorScale(baseScale, sample, debugScaleMultiplier);
-        isUsingButlerCharacterScaleRules = true;
-        currentButlerCharacterScale = sample.NormalizedScale;
-        currentButlerCharacterDepth01 = sample.Depth01;
-        currentButlerCharacterScaleSource = sample.Source;
-        return true;
     }
 
     public void PlaceAt(Transform target)
@@ -317,9 +224,6 @@ public class ActorRoomState : MonoBehaviour
         Vector3 localPoint = roomStage.InverseTransformPoint(roomTarget.position);
         roomStageLocalPoint = new Vector2(localPoint.x, localPoint.y);
         boundWorldZ = targetTransform.position.z;
-        boundLocalScale = targetTransform.localScale;
-        boundRoomStageScale = Mathf.Max(0.0001f, roomStage.lossyScale.x);
-        boundRoomPerspectiveProfile = roomContentGroup.PerspectiveProfile;
         boundRoomId = roomContentGroup.RoomName;
         hasRoomStageLocalBinding = true;
         ClearRoomStageMotionBaseline();
@@ -330,9 +234,6 @@ public class ActorRoomState : MonoBehaviour
         hasRoomStageLocalBinding = false;
         roomStageLocalPoint = Vector2.zero;
         boundWorldZ = 0f;
-        boundLocalScale = Vector3.one;
-        boundRoomStageScale = 1f;
-        boundRoomPerspectiveProfile = null;
         boundRoomId = string.Empty;
         ClearRoomStageMotionBaseline();
     }
@@ -459,30 +360,6 @@ public class ActorRoomState : MonoBehaviour
         canvasGroups = root.GetComponentsInChildren<CanvasGroup>(true);
         animators = root.GetComponentsInChildren<Animator>(true);
         roomProjection = root.GetComponentInChildren<RoomProjectedEntity>(true);
-    }
-
-    private void CaptureAuthoredActorScaleIfNeeded()
-    {
-        if (hasAuthoredActorLocalScale)
-        {
-            return;
-        }
-
-        CaptureAuthoredActorScale(false);
-    }
-
-    private void CaptureAuthoredActorScale(bool force)
-    {
-        if (!force && hasAuthoredActorLocalScale)
-        {
-            return;
-        }
-
-        Transform targetTransform = actorObject != null ? actorObject.transform : transform;
-        authoredActorLocalScale = targetTransform != null
-            ? SanitizeScale(targetTransform.localScale)
-            : Vector3.one;
-        hasAuthoredActorLocalScale = true;
     }
 
     private void ApplySeatedAnimatorState()
@@ -683,12 +560,6 @@ public class ActorRoomState : MonoBehaviour
                 targetTransform.position = correctedWorldPosition;
             }
 
-            if (scaleWithRoomStageMotion &&
-                !Mathf.Approximately(scaleRatio, 1f) &&
-                !HasActiveGuestScaleParticipant(targetTransform))
-            {
-                targetTransform.localScale = ScaleXY(targetTransform.localScale, scaleRatio);
-            }
         }
 
         lastRoomStageScreenCenter = currentCenter;
@@ -805,26 +676,15 @@ public class ActorRoomState : MonoBehaviour
             roomStageLocalPoint,
             depth,
             out Vector3 worldPoint,
-            out float currentStageScale))
+            out _))
         {
             return false;
         }
 
         worldPoint.z = boundWorldZ;
         targetTransform.position = worldPoint;
-        float scaleRatio = scaleWithRoomStageMotion
-            ? currentStageScale / Mathf.Max(0.0001f, boundRoomStageScale)
-            : 1f;
-        float perspectiveScale = GetBoundRoomPerspectiveScale();
-        if (!HasActiveGuestScaleParticipant(targetTransform))
-        {
-            targetTransform.localScale = scaleWithRoomStageMotion
-                ? ScaleXY(boundLocalScale, scaleRatio * perspectiveScale)
-                : boundLocalScale;
-        }
 
-        if (!HasActiveGuestScaleParticipant(targetTransform) &&
-            CharacterFootPositionUtility.TryGetWorldPoint(targetObject, true, false, out Vector3 feetWorldPoint))
+        if (CharacterFootPositionUtility.TryGetWorldPoint(targetObject, true, false, out Vector3 feetWorldPoint))
         {
             Vector3 footCorrection = worldPoint - feetWorldPoint;
             footCorrection.z = 0f;
@@ -860,14 +720,6 @@ public class ActorRoomState : MonoBehaviour
             roomId = parentRoom.RoomName;
         }
 
-        if (parentRoom != null)
-        {
-            Vector3 localPoint = parentRoom.transform.InverseTransformPoint((actorObject != null ? actorObject.transform : transform).position);
-            roomLocalFootPoint = new Vector2(localPoint.x, localPoint.y);
-            return !string.IsNullOrWhiteSpace(roomId);
-        }
-
-        ResolveReferences();
         GameObject targetObject = actorObject != null ? actorObject : gameObject;
         Transform targetTransform = targetObject != null ? targetObject.transform : transform;
         Vector3 footWorldPoint;
@@ -876,6 +728,15 @@ public class ActorRoomState : MonoBehaviour
         {
             footWorldPoint = targetTransform != null ? targetTransform.position : transform.position;
         }
+
+        if (parentRoom != null)
+        {
+            Vector3 localPoint = parentRoom.transform.InverseTransformPoint(footWorldPoint);
+            roomLocalFootPoint = new Vector2(localPoint.x, localPoint.y);
+            return !string.IsNullOrWhiteSpace(roomId);
+        }
+
+        ResolveReferences();
 
         if (cameraManager != null &&
             targetTransform != null &&
@@ -887,115 +748,10 @@ public class ActorRoomState : MonoBehaviour
         return false;
     }
 
-    [Obsolete("Guest body scale is now applied by GuestRoomScaleApplier.")]
-    private static Vector3 BuildButlerActorScale(
-        Vector3 baseScale,
-        PointClickPlayerMovement.ButlerCharacterScaleSample sample,
-        float debugScaleMultiplier)
-    {
-        Vector3 safeBaseScale = SanitizeScale(baseScale);
-        float baseY = Mathf.Max(0.001f, Mathf.Abs(safeBaseScale.y));
-        float xOverY = safeBaseScale.x / baseY;
-        float finalY = Mathf.Max(0.001f, sample.ButlerFinalLocalScaleY) *
-            baseY *
-            Mathf.Max(0.001f, debugScaleMultiplier);
-
-        return new Vector3(
-            xOverY * finalY,
-            Mathf.Sign(safeBaseScale.y) * finalY,
-            safeBaseScale.z);
-    }
-
-    private float GetBoundRoomPerspectiveScale()
-    {
-        if (boundRoomPerspectiveProfile != null)
-        {
-            return boundRoomPerspectiveProfile.GetScale(roomStageLocalPoint);
-        }
-
-        if (string.IsNullOrWhiteSpace(boundRoomId))
-        {
-            return 1f;
-        }
-
-        RoomContentGroup[] rooms = FindObjectsByType<RoomContentGroup>(FindObjectsInactive.Include);
-
-        for (int i = 0; i < rooms.Length; i++)
-        {
-            RoomContentGroup room = rooms[i];
-
-            if (room == null || !SameRoom(room.RoomName, boundRoomId))
-            {
-                continue;
-            }
-
-            if (room.TryGetPerspectiveProfile(out boundRoomPerspectiveProfile))
-            {
-                return boundRoomPerspectiveProfile.GetScale(roomStageLocalPoint);
-            }
-
-            break;
-        }
-
-        return 1f;
-    }
-
     private static bool IsActorUnderRoomStage(Transform targetTransform)
     {
         return targetTransform != null &&
             targetTransform.GetComponentInParent<RoomContentGroup>(true) != null;
-    }
-
-    private bool HasActiveGuestScaleParticipant(Transform targetTransform)
-    {
-        GuestScaleParticipant participant = targetTransform != null
-            ? targetTransform.GetComponentInParent<GuestScaleParticipant>(true)
-            : GetComponentInParent<GuestScaleParticipant>(true);
-
-        if (participant == null && targetTransform != null)
-        {
-            participant = targetTransform.GetComponentInChildren<GuestScaleParticipant>(true);
-        }
-
-        if (participant == null && actorObject != null)
-        {
-            participant = actorObject.GetComponentInParent<GuestScaleParticipant>(true);
-        }
-
-        if (participant == null && actorObject != null)
-        {
-            participant = actorObject.GetComponentInChildren<GuestScaleParticipant>(true);
-        }
-
-        if (participant == null)
-        {
-            participant = GetComponentInChildren<GuestScaleParticipant>(true);
-        }
-
-        return participant != null &&
-            !participant.ExcludeFromGuestScaling &&
-            !participant.IsButler;
-    }
-
-    private static Vector3 ScaleXY(Vector3 scale, float ratio)
-    {
-        return new Vector3(scale.x * ratio, scale.y * ratio, scale.z);
-    }
-
-    private void ClearButlerCharacterScaleDebug()
-    {
-        isUsingButlerCharacterScaleRules = false;
-        currentButlerCharacterScale = 1f;
-        currentButlerCharacterDepth01 = 0f;
-        currentButlerCharacterScaleSource = string.Empty;
-    }
-
-    private static Vector3 SanitizeScale(Vector3 scale)
-    {
-        return new Vector3(
-            Mathf.Approximately(scale.x, 0f) ? 1f : scale.x,
-            Mathf.Approximately(scale.y, 0f) ? 1f : scale.y,
-            Mathf.Approximately(scale.z, 0f) ? 1f : scale.z);
     }
 
     private bool TryGetCurrentRoomStageScreenTransform(out Vector2 stageCenter, out float stageScale)

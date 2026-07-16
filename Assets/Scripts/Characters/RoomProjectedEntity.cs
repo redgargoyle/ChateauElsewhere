@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,15 +9,14 @@ public sealed class RoomProjectedEntity : MonoBehaviour
 {
     public enum ProjectionMode
     {
-        FloorCharacter,
-        FloorProp,
-        WallProp,
-        FurnitureSurfaceProp,
-        ForegroundOccluder
+        FloorCharacter = 0,
+        FloorProp = 1,
+        WallProp = 2,
+        FurnitureSurfaceProp = 3,
+        ForegroundOccluder = 4
     }
 
     [SerializeField] private RoomPerspectiveProfile roomProfile;
-    [SerializeField] private CharacterVisualProfile visualProfile;
     [SerializeField] private ProjectionMode projectionMode = ProjectionMode.FloorCharacter;
     [SerializeField] private Vector2 roomLocalFootPoint;
     [SerializeField] private Transform visualRoot;
@@ -28,44 +26,29 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     [SerializeField] private bool applySorting = true;
     [SerializeField] private bool includeInactiveRenderers = true;
     [SerializeField] private bool requireActorRoomMatch = true;
-    [SerializeField] private bool normalizeLogicalRootScale = true;
-    [SerializeField] private Vector3 logicalRootScale = Vector3.one;
     [SerializeField] private int sortingOffset;
     [SerializeField] private CameraManager cameraManager;
     [SerializeField] private Transform contactShadowRoot;
     [SerializeField] private SpriteRenderer contactShadowRenderer;
     [SerializeField] private Graphic contactShadowGraphic;
-    [SerializeField] private bool useButlerCharacterScaleRules = true;
-    [SerializeField] private PointClickPlayerMovement butlerScaleSource;
-    [SerializeField] private bool ignoreRoomVisualScaleOverridesWhenUsingButlerRules = true;
-    [SerializeField] private bool useButlerRulesOnlyForFloorCharacters = true;
-    [SerializeField] private bool useRoomVisualScaleOverrides = true;
-    [SerializeField, HideInInspector] private string editorSelectedVisualScaleRoomId = string.Empty;
-    [SerializeField, HideInInspector] private List<RoomVisualScaleOverride> roomVisualScaleOverrides = new List<RoomVisualScaleOverride>();
+    [SerializeField, HideInInspector] private Vector3 propProjectionBaseScale = Vector3.one;
+    [SerializeField, HideInInspector] private bool hasPropProjectionBaseScale;
 
     private RectTransform rectTransform;
     private SpriteRenderer[] spriteRenderers = Array.Empty<SpriteRenderer>();
     private Graphic[] graphics = Array.Empty<Graphic>();
     private Color[] spriteRendererBaseColors = Array.Empty<Color>();
     private Color[] graphicBaseColors = Array.Empty<Color>();
-    private Transform cachedVisualRoot;
     private ActorRoomState actorRoomState;
-    [SerializeField, HideInInspector] private Vector3 authoredVisualRootScale = Vector3.one;
-    [SerializeField, HideInInspector] private bool hasAuthoredVisualRootScale;
-    private float currentScale = 1f;
+    private float currentPropProjectionScale = 1f;
     private float currentRoomStageScaleMultiplier = 1f;
     private int currentSortingOrder;
-    private bool isUsingButlerCharacterScaleRules;
-    private float currentButlerCharacterScale = 1f;
-    private float currentButlerCharacterDepth01;
-    private string currentButlerCharacterScaleSource = string.Empty;
     private bool hasRoomStageScaleReference;
     private float roomStageScaleReference = 1f;
     private string roomStageScaleReferenceRoom = string.Empty;
     private bool projectedSortingSuppressed;
 
     public RoomPerspectiveProfile RoomProfile => roomProfile;
-    public CharacterVisualProfile VisualProfile => visualProfile;
     public ProjectionMode Mode => projectionMode;
     public Vector2 RoomLocalFootPoint => roomLocalFootPoint;
     public Transform VisualRoot => visualRoot != null ? visualRoot : transform;
@@ -73,20 +56,9 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     public bool IsProjectionActive => ShouldApplyProjection();
     public bool OwnsProjectedPosition => applyPosition && IsProjectionActive;
     public bool OwnsProjectedSorting => applySorting && !projectedSortingSuppressed && IsProjectionActive;
-    public float CurrentScale => currentScale;
+    public float CurrentPropProjectionScale => currentPropProjectionScale;
     public float CurrentRoomStageScaleMultiplier => currentRoomStageScaleMultiplier;
     public int CurrentSortingOrder => currentSortingOrder;
-    public bool UseButlerCharacterScaleRules => useButlerCharacterScaleRules;
-    public PointClickPlayerMovement ButlerScaleSource => butlerScaleSource;
-    public bool IgnoreRoomVisualScaleOverridesWhenUsingButlerRules => ignoreRoomVisualScaleOverridesWhenUsingButlerRules;
-    public bool UseButlerRulesOnlyForFloorCharacters => useButlerRulesOnlyForFloorCharacters;
-    public bool IsUsingButlerCharacterScaleRules => isUsingButlerCharacterScaleRules;
-    public float CurrentButlerCharacterScale => currentButlerCharacterScale;
-    public float CurrentButlerCharacterDepth01 => currentButlerCharacterDepth01;
-    public string CurrentButlerCharacterScaleSource => currentButlerCharacterScaleSource;
-    public bool UsesRoomVisualScaleOverrides => useRoomVisualScaleOverrides;
-    public string EditorSelectedVisualScaleRoomId => editorSelectedVisualScaleRoomId;
-    public string CurrentVisualScaleRoomId => GetCurrentVisualScaleRoomKey();
     public bool IsProjectedSortingSuppressed => projectedSortingSuppressed;
 
     private void Reset()
@@ -97,14 +69,14 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             ? rectTransform.anchoredPosition
             : new Vector2(transform.localPosition.x, transform.localPosition.y);
         ResolveReferences();
-        CaptureAuthoredVisualScale(true);
+        CapturePropProjectionBaseScale(true);
         RefreshVisualTargets();
     }
 
     private void Awake()
     {
         ResolveReferences();
-        CaptureAuthoredVisualScale(false);
+        CapturePropProjectionBaseScale(false);
         RefreshVisualTargets();
         ApplyProjection();
     }
@@ -112,19 +84,15 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     private void OnEnable()
     {
         ResolveReferences();
-        CaptureAuthoredVisualScale(false);
+        CapturePropProjectionBaseScale(false);
         RefreshVisualTargets();
         ApplyProjection();
     }
 
     private void OnValidate()
     {
-        logicalRootScale = new Vector3(
-            Mathf.Approximately(logicalRootScale.x, 0f) ? 1f : logicalRootScale.x,
-            Mathf.Approximately(logicalRootScale.y, 0f) ? 1f : logicalRootScale.y,
-            Mathf.Approximately(logicalRootScale.z, 0f) ? 1f : logicalRootScale.z);
         ResolveReferences();
-        CaptureAuthoredVisualScale(false);
+        CapturePropProjectionBaseScale(false);
         RefreshVisualTargets();
         ApplyProjection();
     }
@@ -155,73 +123,13 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         ApplyProjection();
     }
 
-    public void SetVisualProfile(CharacterVisualProfile profile)
-    {
-        visualProfile = profile;
-        ApplyProjection();
-    }
-
     public void SetVisualRoot(Transform root)
     {
         visualRoot = root != null ? root : transform;
-        CaptureAuthoredVisualScale(true);
+        hasPropProjectionBaseScale = false;
+        CapturePropProjectionBaseScale(true);
         RefreshVisualTargets();
         ApplyProjection();
-    }
-
-    public void SetButlerCharacterScaleRulesEnabled(bool value, bool applyImmediately = true)
-    {
-        useButlerCharacterScaleRules = value;
-
-        if (applyImmediately)
-        {
-            ApplyProjection();
-        }
-    }
-
-    public void SetButlerScaleSource(PointClickPlayerMovement source, bool applyImmediately = true)
-    {
-        butlerScaleSource = source;
-
-        if (applyImmediately)
-        {
-            ApplyProjection();
-        }
-    }
-
-    public void SetIgnoreRoomVisualScaleOverridesWhenUsingButlerRules(bool value, bool applyImmediately = true)
-    {
-        ignoreRoomVisualScaleOverridesWhenUsingButlerRules = value;
-
-        if (applyImmediately)
-        {
-            ApplyProjection();
-        }
-    }
-
-    public void SetUseButlerRulesOnlyForFloorCharacters(bool value, bool applyImmediately = true)
-    {
-        useButlerRulesOnlyForFloorCharacters = value;
-
-        if (applyImmediately)
-        {
-            ApplyProjection();
-        }
-    }
-
-    public void SetRoomVisualScaleOverridesEnabled(bool value, bool applyImmediately = true)
-    {
-        useRoomVisualScaleOverrides = value;
-
-        if (applyImmediately)
-        {
-            ApplyProjection();
-        }
-    }
-
-    public void SetEditorSelectedVisualScaleRoomId(string roomId)
-    {
-        editorSelectedVisualScaleRoomId = CleanRoomId(roomId);
     }
 
     public void SetProjectedSortingSuppressed(bool value)
@@ -236,141 +144,6 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         if (!projectedSortingSuppressed)
         {
             ApplyProjection();
-        }
-    }
-
-    public Vector3 GetVisualRootScaleForRoom(string roomId)
-    {
-        return TryGetVisualRootScaleForRoom(roomId, out Vector3 scale)
-            ? scale
-            : GetDefaultAuthoredVisualRootScale();
-    }
-
-    public bool TryGetVisualRootScaleForRoom(string roomId, out Vector3 scale)
-    {
-        scale = Vector3.one;
-
-        if (!useRoomVisualScaleOverrides ||
-            string.IsNullOrWhiteSpace(roomId) ||
-            roomVisualScaleOverrides == null)
-        {
-            return false;
-        }
-
-        string cleanRoomId = CleanRoomId(roomId);
-
-        for (int i = 0; i < roomVisualScaleOverrides.Count; i++)
-        {
-            RoomVisualScaleOverride roomScale = roomVisualScaleOverrides[i];
-
-            if (roomScale.Matches(cleanRoomId))
-            {
-                scale = roomScale.VisualRootScale;
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public bool HasVisualRootScaleForRoom(string roomId)
-    {
-        return TryGetVisualRootScaleForRoom(roomId, out _);
-    }
-
-    public void SetVisualRootScaleForRoom(string roomId, Vector3 scale, bool applyImmediately = true)
-    {
-        string cleanRoomId = CleanRoomId(roomId);
-
-        if (string.IsNullOrWhiteSpace(cleanRoomId))
-        {
-            return;
-        }
-
-        if (roomVisualScaleOverrides == null)
-        {
-            roomVisualScaleOverrides = new List<RoomVisualScaleOverride>();
-        }
-
-        scale = SanitizeScale(scale);
-        int existingIndex = GetVisualScaleOverrideIndex(cleanRoomId);
-
-        if (existingIndex >= 0)
-        {
-            roomVisualScaleOverrides[existingIndex] = new RoomVisualScaleOverride(cleanRoomId, scale);
-        }
-        else
-        {
-            roomVisualScaleOverrides.Add(new RoomVisualScaleOverride(cleanRoomId, scale));
-        }
-
-        useRoomVisualScaleOverrides = true;
-        SetEditorSelectedVisualScaleRoomId(cleanRoomId);
-
-        if (applyImmediately)
-        {
-            ApplyProjection();
-        }
-    }
-
-    public bool RemoveVisualRootScaleForRoom(string roomId, bool applyImmediately = true)
-    {
-        string cleanRoomId = CleanRoomId(roomId);
-        int existingIndex = GetVisualScaleOverrideIndex(cleanRoomId);
-
-        if (existingIndex < 0)
-        {
-            return false;
-        }
-
-        roomVisualScaleOverrides.RemoveAt(existingIndex);
-
-        if (applyImmediately)
-        {
-            ApplyProjection();
-        }
-
-        return true;
-    }
-
-    public Vector3 CaptureCurrentVisualRootScaleForRoom(string roomId, bool removeProjectionMultiplier = true)
-    {
-        Transform targetRoot = VisualRoot;
-        Vector3 currentVisualRootScale = targetRoot != null
-            ? SanitizeScale(targetRoot.localScale)
-            : GetDefaultAuthoredVisualRootScale();
-
-        if (removeProjectionMultiplier && applyScale && ShouldApplyProjection())
-        {
-            float projectionMultiplier = Mathf.Max(
-                0.001f,
-                Mathf.Max(0.001f, currentScale > 0f ? currentScale : GetProjectedScale()) *
-                Mathf.Max(0.001f, currentRoomStageScaleMultiplier > 0f ? currentRoomStageScaleMultiplier : 1f));
-            currentVisualRootScale = new Vector3(
-                currentVisualRootScale.x / projectionMultiplier,
-                currentVisualRootScale.y / projectionMultiplier,
-                currentVisualRootScale.z);
-        }
-
-        SetVisualRootScaleForRoom(roomId, currentVisualRootScale);
-        return currentVisualRootScale;
-    }
-
-    public void GetVisualScaleOverrideRoomIds(List<string> roomIds)
-    {
-        if (roomIds == null || roomVisualScaleOverrides == null)
-        {
-            return;
-        }
-
-        for (int i = 0; i < roomVisualScaleOverrides.Count; i++)
-        {
-            string roomId = roomVisualScaleOverrides[i].RoomId;
-
-            if (!string.IsNullOrWhiteSpace(roomId) && !ContainsRoomId(roomIds, roomId))
-            {
-                roomIds.Add(roomId);
-            }
         }
     }
 
@@ -484,32 +257,26 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     public void ApplyProjection()
     {
         ResolveReferences();
-        CaptureAuthoredVisualScale(false);
+        CapturePropProjectionBaseScale(false);
 
         if (!ShouldApplyProjection())
         {
-            ClearButlerCharacterScaleDebug();
             ClearRoomStageScaleReference();
             return;
         }
 
-        currentScale = GetProjectedScale();
+        currentPropProjectionScale = GetPropProjectionScale();
         currentRoomStageScaleMultiplier = GetRoomStageScaleMultiplier();
         currentSortingOrder = roomProfile.GetSortingOrder(roomLocalFootPoint, sortingOffset);
-
-        if (normalizeLogicalRootScale && VisualRoot != transform)
-        {
-            transform.localScale = logicalRootScale;
-        }
 
         if (applyPosition)
         {
             ApplyProjectedPosition();
         }
 
-        if (applyScale)
+        if (ShouldApplyPropProjectionScale())
         {
-            ApplyProjectedScale();
+            ApplyProjectedPropScale();
         }
 
         if (applyTint)
@@ -525,26 +292,9 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         ApplyContactShadow();
     }
 
-    public float GetProjectedScale()
+    private float GetPropProjectionScale()
     {
-        float profileScale;
-
-        if (TryGetButlerCharacterScaleForThisEntity(out PointClickPlayerMovement.ButlerCharacterScaleSample sample))
-        {
-            profileScale = sample.NormalizedScale;
-            isUsingButlerCharacterScaleRules = true;
-            currentButlerCharacterScale = sample.NormalizedScale;
-            currentButlerCharacterDepth01 = sample.Depth01;
-            currentButlerCharacterScaleSource = sample.Source;
-        }
-        else
-        {
-            profileScale = roomProfile != null ? roomProfile.GetScale(roomLocalFootPoint) : 1f;
-            ClearButlerCharacterScaleDebug();
-        }
-
-        float visualScale = visualProfile != null ? visualProfile.HeightScaleMultiplier : 1f;
-        return Mathf.Max(0.001f, profileScale * visualScale);
+        return roomProfile != null ? roomProfile.GetScale(roomLocalFootPoint) : 1f;
     }
 
     public int GetSortingOrder(int localOffset = 0)
@@ -582,21 +332,23 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         }
     }
 
-    private void CaptureAuthoredVisualScale(bool force)
+    private void CapturePropProjectionBaseScale(bool force)
     {
-        Transform targetRoot = VisualRoot;
-        Vector3 currentVisualRootScale = targetRoot != null
-            ? SanitizeScale(targetRoot.localScale)
-            : Vector3.one;
-        if (!force && hasAuthoredVisualRootScale)
+        if (!IsPropProjectionMode())
         {
-            cachedVisualRoot = targetRoot;
             return;
         }
 
-        cachedVisualRoot = targetRoot;
-        authoredVisualRootScale = currentVisualRootScale;
-        hasAuthoredVisualRootScale = true;
+        if (!force && hasPropProjectionBaseScale)
+        {
+            return;
+        }
+
+        Transform targetRoot = VisualRoot;
+        propProjectionBaseScale = targetRoot != null
+            ? SanitizeScale(targetRoot.localScale)
+            : Vector3.one;
+        hasPropProjectionBaseScale = true;
     }
 
     private void ApplyProjectedPosition()
@@ -664,104 +416,34 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         return true;
     }
 
-    private void ApplyProjectedScale()
+    private bool ShouldApplyPropProjectionScale()
+    {
+        return applyScale && IsPropProjectionMode();
+    }
+
+    private bool IsPropProjectionMode()
+    {
+        return projectionMode == ProjectionMode.FloorProp ||
+            projectionMode == ProjectionMode.WallProp ||
+            projectionMode == ProjectionMode.FurnitureSurfaceProp ||
+            projectionMode == ProjectionMode.ForegroundOccluder;
+    }
+
+    private void ApplyProjectedPropScale()
     {
         Transform targetRoot = VisualRoot;
-
         if (targetRoot == null)
         {
             return;
         }
 
-        if (HasActiveGuestScaleParticipant(targetRoot))
-        {
-            return;
-        }
-
-        float appliedScale = currentScale * currentRoomStageScaleMultiplier;
-        Vector3 baseScale = isUsingButlerCharacterScaleRules && ignoreRoomVisualScaleOverridesWhenUsingButlerRules
-            ? GetDefaultAuthoredVisualRootScale()
-            : GetAuthoredVisualRootScaleForCurrentRoom();
-        Vector3 projectedScale = new Vector3(
+        CapturePropProjectionBaseScale(false);
+        float appliedScale = currentPropProjectionScale * currentRoomStageScaleMultiplier;
+        Vector3 baseScale = hasPropProjectionBaseScale ? propProjectionBaseScale : Vector3.one;
+        targetRoot.localScale = new Vector3(
             baseScale.x * appliedScale,
             baseScale.y * appliedScale,
             baseScale.z);
-
-        targetRoot.localScale = projectedScale;
-    }
-
-    [Obsolete("Guest body scale is now applied by GuestRoomScaleApplier.")]
-    public void ApplyButlerCharacterScaleNow(PointClickPlayerMovement source = null)
-    {
-        ApplyButlerCharacterScaleNow(source, 1f);
-    }
-
-    [Obsolete("Guest body scale is now applied by GuestRoomScaleApplier.")]
-    public void ApplyButlerCharacterScaleNow(PointClickPlayerMovement source, float debugScaleMultiplier)
-    {
-        if (HasActiveGuestScaleParticipant(VisualRoot))
-        {
-            ClearButlerCharacterScaleDebug();
-            return;
-        }
-
-        if (source != null)
-        {
-            butlerScaleSource = source;
-        }
-
-        ResolveReferences();
-        CaptureAuthoredVisualScale(false);
-        RefreshVisualTargets();
-        ApplyProjection();
-
-        if (!TryGetButlerCharacterScaleForThisEntity(out PointClickPlayerMovement.ButlerCharacterScaleSample sample))
-        {
-            ClearButlerCharacterScaleDebug();
-            return;
-        }
-
-        ForceApplyButlerCharacterScale(sample, debugScaleMultiplier);
-    }
-
-    public bool TryGetButlerCharacterScaleSample(out PointClickPlayerMovement.ButlerCharacterScaleSample sample)
-    {
-        return TryGetButlerCharacterScaleForThisEntity(out sample);
-    }
-
-    [Obsolete("Guest body scale is now applied by GuestRoomScaleApplier.")]
-    private void ForceApplyButlerCharacterScale(
-        PointClickPlayerMovement.ButlerCharacterScaleSample sample,
-        float debugScaleMultiplier)
-    {
-        Transform targetRoot = VisualRoot;
-
-        if (targetRoot == null || HasActiveGuestScaleParticipant(targetRoot))
-        {
-            return;
-        }
-
-        isUsingButlerCharacterScaleRules = true;
-        currentButlerCharacterScale = sample.NormalizedScale;
-        currentButlerCharacterDepth01 = sample.Depth01;
-        currentButlerCharacterScaleSource = sample.Source;
-
-        float visualScale = visualProfile != null ? visualProfile.HeightScaleMultiplier : 1f;
-        float appliedScale =
-            Mathf.Max(0.001f, sample.NormalizedScale) *
-            Mathf.Max(0.001f, debugScaleMultiplier) *
-            Mathf.Max(0.001f, visualScale) *
-            Mathf.Max(0.001f, currentRoomStageScaleMultiplier > 0f ? currentRoomStageScaleMultiplier : GetRoomStageScaleMultiplier());
-        Vector3 baseScale = ignoreRoomVisualScaleOverridesWhenUsingButlerRules
-            ? GetDefaultAuthoredVisualRootScale()
-            : GetAuthoredVisualRootScaleForCurrentRoom();
-        Vector3 projectedScale = new Vector3(
-            baseScale.x * appliedScale,
-            baseScale.y * appliedScale,
-            baseScale.z);
-
-        targetRoot.localScale = projectedScale;
-        currentScale = Mathf.Max(0.001f, sample.NormalizedScale * visualScale);
     }
 
     private void ApplyProjectedTint()
@@ -798,17 +480,13 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         for (int i = 0; i < spriteRenderers.Length; i++)
         {
             SpriteRenderer spriteRenderer = spriteRenderers[i];
-
             if (spriteRenderer == null)
             {
                 continue;
             }
 
-            int localOffset = visualProfile != null
-                ? visualProfile.GetSortingOffsetForRenderer(spriteRenderer.transform)
-                : 0;
             spriteRenderer.sortingLayerName = layerName;
-            spriteRenderer.sortingOrder = GetSortingOrder(localOffset);
+            spriteRenderer.sortingOrder = GetSortingOrder();
             spriteRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
         }
     }
@@ -830,7 +508,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             color.a = opacity;
             contactShadowRenderer.color = color;
             contactShadowRenderer.sortingLayerName = GetSortingLayerName();
-            contactShadowRenderer.sortingOrder = GetSortingOrder(visualProfile != null ? visualProfile.ShadowSortingOffset : -2);
+            contactShadowRenderer.sortingOrder = GetSortingOrder(-2);
         }
 
         if (contactShadowGraphic != null)
@@ -849,7 +527,6 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         }
 
         RoomContentGroup roomContent = target.GetComponentInParent<RoomContentGroup>(true);
-
         if (roomContent != null && roomContent.TryGetPerspectiveProfile(out RoomPerspectiveProfile profile))
         {
             roomProfile = profile;
@@ -881,29 +558,6 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         }
 
         return SameRoom(actorRoomState.CurrentRoomId, roomProfile.RoomId);
-    }
-
-    private Vector3 GetAuthoredVisualRootScaleForCurrentRoom()
-    {
-        string roomKey = GetCurrentVisualScaleRoomKey();
-        return TryGetVisualRootScaleForRoom(roomKey, out Vector3 roomScale)
-            ? roomScale
-            : GetDefaultAuthoredVisualRootScale();
-    }
-
-    private Vector3 GetDefaultAuthoredVisualRootScale()
-    {
-        return hasAuthoredVisualRootScale ? authoredVisualRootScale : Vector3.one;
-    }
-
-    private string GetCurrentVisualScaleRoomKey()
-    {
-        if (!Application.isPlaying && !string.IsNullOrWhiteSpace(editorSelectedVisualScaleRoomId))
-        {
-            return editorSelectedVisualScaleRoomId;
-        }
-
-        return GetCurrentProjectionRoomKey();
     }
 
     private float GetRoomStageScaleMultiplier()
@@ -948,8 +602,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         }
 
         string roomKey = GetCurrentProjectionRoomKey();
-        if (!hasRoomStageScaleReference ||
-            !SameRoom(roomStageScaleReferenceRoom, roomKey))
+        if (!hasRoomStageScaleReference || !SameRoom(roomStageScaleReferenceRoom, roomKey))
         {
             roomStageScaleReference = Mathf.Max(0.0001f, roomStageScale);
             roomStageScaleReferenceRoom = roomKey;
@@ -962,14 +615,12 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     private bool IsAlreadyOwnedByRoomStage()
     {
         Transform targetRoot = VisualRoot;
-        return targetRoot != null &&
-            targetRoot.GetComponentInParent<RoomContentGroup>(true) != null;
+        return targetRoot != null && targetRoot.GetComponentInParent<RoomContentGroup>(true) != null;
     }
 
     private string GetCurrentProjectionRoomKey()
     {
-        if (actorRoomState != null &&
-            !string.IsNullOrWhiteSpace(actorRoomState.CurrentRoomId))
+        if (actorRoomState != null && !string.IsNullOrWhiteSpace(actorRoomState.CurrentRoomId))
         {
             return actorRoomState.CurrentRoomId;
         }
@@ -980,151 +631,9 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         }
 
         RoomContentGroup parentRoom = GetComponentInParent<RoomContentGroup>(true);
-        if (parentRoom != null && !string.IsNullOrWhiteSpace(parentRoom.RoomName))
-        {
-            return parentRoom.RoomName;
-        }
-
-        return !string.IsNullOrWhiteSpace(editorSelectedVisualScaleRoomId)
-            ? editorSelectedVisualScaleRoomId
+        return parentRoom != null && !string.IsNullOrWhiteSpace(parentRoom.RoomName)
+            ? parentRoom.RoomName
             : string.Empty;
-    }
-
-    private bool TryGetButlerCharacterScaleForThisEntity(out PointClickPlayerMovement.ButlerCharacterScaleSample sample)
-    {
-        sample = default;
-
-        if (HasActiveGuestScaleParticipant(VisualRoot))
-        {
-            return false;
-        }
-
-        if (!useButlerCharacterScaleRules ||
-            (useButlerRulesOnlyForFloorCharacters && projectionMode != ProjectionMode.FloorCharacter))
-        {
-            return false;
-        }
-
-        string roomId = GetCurrentProjectionRoomKey();
-
-        if (string.IsNullOrWhiteSpace(roomId))
-        {
-            return false;
-        }
-
-        PointClickPlayerMovement source = ResolveButlerScaleSource();
-        return source != null &&
-            source.TryEvaluateButlerCharacterScale(roomId, roomLocalFootPoint, out sample);
-    }
-
-    private bool HasActiveGuestScaleParticipant(Transform targetRoot)
-    {
-        GuestScaleParticipant participant = GetComponent<GuestScaleParticipant>();
-
-        if (participant == null)
-        {
-            participant = GetComponentInParent<GuestScaleParticipant>(true);
-        }
-
-        if (participant == null)
-        {
-            participant = GetComponentInChildren<GuestScaleParticipant>(true);
-        }
-
-        if (participant == null && targetRoot != null)
-        {
-            participant = targetRoot.GetComponentInParent<GuestScaleParticipant>(true);
-        }
-
-        if (participant == null && targetRoot != null)
-        {
-            participant = targetRoot.GetComponentInChildren<GuestScaleParticipant>(true);
-        }
-
-        if (participant == null ||
-            participant.ExcludeFromGuestScaling ||
-            participant.IsButler)
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    private PointClickPlayerMovement ResolveButlerScaleSource()
-    {
-        if (butlerScaleSource != null)
-        {
-            return butlerScaleSource;
-        }
-
-        PointClickPlayerMovement activeTaggedPlayer = null;
-        PointClickPlayerMovement activeNamedPlayer = null;
-        PointClickPlayerMovement firstActive = null;
-        PointClickPlayerMovement firstInactive = null;
-        PointClickPlayerMovement[] candidates = FindObjectsByType<PointClickPlayerMovement>(FindObjectsInactive.Include);
-
-        for (int i = 0; i < candidates.Length; i++)
-        {
-            PointClickPlayerMovement candidate = candidates[i];
-
-            if (candidate == null || candidate.gameObject == null)
-            {
-                continue;
-            }
-
-            bool isActive = candidate.gameObject.activeInHierarchy;
-
-            if (isActive)
-            {
-                firstActive ??= candidate;
-
-                if (string.Equals(candidate.gameObject.tag, "Player", StringComparison.OrdinalIgnoreCase))
-                {
-                    activeTaggedPlayer ??= candidate;
-                }
-
-                if (NameLooksLikePlayerOrButler(candidate.name) ||
-                    NameLooksLikePlayerOrButler(candidate.gameObject.name))
-                {
-                    activeNamedPlayer ??= candidate;
-                }
-            }
-            else if (!Application.isPlaying)
-            {
-                firstInactive ??= candidate;
-            }
-        }
-
-        butlerScaleSource =
-            activeTaggedPlayer != null
-                ? activeTaggedPlayer
-                : activeNamedPlayer != null
-                    ? activeNamedPlayer
-                    : firstActive != null
-                        ? firstActive
-                        : firstInactive;
-        return butlerScaleSource;
-    }
-
-    private int GetVisualScaleOverrideIndex(string roomId)
-    {
-        if (roomVisualScaleOverrides == null || string.IsNullOrWhiteSpace(roomId))
-        {
-            return -1;
-        }
-
-        string cleanRoomId = CleanRoomId(roomId);
-
-        for (int i = 0; i < roomVisualScaleOverrides.Count; i++)
-        {
-            if (roomVisualScaleOverrides[i].Matches(cleanRoomId))
-            {
-                return i;
-            }
-        }
-
-        return -1;
     }
 
     private void ClearRoomStageScaleReference()
@@ -1133,14 +642,6 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         hasRoomStageScaleReference = false;
         roomStageScaleReference = 1f;
         roomStageScaleReferenceRoom = string.Empty;
-    }
-
-    private void ClearButlerCharacterScaleDebug()
-    {
-        isUsingButlerCharacterScaleRules = false;
-        currentButlerCharacterScale = 1f;
-        currentButlerCharacterDepth01 = 0f;
-        currentButlerCharacterScaleSource = string.Empty;
     }
 
     private static Color MultiplyColor(Color baseColor, Color tint)
@@ -1176,56 +677,5 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             .Replace("_", string.Empty)
             .Replace(" ", string.Empty)
             .Replace("-", string.Empty);
-    }
-
-    private static bool NameLooksLikePlayerOrButler(string value)
-    {
-        return !string.IsNullOrWhiteSpace(value) &&
-            (value.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0 ||
-            value.IndexOf("Butler", StringComparison.OrdinalIgnoreCase) >= 0);
-    }
-
-    private static string CleanRoomId(string value)
-    {
-        return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
-    }
-
-    private static bool ContainsRoomId(List<string> roomIds, string roomId)
-    {
-        if (roomIds == null || string.IsNullOrWhiteSpace(roomId))
-        {
-            return false;
-        }
-
-        for (int i = 0; i < roomIds.Count; i++)
-        {
-            if (SameRoom(roomIds[i], roomId))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    [Serializable]
-    private struct RoomVisualScaleOverride
-    {
-        [SerializeField] private string roomId;
-        [SerializeField] private Vector3 visualRootScale;
-
-        public RoomVisualScaleOverride(string roomId, Vector3 visualRootScale)
-        {
-            this.roomId = CleanRoomId(roomId);
-            this.visualRootScale = SanitizeScale(visualRootScale);
-        }
-
-        public string RoomId => roomId;
-        public Vector3 VisualRootScale => SanitizeScale(visualRootScale);
-
-        public bool Matches(string otherRoomId)
-        {
-            return SameRoom(roomId, otherRoomId);
-        }
     }
 }

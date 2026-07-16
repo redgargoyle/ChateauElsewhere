@@ -6,11 +6,9 @@ public sealed class RoomProjectionCalibrationWindow : EditorWindow
 {
     private const string RoomProfilesFolderPath = "Assets/ScriptableObjects/Rooms";
     private const string DrawingRoomProfilePath = "Assets/ScriptableObjects/Rooms/DrawingRoomPerspectiveProfile.asset";
-    private const string StandardAdultProfilePath = "Assets/ScriptableObjects/Characters/StandardAdultVisualProfile.asset";
 
     private RoomPerspectiveProfile previewProfile;
     private Vector2 previewFootPoint = new Vector2(0f, -120f);
-    private float previewAdultHeight = 290f;
 
     [MenuItem("Tools/Room Projection/Calibration Window")]
     public static void Open()
@@ -88,35 +86,6 @@ public sealed class RoomProjectionCalibrationWindow : EditorWindow
         Debug.Log($"Assigned room perspective profiles to {assignedCount} room(s).");
     }
 
-    [MenuItem("Tools/Room Projection/Create Standard Adult Visual Profile")]
-    public static CharacterVisualProfile CreateStandardAdultVisualProfile()
-    {
-        EnsureAssetFolder("Assets/ScriptableObjects");
-        EnsureAssetFolder("Assets/ScriptableObjects/Characters");
-
-        CharacterVisualProfile profile = AssetDatabase.LoadAssetAtPath<CharacterVisualProfile>(StandardAdultProfilePath);
-
-        if (profile == null)
-        {
-            profile = CreateInstance<CharacterVisualProfile>();
-            AssetDatabase.CreateAsset(profile, StandardAdultProfilePath);
-        }
-
-        profile.Configure(
-            "Standard Adult",
-            1f,
-            290f,
-            220f,
-            new Vector2(0.5f, 0f),
-            0,
-            1,
-            -2);
-        EditorUtility.SetDirty(profile);
-        AssetDatabase.SaveAssets();
-        Selection.activeObject = profile;
-        return profile;
-    }
-
     private void OnEnable()
     {
         if (previewProfile == null)
@@ -134,17 +103,9 @@ public sealed class RoomProjectionCalibrationWindow : EditorWindow
             typeof(RoomPerspectiveProfile),
             false);
 
-        using (new EditorGUILayout.HorizontalScope())
+        if (GUILayout.Button("Create Drawing Room Profile"))
         {
-            if (GUILayout.Button("Create Drawing Room Profile"))
-            {
-                previewProfile = CreateDrawingRoomPerspectiveProfile();
-            }
-
-            if (GUILayout.Button("Create Adult Visual Profile"))
-            {
-                CreateStandardAdultVisualProfile();
-            }
+            previewProfile = CreateDrawingRoomPerspectiveProfile();
         }
 
         if (GUILayout.Button("Create/Assign Profiles For Scene Rooms"))
@@ -162,11 +123,10 @@ public sealed class RoomProjectionCalibrationWindow : EditorWindow
     {
         EditorGUILayout.LabelField("Foot Point Preview", EditorStyles.boldLabel);
         previewFootPoint = EditorGUILayout.Vector2Field("Room Local Foot", previewFootPoint);
-        previewAdultHeight = Mathf.Max(1f, EditorGUILayout.FloatField("Adult Height", previewAdultHeight));
 
         if (previewProfile == null)
         {
-            EditorGUILayout.HelpBox("Assign or create a room perspective profile to preview depth, scale, tint, and sorting.", MessageType.Info);
+            EditorGUILayout.HelpBox("Assign or create a room perspective profile to preview depth, tint, sorting, and prop projection.", MessageType.Info);
             return;
         }
 
@@ -176,8 +136,7 @@ public sealed class RoomProjectionCalibrationWindow : EditorWindow
         int sortingOrder = previewProfile.GetSortingOrder(previewFootPoint);
 
         EditorGUILayout.LabelField("Depth 0-1", depth.ToString("0.000"));
-        EditorGUILayout.LabelField("Scale", scale.ToString("0.000"));
-        EditorGUILayout.LabelField("Projected Adult Height", (previewAdultHeight * scale).ToString("0.0 px"));
+        EditorGUILayout.LabelField("Prop Projection Scale", scale.ToString("0.000"));
         EditorGUILayout.ColorField("Tint", tint);
         EditorGUILayout.LabelField("Sorting Order", sortingOrder.ToString());
     }
@@ -201,7 +160,11 @@ public sealed class RoomProjectionCalibrationWindow : EditorWindow
 
         if (selectedEntity.HasUsableProfile)
         {
-            EditorGUILayout.LabelField("Current Scale", selectedEntity.CurrentScale.ToString("0.000"));
+            if (selectedEntity.Mode != RoomProjectedEntity.ProjectionMode.FloorCharacter)
+            {
+                EditorGUILayout.LabelField("Current Prop Projection Scale", selectedEntity.CurrentPropProjectionScale.ToString("0.000"));
+            }
+
             EditorGUILayout.LabelField("Current Sorting", selectedEntity.CurrentSortingOrder.ToString());
         }
 

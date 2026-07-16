@@ -9,6 +9,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public sealed class CharacterScaleOwnershipRegressionTests
 {
@@ -20,6 +21,12 @@ public sealed class CharacterScaleOwnershipRegressionTests
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
     private const string PanicControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestPanicController.cs";
     private const string LayoutCaptureWindowPath = "Assets/Editor/PlayModeLayoutCaptureWindow.cs";
+    private const string ActorRoomStatePath = "Assets/Scripts/Story/ActorRoomState.cs";
+    private const string RoomProjectedEntityPath = "Assets/Scripts/Characters/RoomProjectedEntity.cs";
+    private const string RoomPersonWalkerPath = "Assets/Scripts/Characters/RoomPersonWalker2D.cs";
+    private const string CharacterVisualProfileGuid = "9d7c5206bdd145f4bdd4426f7ccc37bd";
+    private const string RoomProjectedEntityEditorGuid = "9ce1fe34319045699aa184a301f7f45f";
+    private const string RoomProjectedEntityGuid = "361e3658088b41ab98d330ae6457640b";
 
     private static readonly object[] GuestSittingRoster =
     {
@@ -418,6 +425,210 @@ public sealed class CharacterScaleOwnershipRegressionTests
         Assert.That(methodBody, Does.Contain("sittingClip"));
         Assert.That(methodBody, Does.Contain("Debug.LogWarning"));
         Assert.That(methodBody, Does.Not.Contain("existingCrouchClip : baseClip"));
+    }
+
+    [Test]
+    public void StageProjectionAndWalkerSourcesContainNoManagedCharacterScaleOwnership()
+    {
+        var prohibitedByPath = new Dictionary<string, string[]>
+        {
+            [ActorRoomStatePath] = new[]
+            {
+                "ApplyButlerCharacterScaleNow",
+                "BuildButlerActorScale",
+                "ScaleXY",
+                "scaleWithRoomStageMotion",
+                "boundLocalScale",
+                "authoredActorLocalScale",
+                "GuestScaleParticipant"
+            },
+            [RoomProjectedEntityPath] = new[]
+            {
+                "ApplyButlerCharacterScaleNow",
+                "ButlerCharacterScale",
+                "CharacterVisualProfile",
+                "roomVisualScaleOverrides",
+                "CurrentVisualScaleRoomId",
+                "CurrentScale =>",
+                "GetProjectedScale",
+                "GuestScaleParticipant"
+            },
+            [RoomPersonWalkerPath] = new[]
+            {
+                "ApplyButlerCharacterScaleNow",
+                "ButlerCharacterScale",
+                "nearScale",
+                "farScale",
+                "authoredWalkerLocalScale",
+                "rectTransform.localScale",
+                "GuestScaleParticipant"
+            }
+        };
+
+        foreach (KeyValuePair<string, string[]> entry in prohibitedByPath)
+        {
+            string source = File.ReadAllText(entry.Key);
+
+            foreach (string symbol in entry.Value)
+            {
+                Assert.That(
+                    source,
+                    Does.Not.Contain(symbol),
+                    $"{entry.Key} must not retain managed-character size ownership through '{symbol}'.");
+            }
+        }
+    }
+
+    [Test]
+    public void FloorCharacterProjectionPreservesVisualScaleWhileKeepingPositionProjection()
+    {
+        RoomPerspectiveProfile profile = ScriptableObject.CreateInstance<RoomPerspectiveProfile>();
+        GameObject actor = new GameObject("ScaleNeutralProjectedActor");
+
+        try
+        {
+            Vector3 authoredScale = new Vector3(1.35f, 1.65f, 0.9f);
+            actor.transform.localScale = authoredScale;
+            RoomProjectedEntity projection = actor.AddComponent<RoomProjectedEntity>();
+            profile.SetDepthYRange(-10f, 10f);
+            profile.SetScaleEndpoints(2f, 2f);
+
+            projection.SetRoomLocalFootPoint(new Vector2(42f, -7f), false);
+            projection.SetRoomProfile(profile);
+
+            Assert.That(actor.transform.localScale, Is.EqualTo(authoredScale));
+            Assert.That(actor.transform.localPosition.x, Is.EqualTo(42f).Within(0.001f));
+            Assert.That(actor.transform.localPosition.y, Is.EqualTo(-7f).Within(0.001f));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(actor);
+            UnityEngine.Object.DestroyImmediate(profile);
+        }
+    }
+
+    [Test]
+    public void RoomPersonWalkerVisualRefreshPreservesGraphicScale()
+    {
+        GameObject walkerObject = new GameObject(
+            "ScaleNeutralWalker",
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(Image));
+
+        try
+        {
+            RoomPersonWalker2D walker = walkerObject.AddComponent<RoomPersonWalker2D>();
+            Vector3 authoredScale = new Vector3(1.25f, 1.4f, 0.8f);
+            walkerObject.transform.localScale = authoredScale;
+
+            walker.RefreshDepthVisualsNow();
+
+            Assert.That(walkerObject.transform.localScale, Is.EqualTo(authoredScale));
+            Assert.That(walker.TargetGraphic.raycastTarget, Is.False);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(walkerObject);
+        }
+    }
+
+    [Test]
+    public void RoomPersonWalkerFacingUsesPresentationRotationWithoutChangingScale()
+    {
+        GameObject walkerObject = new GameObject(
+            "ScaleNeutralFacingWalker",
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(Image));
+
+        try
+        {
+            RoomPersonWalker2D walker = walkerObject.AddComponent<RoomPersonWalker2D>();
+            Vector3 authoredScale = new Vector3(1.25f, 1.4f, 0.8f);
+            walkerObject.transform.localScale = authoredScale;
+            typeof(RoomPersonWalker2D).GetField(
+                "pathPoints",
+                BindingFlags.Instance | BindingFlags.NonPublic)?.SetValue(
+                walker,
+                new[] { Vector2.zero, new Vector2(-100f, 0f) });
+            typeof(RoomPersonWalker2D).GetField(
+                "pixelsPerSecond",
+                BindingFlags.Instance | BindingFlags.NonPublic)?.SetValue(walker, 100f);
+
+            MethodInfo tick = typeof(RoomPersonWalker2D).GetMethod(
+                "Tick",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(tick, Is.Not.Null);
+            tick.Invoke(walker, new object[] { 0.25f, true });
+
+            Assert.That(walkerObject.transform.localScale, Is.EqualTo(authoredScale));
+            Assert.That(Mathf.Abs(Mathf.DeltaAngle(walkerObject.transform.localEulerAngles.y, 180f)), Is.LessThan(0.01f));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(walkerObject);
+        }
+    }
+
+    [Test]
+    public void ProjectionModeNumericValuesRemainSerializationStable()
+    {
+        Assert.That((int)RoomProjectedEntity.ProjectionMode.FloorCharacter, Is.EqualTo(0));
+        Assert.That((int)RoomProjectedEntity.ProjectionMode.FloorProp, Is.EqualTo(1));
+        Assert.That((int)RoomProjectedEntity.ProjectionMode.WallProp, Is.EqualTo(2));
+        Assert.That((int)RoomProjectedEntity.ProjectionMode.FurnitureSurfaceProp, Is.EqualTo(3));
+        Assert.That((int)RoomProjectedEntity.ProjectionMode.ForegroundOccluder, Is.EqualTo(4));
+
+        string source = File.ReadAllText(RoomProjectedEntityPath);
+        Assert.That(source, Does.Match(@"FloorCharacter\s*=\s*0"));
+        Assert.That(source, Does.Match(@"FloorProp\s*=\s*1"));
+        Assert.That(source, Does.Match(@"WallProp\s*=\s*2"));
+        Assert.That(source, Does.Match(@"FurnitureSurfaceProp\s*=\s*3"));
+        Assert.That(source, Does.Match(@"ForegroundOccluder\s*=\s*4"));
+    }
+
+    [Test]
+    public void SerializedProjectionScaleSeamIsPropOnlyAndDisabledInAllLiveRecords()
+    {
+        string[] serializedPaths =
+        {
+            GameplayPath,
+            "Assets/Prefabs/Room_Drawing_Room.prefab",
+            "Assets/Prefabs/Room_Drawing_Room_Perspective.prefab"
+        };
+        var projectionBlocks = new List<string>();
+
+        foreach (string path in serializedPaths)
+        {
+            string text = File.ReadAllText(path);
+            projectionBlocks.AddRange(
+                Regex.Matches(text, @"(?ms)^--- !u!114 &.*?(?=^--- !u!|\z)")
+                    .Cast<Match>()
+                    .Select(match => match.Value)
+                    .Where(block => block.Contains($"guid: {RoomProjectedEntityGuid}")));
+        }
+
+        Assert.That(projectionBlocks, Has.Count.EqualTo(13));
+        Assert.That(projectionBlocks.All(block => Regex.IsMatch(block, @"(?m)^  projectionMode: 4$")), Is.True);
+        Assert.That(projectionBlocks.All(block => Regex.IsMatch(block, @"(?m)^  applyScale: 0$")), Is.True);
+    }
+
+    [Test]
+    public void DeletedProjectionScaleTypesLeaveNoGuidReferences()
+    {
+        string[] serializedPaths = Directory.GetFiles("Assets", "*", SearchOption.AllDirectories)
+            .Where(path => path.EndsWith(".unity", StringComparison.OrdinalIgnoreCase) ||
+                path.EndsWith(".prefab", StringComparison.OrdinalIgnoreCase) ||
+                path.EndsWith(".asset", StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+
+        foreach (string path in serializedPaths)
+        {
+            string text = File.ReadAllText(path);
+            Assert.That(text, Does.Not.Contain(CharacterVisualProfileGuid), path);
+            Assert.That(text, Does.Not.Contain(RoomProjectedEntityEditorGuid), path);
+        }
     }
 
     private static bool InvokeTryCreateCaptureItem(MethodInfo method, Transform target, out object captureItem)
