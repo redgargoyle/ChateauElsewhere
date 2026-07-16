@@ -200,6 +200,12 @@ public class ActorRoomState : MonoBehaviour
         boundWorldZ = targetTransform.position.z;
         boundRoomId = roomContentGroup.RoomName;
         hasRoomStageLocalBinding = true;
+
+        // A room anchor describes visible feet, not the actor-root pivot. Apply
+        // the display owner's target-room size now so callers that immediately
+        // align feet (including hidden Chapter 2 staging) measure the final
+        // visual bounds instead of the previous room's display scale.
+        TryApplyBoundAnimationDisplayScale(targetTransform.gameObject);
     }
 
     public void ClearRoomStagePointBinding()
@@ -519,6 +525,11 @@ public class ActorRoomState : MonoBehaviour
         worldPoint.z = boundWorldZ;
         targetTransform.position = worldPoint;
 
+        // CharacterAnimationDisplay is the only runtime writer of body size.
+        // Ask it to refresh before sampling renderer bounds so the root-foot
+        // correction always uses the final room/Y scale for this anchor.
+        TryApplyBoundAnimationDisplayScale(targetObject);
+
         // The authored room anchor represents the character's visible feet. This
         // is position-only alignment: sprite import/pivot data determines the
         // offset, the actor root remains untouched, and CharacterAnimationDisplay
@@ -531,6 +542,17 @@ public class ActorRoomState : MonoBehaviour
         }
 
         return true;
+    }
+
+    private void TryApplyBoundAnimationDisplayScale(GameObject targetObject)
+    {
+        if (targetObject == null || string.IsNullOrWhiteSpace(boundRoomId))
+        {
+            return;
+        }
+
+        CharacterAnimationDisplay display = targetObject.GetComponent<CharacterAnimationDisplay>();
+        display?.TryApplyScaleForRoom(boundRoomId);
     }
 
     private static bool IsActorUnderRoomStage(Transform targetTransform)

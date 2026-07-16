@@ -177,6 +177,49 @@ public class StoryActorRoomStageLockingTests
         }
     }
 
+    [Test]
+    public void StaticBoundGuestUsesFinalAnimationDisplayScaleBeforeFeetAreAligned()
+    {
+        TestRig rig = CreateRig();
+        Texture2D bodyTexture = new Texture2D(20, 40);
+        Sprite bodySprite = Sprite.Create(
+            bodyTexture,
+            new Rect(0f, 0f, bodyTexture.width, bodyTexture.height),
+            new Vector2(0.5f, 0.5f),
+            20f);
+        SpriteRenderer rootRenderer = rig.ActorState.GetComponent<SpriteRenderer>();
+
+        GameObject visual = new GameObject("AnimationDisplay", typeof(SpriteRenderer));
+        visual.transform.SetParent(rig.ActorState.transform, false);
+        SpriteRenderer bodyRenderer = visual.GetComponent<SpriteRenderer>();
+        bodyRenderer.sprite = bodySprite;
+
+        CharacterScaleCatalog catalog = CreateConstantScaleCatalog(rig, 2f);
+        CharacterAnimationDisplay display = rig.ActorState.gameObject.AddComponent<CharacterAnimationDisplay>();
+        display.Configure(visual.transform, catalog);
+
+        try
+        {
+            Vector3 authoredRootScale = rig.ActorState.transform.localScale;
+            rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
+            rootRenderer.enabled = false;
+
+            PlaceActorAt(rig, rig.Anchor);
+
+            Assert.That(display.AnimationDisplay.localScale, Is.EqualTo(new Vector3(2f, 2f, 1f)),
+                "Static placement must apply the target room's display scale before it samples visible feet.");
+            AssertVisibleFeetLockedToAnchor(rig, bodyRenderer, "scaled static foot binding");
+            Assert.That(rig.ActorState.transform.localScale, Is.EqualTo(authoredRootScale),
+                "Feet alignment must not take ownership of the actor root scale.");
+        }
+        finally
+        {
+            Object.DestroyImmediate(bodySprite);
+            Object.DestroyImmediate(bodyTexture);
+            rig.Destroy();
+        }
+    }
+
     [UnityTest]
     public IEnumerator TransformWaypointMovementFollowsAnchorMovedDuringWalk()
     {
@@ -347,6 +390,35 @@ public class StoryActorRoomStageLockingTests
         SetPrivateField(rig.ActorState, "restrictVisibilityToCurrentRoom", false);
         EnsureRigCameraIsMain(rig);
         return rig;
+    }
+
+    private static CharacterScaleCatalog CreateConstantScaleCatalog(TestRig rig, float scale)
+    {
+        GameObject catalogObject = new GameObject("Character Scale Catalog", typeof(CharacterScaleCatalog));
+        catalogObject.transform.SetParent(rig.Root.transform, false);
+        CharacterScaleCatalog catalog = catalogObject.GetComponent<CharacterScaleCatalog>();
+
+        GameObject markerRoot = new GameObject("Character Scale");
+        markerRoot.transform.SetParent(rig.RoomContent.transform, false);
+
+        GameObject front = new GameObject("Front");
+        front.transform.SetParent(markerRoot.transform, false);
+        front.transform.localPosition = new Vector3(0f, -100f, 0f);
+        front.transform.localScale = new Vector3(scale, scale, 1f);
+
+        GameObject back = new GameObject("Back");
+        back.transform.SetParent(markerRoot.transform, false);
+        back.transform.localPosition = new Vector3(0f, 100f, 0f);
+        back.transform.localScale = new Vector3(scale, scale, 1f);
+
+        CharacterScaleRoom roomScale = rig.RoomContent.gameObject.AddComponent<CharacterScaleRoom>();
+        roomScale.Configure(
+            rig.RoomContent,
+            front.transform,
+            back.transform,
+            Mathf.Abs(rig.RoomContent.transform.localScale.x));
+        catalog.SetRooms(new[] { roomScale });
+        return catalog;
     }
 
     private static void SetPrivateField<T>(ActorRoomState actorState, string fieldName, T value)

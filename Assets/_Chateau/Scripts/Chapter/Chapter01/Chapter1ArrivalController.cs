@@ -3144,8 +3144,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (guestState.GuestObject != null &&
             TryGetWorldPositionForGuestTarget(guestState.GuestObject.transform, target, out Vector3 worldPosition))
         {
-            guestState.GuestObject.transform.position = worldPosition;
-            BindGuestToRoomStagePoint(guestState, target);
+            PlaceGuestFeetAtPosition(guestState, worldPosition, target);
             return;
         }
 
@@ -3159,8 +3158,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             Vector3 targetPosition = target.position;
             targetPosition.z = guestState.GuestObject.transform.position.z;
-            guestState.GuestObject.transform.position = targetPosition;
-            BindGuestToRoomStagePoint(guestState, target);
+            PlaceGuestFeetAtPosition(guestState, targetPosition, target);
         }
     }
 
@@ -3211,6 +3209,11 @@ public class Chapter1ArrivalController : MonoBehaviour
             Transform guestTransform = guestState.GuestObject.transform;
             Vector3 targetPosition = feetPosition;
 
+            // Binding first gives CharacterAnimationDisplay the stable authored
+            // room-local foot point it needs to apply the final room/Y size.
+            // The subsequent bounds sample then aligns feet at that final size.
+            BindGuestToRoomStagePoint(guestState, roomStageTarget);
+
             if (TryGetGuestFeetWorldPoint(guestState.GuestObject, true, true, out Vector3 currentFeetPosition))
             {
                 Vector3 feetOffset = currentFeetPosition - guestTransform.position;
@@ -3220,7 +3223,6 @@ public class Chapter1ArrivalController : MonoBehaviour
 
             targetPosition.z = guestTransform.position.z;
             guestTransform.position = targetPosition;
-            BindGuestToRoomStagePoint(guestState, roomStageTarget);
             return;
         }
 

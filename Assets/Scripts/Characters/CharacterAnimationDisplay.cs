@@ -66,6 +66,11 @@ public sealed class CharacterAnimationDisplay : MonoBehaviour
 
     public bool TryApplyScaleForRoom(string roomName)
     {
+        // This can be called synchronously as a room-stage binding is created,
+        // before this component's next LateUpdate. Refresh the actor state so
+        // the authored bound foot point is available for the first scale pass.
+        ResolveReferences();
+
         if (!HasValidDisplayRoot())
         {
             WarnOnce("CharacterAnimationDisplay requires a dedicated child AnimationDisplay; the actor root will not be scaled.");

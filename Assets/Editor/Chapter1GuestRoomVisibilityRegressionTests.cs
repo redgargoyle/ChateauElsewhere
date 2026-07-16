@@ -356,6 +356,8 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(seatMethodBody, Does.Contain("return FindDrawingRoomGuestPoint(index);"), "Assigned seats should use the same editable Drawing Room point source.");
         Assert.That(controllerText, Does.Match(@"FindDrawingRoomGuestPoint\s*\([^)]*\)\s*\{[\s\S]*FindAnchor\(pointName, drawingRoomId\)[\s\S]*FindSceneObjectByExactName\(pointName\)"), "Editable guest points should fall back to the physical scene object name if RoomAnchor data is stale.");
         Assert.That(placeMethodBody, Does.Match(@"TryGetWorldPositionForGuestTarget[\s\S]*ActorState\.PlaceAt"), "World-space guests should convert UI room-stage points before falling back to raw Transform placement.");
+        Assert.That(placeMethodBody, Does.Match(@"TryGetWorldPositionForGuestTarget[\s\S]*PlaceGuestFeetAtPosition"), "Static world-space placement must align visible guest feet to the authored target.");
+        Assert.That(placeMethodBody, Does.Not.Contain("guestState.GuestObject.transform.position = worldPosition"), "Static world-space placement must not put a center-pivot actor root directly on a foot anchor.");
         Assert.That(controllerText, Does.Contain("RectTransformUtility.ScreenPointToLocalPointInRectangle"), "UI guests should convert Drawing Room points into their parent RectTransform space.");
         Assert.That(controllerText, Does.Contain("RectTransformUtility.WorldToScreenPoint"), "Drawing Room points should be interpreted by their visible screen position.");
         Assert.That(controllerText, Does.Contain("mainCamera.ScreenToWorldPoint"), "World-space guests should receive a camera-world position for visible room-stage points.");
@@ -435,6 +437,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string prepareMethodBody = ExtractMethodBody(controllerText, "PrepareSceneGuestObject");
         string disablePlayerMethodBody = ExtractMethodBody(controllerText, "DisablePlayerOnlyComponents");
         string placeMethodBody = ExtractMethodBody(controllerText, "PlaceGuestAt");
+        string placeFeetMethodBody = ExtractMethodBody(controllerText, "PlaceGuestFeetAtPosition");
 
         Assert.That(playerMovementText, Does.Not.Match(@"\.localScale\s*="), "Point-click movement must not write the Butler body scale.");
         Assert.That(actorRoomStateText, Does.Not.Match(@"\.localScale\s*="), "Room-stage binding must not write guest body scale.");
@@ -442,7 +445,8 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(prepareMethodBody, Does.Not.Contain("GuestScale"));
         Assert.That(disablePlayerMethodBody, Does.Contain("pointClickMovements[i].enabled = false"), "Guest clones should still disable player-only input.");
         Assert.That(disablePlayerMethodBody, Does.Not.Contain("PerspectiveScale"));
-        Assert.That(placeMethodBody, Does.Contain("BindGuestToRoomStagePoint"), "World guests should remain attached to their authored room anchors.");
+        Assert.That(placeMethodBody, Does.Contain("PlaceGuestFeetAtPosition"), "World guests should align their visible feet through the shared placement path.");
+        Assert.That(placeFeetMethodBody, Does.Contain("BindGuestToRoomStagePoint"), "World guests should remain attached to their authored room anchors.");
         Assert.That(placeMethodBody, Does.Not.Match(@"\.localScale\s*="), "Authored placement must not resize guests.");
     }
 
