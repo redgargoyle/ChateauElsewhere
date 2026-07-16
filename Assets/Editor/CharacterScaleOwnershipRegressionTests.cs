@@ -193,6 +193,7 @@ public sealed class CharacterScaleOwnershipRegressionTests
         Assert.That(source, Does.Contain("Missing authored guest reference"));
         Assert.That(source, Does.Not.Contain("Runtime placeholder guests will be created"));
         Assert.That(source, Does.Not.Contain("Missing guests will be created at runtime"));
+        Assert.That(source, Does.Not.Contain("fallback guest creation"));
         Assert.That(
             ExtractMethodBody(source, "EnsureGuestConfigs"),
             Does.Contain("throw new InvalidOperationException"),
@@ -253,12 +254,36 @@ public sealed class CharacterScaleOwnershipRegressionTests
     [Test]
     public void LayoutCaptureRejectsManagedActorRootsAndDescendantsAtEveryWriteBoundary()
     {
-        const string temporaryScenePath = "Assets/__CharacterScaleLayoutCaptureRegression.unity";
-        Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        const string temporarySceneTemplatePath = "Assets/Settings/Scenes/URP2DSceneTemplate.unity";
+        Scene previousActiveScene = SceneManager.GetActiveScene();
+        bool hadLoadedActiveScene = previousActiveScene.IsValid() && previousActiveScene.isLoaded;
+        int initialSceneCount = SceneManager.sceneCount;
+        string temporarySceneName = $"__CharacterScaleLayoutCaptureRegression_{Guid.NewGuid():N}";
+        string temporaryScenePath = AssetDatabase.GenerateUniqueAssetPath(
+            $"Assets/{temporarySceneName}.unity");
+        Scene scene = default;
 
         try
         {
+            Assert.That(AssetDatabase.CopyAsset(temporarySceneTemplatePath, temporaryScenePath), Is.True);
+            scene = EditorSceneManager.OpenScene(temporaryScenePath, OpenSceneMode.Additive);
+            Assert.That(scene.IsValid() && scene.isLoaded, Is.True);
+            Assert.That(SceneManager.sceneCount, Is.GreaterThanOrEqualTo(initialSceneCount + 1));
+
+            if (hadLoadedActiveScene)
+            {
+                Assert.That(
+                    previousActiveScene.IsValid() && previousActiveScene.isLoaded,
+                    Is.True,
+                    "Opening the additive layout-capture fixture must preserve the editor's active scene.");
+            }
+
             EditorSceneManager.SetActiveScene(scene);
+
+            foreach (GameObject root in scene.GetRootGameObjects())
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
 
             GameObject butler = new GameObject("ButlerActor");
             butler.AddComponent<PointClickPlayerMovement>();
@@ -322,9 +347,14 @@ public sealed class CharacterScaleOwnershipRegressionTests
         }
         finally
         {
+            if (hadLoadedActiveScene && previousActiveScene.IsValid() && previousActiveScene.isLoaded)
+            {
+                EditorSceneManager.SetActiveScene(previousActiveScene);
+            }
+
             if (scene.IsValid() && scene.isLoaded)
             {
-                EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+                EditorSceneManager.CloseScene(scene, true);
             }
 
             AssetDatabase.DeleteAsset(temporaryScenePath);

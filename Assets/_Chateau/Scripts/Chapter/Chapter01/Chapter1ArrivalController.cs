@@ -2674,7 +2674,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (stagedGuestCount < requiredGuestCount)
         {
             Debug.LogWarning(
-                $"Chapter 2 skip could only stage {stagedGuestCount}/{requiredGuestCount} required guest(s). Check scene guest configuration and fallback guest creation.",
+                $"Chapter 2 skip could only stage {stagedGuestCount}/{requiredGuestCount} required guest(s). Check the authored Guest 1-8 scene objects and references.",
                 this);
         }
 
