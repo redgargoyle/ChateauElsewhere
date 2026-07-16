@@ -292,7 +292,11 @@ git add Assets/Editor/CharacterScaleOwnershipRegressionTests.cs \
 git commit -m "refactor: make character stage and projection scale neutral"
 ```
 
-### Task 4: Remove Butler sizing from point-and-click movement
+### Task 4A: Neutralize point-and-click character scale writers
+
+**Compile-safe execution amendment (2026-07-16):** Task 4 is split across 4A and Task 5. Task 4A removes every PointClick body-root scale writer, preview/mutation/debug API, profile/fallback evaluator, and authored-scale capture/restore path. It deliberately retains the hidden serialized scale fields/rows as migration evidence plus only the read-only `ButlerCharacterScaleSample`, `TryEvaluateButlerCharacterScale`, `GetButlerScaleOverrideRoomIds`, and `ButlerScaleRevision` bridge required by the still-compiling guest stack. Task 5 performs the Unity serialization migration first, then deletes that guest stack and the remaining PointClick bridge/evidence in the same compile-atomic slice.
+
+The completed legacy Guest Size Master, mutating Guest audit, and old Guest/Butler scale regression suite move forward from Task 5 into Task 4A so they cannot keep calling removed mutation APIs.
 
 **Files:**
 - Modify: `Assets/Editor/CharacterScaleOwnershipRegressionTests.cs`
@@ -301,30 +305,37 @@ git commit -m "refactor: make character stage and projection scale neutral"
 - Delete: `Assets/Editor/ButlerRoomScaleCalibrationWindow.cs.meta`
 - Delete: `Assets/Editor/PointClickPlayerMovementEditor.cs`
 - Delete: `Assets/Editor/PointClickPlayerMovementEditor.cs.meta`
+- Delete: `Assets/Editor/GuestRoomScaleMasterWindow.cs`
+- Delete: `Assets/Editor/GuestRoomScaleMasterWindow.cs.meta`
+- Delete: `Assets/Editor/GuestScaleAudit.cs`
+- Delete: `Assets/Editor/GuestScaleAudit.cs.meta`
+- Delete: `Assets/Editor/GuestButlerScaleRegressionTests.cs`
+- Delete: `Assets/Editor/GuestButlerScaleRegressionTests.cs.meta`
+- Modify: `Assets/Editor/CharacterRegressionTests.cs`
+- Modify: `Assets/Editor/RoomPerspectiveProfileEditor.cs`
 - Modify: `Assets/Editor/RoomProjectionRegressionTests.cs`
-- Modify: `Assets/Editor/Chapter1GuestRoomVisibilityRegressionTests.cs`
-- Modify: `Assets/Editor/DialogueSpeechMovementRegressionTests.cs`
 - Modify: `Assets/Editor/NavigationRegressionTests.cs`
+- Modify: `docs/superpowers/plans/2026-07-16-character-size-phase1-cleanup.md`
 
 **Interfaces:**
 - Consumes: the existing logical/world position conversion and current room-stage ratio.
-- Produces: `PointClickPlayerMovement` as movement, room/foot-position, animation, and sorting owner only.
+- Produces: `PointClickPlayerMovement` with movement, room/foot-position, animation, and sorting ownership plus the temporary read-only migration bridge described above; it has no character transform writer.
 
 - [ ] **Step 1: Add a failing Butler ownership test**
 
-Read `PointClickPlayerMovement.cs` and require absence of `ButlerCharacterScaleSample`, `ButlerRoomScaleOverride`, `butlerRoomScaleOverrides`, `nearScale`, `farScale`, `ApplyPerspectiveScale`, calibration preview/setter APIs, authored scale capture, and scale debug state. At the same time require `currentRoomStageScaleRatio`, `TryGetRoomStageLocalPointForRoom`, logical/world conversion, `ApplyVisualPosition`, and sorting to remain.
+Read `PointClickPlayerMovement.cs` and require absence of `ApplyPerspectiveScale`, every root-scale assignment, calibration preview/setter/debug APIs, authored scale capture/restore, guest-participant scale guards, and perspective profile/fallback evaluators. Require only the four temporary bridge symbols above to remain publicly visible. At the same time require `currentRoomStageScaleRatio`, `TryGetRoomStageLocalPointForRoom`, logical/world conversion, `ApplyVisualPosition`, and sorting to remain.
 
 - [ ] **Step 2: Verify RED**
 
 Run the focused ownership test. Expected: failure on the active Butler scale fields/APIs.
 
-- [ ] **Step 3: Remove Butler scale fields, APIs, and calls**
+- [ ] **Step 3: Neutralize Butler scale writers while retaining migration evidence**
 
-Delete the scale-only serialized fields, nested data types, calibration/evaluation/preview/debug methods, scale calculations, all `ApplyPerspectiveScale` calls, and every Butler body `localScale` write. Do not remove `currentRoomStageScaleRatio`; keep it in room-stage position conversion. Keep room-local foot queries clean and read-only for Phase 2.
+Hide and retain the scale-only serialized fields and nested row until Task 5 can migrate their YAML safely. Delete calibration/evaluation/preview/debug mutation methods, scale calculations, all `ApplyPerspectiveScale` calls, and every Butler body `localScale` write. Keep only the temporary read-only bridge. Do not remove `currentRoomStageScaleRatio`; keep it in room-stage position conversion. Keep room-local foot queries clean and read-only for Phase 2.
 
 - [ ] **Step 4: Delete obsolete Butler editors and migrate tests**
 
-Delete the Butler calibration window and PointClick inspector. Remove Butler-scale tests from `RoomProjectionRegressionTests`; rewrite arrival, dialogue, and navigation tests around feet/room/position rather than calibrated size. Preserve movement, room transition, sorting, and anchor assertions.
+Delete the Butler calibration window, PointClick inspector, Guest Size Master, mutating Guest audit, and old Guest/Butler scale regression suite. Remove Butler-scale tests from `RoomProjectionRegressionTests`; rewrite arrival, dialogue, and navigation tests around feet/room/position rather than calibrated size. Preserve movement, room transition, sorting, and anchor assertions.
 
 - [ ] **Step 5: Run Task 4 GREEN verification and commit**
 
@@ -340,23 +351,21 @@ git add Assets/Editor/CharacterScaleOwnershipRegressionTests.cs \
   Assets/Editor/RoomProjectionRegressionTests.cs \
   Assets/Editor/Chapter1GuestRoomVisibilityRegressionTests.cs \
   Assets/Editor/DialogueSpeechMovementRegressionTests.cs Assets/Editor/NavigationRegressionTests.cs
-git commit -m "refactor: remove Butler size ownership from movement"
+git commit -m "refactor: neutralize point click character scaling"
 ```
 
-### Task 5: Migrate serialized data and delete the guest-scale stack
+### Task 5: Migrate serialized data and delete the guest-scale stack and temporary bridge
 
 **Files:**
 - Create then delete after execution: `Assets/Editor/CharacterScalePhaseOneSceneMigration.cs` and `.meta`
 - Modify: `Assets/Editor/CharacterScaleOwnershipRegressionTests.cs`
-- Delete: `Assets/Editor/GuestButlerScaleRegressionTests.cs` and `.meta`
-- Delete: `Assets/Editor/GuestRoomScaleMasterWindow.cs` and `.meta`
-- Delete: `Assets/Editor/GuestScaleAudit.cs` and `.meta`
 - Delete: `Assets/Scripts/Characters/GuestRoomScaleCalibration.cs` and `.meta`
 - Delete: `Assets/Scripts/Characters/GuestRoomScaleApplier.cs` and `.meta`
 - Delete: `Assets/Scripts/Characters/GuestRoomStageScaleUtility.cs` and `.meta`
 - Delete: `Assets/Scripts/Characters/GuestScaleParticipant.cs` and `.meta`
 - Modify: `Assets/Scenes/Gameplay.unity`
 - Modify: `Assets/Prefabs/Player.prefab`
+- Modify: `Assets/Scripts/PointClickPlayerMovement.cs`
 
 **Interfaces:**
 - Consumes: the tested snapshot and scale-neutral runtime produced by Tasks 1-4.

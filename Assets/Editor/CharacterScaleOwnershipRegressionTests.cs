@@ -24,6 +24,7 @@ public sealed class CharacterScaleOwnershipRegressionTests
     private const string ActorRoomStatePath = "Assets/Scripts/Story/ActorRoomState.cs";
     private const string RoomProjectedEntityPath = "Assets/Scripts/Characters/RoomProjectedEntity.cs";
     private const string RoomPersonWalkerPath = "Assets/Scripts/Characters/RoomPersonWalker2D.cs";
+    private const string PointClickPlayerMovementPath = "Assets/Scripts/PointClickPlayerMovement.cs";
     private const string CharacterVisualProfileGuid = "9d7c5206bdd145f4bdd4426f7ccc37bd";
     private const string RoomProjectedEntityEditorGuid = "9ce1fe34319045699aa184a301f7f45f";
     private const string RoomProjectedEntityGuid = "361e3658088b41ab98d330ae6457640b";
@@ -476,6 +477,125 @@ public sealed class CharacterScaleOwnershipRegressionTests
                     Does.Not.Contain(symbol),
                     $"{entry.Key} must not retain managed-character size ownership through '{symbol}'.");
             }
+        }
+    }
+
+    [Test]
+    public void PointClickLifecyclePreservesAuthoredNonuniformRootScale()
+    {
+        GameObject actor = new GameObject("ScaleNeutralPointClickActor");
+        Vector3 authoredScale = new Vector3(1.35f, 2.1f, 0.8f);
+        actor.transform.localScale = authoredScale;
+
+        try
+        {
+            PointClickPlayerMovement movement = actor.AddComponent<PointClickPlayerMovement>();
+            MethodInfo initializeVisualState = typeof(PointClickPlayerMovement).GetMethod(
+                "InitializeVisualStateFromTransform",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            MethodInfo lateUpdate = typeof(PointClickPlayerMovement).GetMethod(
+                "LateUpdate",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo logicalPosition = typeof(PointClickPlayerMovement).GetField(
+                "logicalPosition",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo isReady = typeof(PointClickPlayerMovement).GetField(
+                "isReady",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+
+            Assert.That(initializeVisualState, Is.Not.Null);
+            Assert.That(lateUpdate, Is.Not.Null);
+            Assert.That(logicalPosition, Is.Not.Null);
+            Assert.That(isReady, Is.Not.Null);
+
+            initializeVisualState.Invoke(movement, null);
+            Assert.That(actor.transform.localScale, Is.EqualTo(authoredScale),
+                "PointClick initialization must preserve the authored actor-root scale.");
+
+            logicalPosition.SetValue(movement, new Vector2(0f, -4.25f));
+            isReady.SetValue(movement, true);
+            lateUpdate.Invoke(movement, null);
+
+            Assert.That(actor.transform.localScale, Is.EqualTo(authoredScale),
+                "PointClick updates may move and sort the actor, but must not resize its root.");
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(actor);
+        }
+    }
+
+    [Test]
+    public void PointClickSourceOwnsPositionAndSortingButNeverCharacterScale()
+    {
+        string source = File.ReadAllText(PointClickPlayerMovementPath);
+
+        Assert.That(source, Does.Not.Contain("transform.localScale ="));
+        Assert.That(source, Does.Not.Contain("ApplyPerspectiveScale"));
+        Assert.That(source, Does.Not.Contain("CaptureAuthoredLocalScale"));
+        Assert.That(source, Does.Not.Contain("RestoreAuthoredLocalScale"));
+        Assert.That(source, Does.Not.Contain("authoredPerspectiveScaleReference"));
+        Assert.That(source, Does.Not.Contain("HasActiveGuestScaleParticipant"));
+
+        string[] requiredPositionAndSortingSymbols =
+        {
+            "currentRoomStageScaleRatio",
+            "ApplyVisualPosition",
+            "UpdateVisualOffset",
+            "ResetRoomStageVisualReference",
+            "LogicalToWalkableWorldPoint",
+            "WalkableWorldToLogicalPoint",
+            "ApplyPlayerSorting",
+            "TryGetRoomStageLocalPointForRoom"
+        };
+
+        foreach (string symbol in requiredPositionAndSortingSymbols)
+        {
+            Assert.That(source, Does.Contain(symbol),
+                $"PointClick must retain position/sorting responsibility through '{symbol}'.");
+        }
+    }
+
+    [Test]
+    public void PointClickRetainsOnlyTemporaryReadOnlyButlerScaleBridge()
+    {
+        string source = File.ReadAllText(PointClickPlayerMovementPath);
+        string[] expectedScaleMembers =
+        {
+            "ButlerCharacterScaleSample",
+            "ButlerScaleRevision",
+            "GetButlerScaleOverrideRoomIds",
+            "TryEvaluateButlerCharacterScale"
+        };
+        string[] actualScaleMembers = typeof(PointClickPlayerMovement)
+            .GetMembers(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
+            .Where(member =>
+                member.Name.IndexOf("Scale", StringComparison.Ordinal) >= 0 &&
+                !member.Name.StartsWith("get_", StringComparison.Ordinal) &&
+                !member.Name.StartsWith("set_", StringComparison.Ordinal))
+            .Select(member => member.Name)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(name => name, StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.That(actualScaleMembers, Is.EqualTo(expectedScaleMembers));
+        Assert.That(source, Does.Contain("FormerlySerializedAs(\"frontScale\")"));
+        Assert.That(source, Does.Contain("FormerlySerializedAs(\"backScale\")"));
+        Assert.That(source, Does.Contain("dormant migration evidence"));
+
+        string[] removedLegacySources =
+        {
+            "Assets/Editor/ButlerRoomScaleCalibrationWindow.cs",
+            "Assets/Editor/PointClickPlayerMovementEditor.cs",
+            "Assets/Editor/GuestRoomScaleMasterWindow.cs",
+            "Assets/Editor/GuestScaleAudit.cs",
+            "Assets/Editor/GuestButlerScaleRegressionTests.cs"
+        };
+
+        foreach (string path in removedLegacySources)
+        {
+            Assert.That(File.Exists(path), Is.False, $"Legacy sizing source must be removed: {path}");
+            Assert.That(File.Exists(path + ".meta"), Is.False, $"Legacy sizing metadata must be removed: {path}.meta");
         }
     }
 

@@ -127,39 +127,11 @@ public sealed class RoomPerspectiveProfileEditor : Editor
             }
         }
 
-        RefreshPointClickMovementsUsing(profile);
-        RefreshRoomPersonWalkersUsing(profile);
-        SceneView.RepaintAll();
-    }
+		RefreshRoomPersonWalkersUsing(profile);
+		SceneView.RepaintAll();
+	}
 
-    private static void RefreshPointClickMovementsUsing(RoomPerspectiveProfile profile)
-    {
-        PointClickPlayerMovement[] movements = Resources.FindObjectsOfTypeAll<PointClickPlayerMovement>();
-
-        for (int i = 0; i < movements.Length; i++)
-        {
-            PointClickPlayerMovement movement = movements[i];
-
-            if (movement == null ||
-                EditorUtility.IsPersistent(movement) ||
-                !movement.UsesPerspectiveProfile(profile))
-            {
-                continue;
-            }
-
-            Undo.RecordObject(movement.transform, "Refresh Room Perspective Scale");
-            movement.RefreshPerspectiveScaleNow(true);
-            EditorUtility.SetDirty(movement);
-            EditorUtility.SetDirty(movement.transform);
-
-            if (!Application.isPlaying && movement.gameObject.scene.IsValid())
-            {
-                EditorSceneManager.MarkSceneDirty(movement.gameObject.scene);
-            }
-        }
-    }
-
-    private static void RefreshRoomPersonWalkersUsing(RoomPerspectiveProfile profile)
+	private static void RefreshRoomPersonWalkersUsing(RoomPerspectiveProfile profile)
     {
         RoomPersonWalker2D[] walkers = Resources.FindObjectsOfTypeAll<RoomPersonWalker2D>();
 

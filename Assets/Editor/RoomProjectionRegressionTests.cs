@@ -45,13 +45,15 @@ public class RoomProjectionRegressionTests
     }
 
     [Test]
-    public void RoomPerspectiveProfileEditorRefreshesProjectionAndWalkerPresentation()
+    public void RoomPerspectiveProfileEditorRefreshesProjectionAndWalkerPresentationOnly()
     {
         string editorText = File.ReadAllText(RoomPerspectiveProfileEditorPath);
         string calibrationText = File.ReadAllText(RoomProjectionCalibrationWindowPath);
 
         Assert.That(editorText, Does.Contain("RefreshProjectedEntitiesUsing"));
         Assert.That(editorText, Does.Contain("RefreshRoomPersonWalkersUsing"));
+        Assert.That(editorText, Does.Not.Contain("PointClickPlayerMovement"));
+        Assert.That(editorText, Does.Not.Contain("RefreshPointClickMovementsUsing"));
         Assert.That(calibrationText, Does.Contain("Create Perspective Profiles For Scene Rooms"));
         Assert.That(calibrationText, Does.Contain("Create/Assign Profiles For Scene Rooms"));
         Assert.That(calibrationText, Does.Contain("room.SetPerspectiveProfile(profile)"));
