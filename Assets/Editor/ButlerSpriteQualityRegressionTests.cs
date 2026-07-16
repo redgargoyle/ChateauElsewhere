@@ -48,7 +48,7 @@ public class ButlerSpriteQualityRegressionTests
         AssertTransparent("butler_idle/butler_idle_01.png", 246, 300, "front right arm gap");
         AssertTransparent("butler_classic_walk_06_r02_c02.png", 224, 290, "left-walk arm gap");
         AssertTransparent("butler_classic_walk_10_r03_c02.png", 114, 290, "right-walk arm gap");
-        AssertTransparent("butler_classic_walk_14_r04_c02.png", 236, 260, "away-walk arm gap");
+        AssertTransparent("butler_classic_walk_14_r04_c02.png", 168, 540, "away-walk leg gap");
     }
 
     private static void AssertTransparent(string relativePath, int x, int topY, string description)
