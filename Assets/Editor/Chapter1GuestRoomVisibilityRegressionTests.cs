@@ -237,7 +237,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(controllerText, Does.Not.Contain("guestEntranceSpawnPlacemark"), "The removed door placemark must not remain cached at runtime.");
         Assert.That(sceneText, Does.Not.Contain("m_Name: Placemark_guests_entrance"), "Gameplay should expose only GuestArrival_Door for guest foot spawning.");
         Assert.That(sceneText, Does.Match(@"anchorId: GuestArrival_Door\s+roomId: Grand Entrance Hall\s+showSceneGizmo: 1"), "GuestArrival_Door should be visible and easy to drag in the Scene view.");
-        Assert.That(sceneText, Does.Match(@"roomId: Grand Entrance Hall\s+enabled: 1\s+roomGuestScaleMultiplier: 1(?:\.0+)?\s"), "Entrance guests should use the Butler's calibrated scale without the old 2.2 enlargement.");
+        Assert.That(sceneText, Does.Match(@"roomId: Grand Entrance Hall\s+enabled: 1\s+roomGuestScaleMultiplier: 1\.06\s"), "Entrance guests should use the Butler depth curve with the small visual-height correction required by their shorter source sprites.");
         Assert.That(firstPlacementIndex, Is.GreaterThanOrEqualTo(0), "The guest must first be placed at GuestArrival_Door so scaling samples that exact foot depth.");
         Assert.That(scaleIndex, Is.GreaterThan(firstPlacementIndex), "The shared Butler scale should be evaluated after the guest reaches the door-foot depth.");
         Assert.That(finalPlacementIndex, Is.GreaterThan(scaleIndex), "Feet should be realigned after scaling changes sprite bounds.");
