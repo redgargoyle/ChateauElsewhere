@@ -126,6 +126,44 @@ public sealed class SubtitlePresentationRegressionTests
     }
 
     [Test]
+    public void SubtitlePortraitSlicesUseIdenticalDimensions()
+    {
+        foreach (string portraitPath in GetGuestPortraitPaths())
+        {
+            TextureImporter importer = AssetImporter.GetAtPath(portraitPath) as TextureImporter;
+            Assert.That(importer, Is.Not.Null, $"Missing portrait importer for {portraitPath}.");
+            importer.GetSourceTextureWidthAndHeight(out int width, out int height);
+            Assert.That(width, Is.EqualTo(280), $"Every portrait slice must use the same width: {portraitPath}.");
+            Assert.That(height, Is.EqualTo(590), $"Every portrait slice must use the same height: {portraitPath}.");
+        }
+    }
+
+    [Test]
+    public void SubtitlePortraitSlicesExcludeSheetDividerLines()
+    {
+        foreach (string portraitPath in GetGuestPortraitPaths())
+        {
+            Texture2D texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+
+            try
+            {
+                Assert.That(texture.LoadImage(File.ReadAllBytes(portraitPath)), Is.True, $"Could not read {portraitPath}.");
+                Color32[] pixels = texture.GetPixels32();
+
+                for (int edgeOffset = 0; edgeOffset < 8; edgeOffset++)
+                {
+                    AssertColumnIsNotSheetDivider(pixels, texture.width, texture.height, edgeOffset, portraitPath);
+                    AssertColumnIsNotSheetDivider(pixels, texture.width, texture.height, texture.width - 1 - edgeOffset, portraitPath);
+                }
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(texture);
+            }
+        }
+    }
+
+    [Test]
     public void SharedPortraitViewportUsesEvenMarginsAndClipsEverySpeakerWithoutGaps()
     {
         string[] speakerLineIds =
@@ -154,6 +192,7 @@ public sealed class SubtitlePresentationRegressionTests
                 RectTransform panel = GameObject.Find("Panel_Subtitle").GetComponent<RectTransform>();
                 RectTransform viewport = GameObject.Find("Frame_SubtitleSpeakerPortrait").GetComponent<RectTransform>();
                 RectTransform portrait = GameObject.Find("Image_SubtitleSpeakerPortrait").GetComponent<RectTransform>();
+                RectTransform nameplate = GameObject.Find("Image_SubtitleSpeakerNameplate").GetComponent<RectTransform>();
                 AspectRatioFitter fitter = portrait.GetComponent<AspectRatioFitter>();
 
                 LayoutRebuilder.ForceRebuildLayoutImmediate(viewport);
@@ -162,10 +201,12 @@ public sealed class SubtitlePresentationRegressionTests
                 float leftMargin = viewport.anchoredPosition.x;
                 float topMargin = -viewport.anchoredPosition.y;
                 float bottomMargin = panel.rect.height - topMargin - viewport.rect.height;
+                float rightMargin = nameplate.anchoredPosition.x - viewport.anchoredPosition.x - viewport.rect.width;
 
                 Assert.That(viewport.GetComponent<RectMask2D>(), Is.Not.Null, $"{lineId} should be clipped to the shared rectangular portrait viewport.");
                 Assert.That(leftMargin, Is.EqualTo(topMargin).Within(0.01f), $"{lineId} should have equal left and top margins.");
                 Assert.That(bottomMargin, Is.EqualTo(topMargin).Within(0.01f), $"{lineId} should have equal top and bottom margins.");
+                Assert.That(rightMargin, Is.EqualTo(leftMargin).Within(0.01f), $"{lineId} should have equal space on both sides of the portrait.");
                 Assert.That(fitter, Is.Not.Null, $"{lineId} should use the shared non-distorting portrait fitter.");
                 Assert.That(fitter.aspectMode, Is.EqualTo(AspectRatioFitter.AspectMode.EnvelopeParent));
                 Assert.That(portrait.rect.width, Is.GreaterThanOrEqualTo(viewport.rect.width - 0.01f), $"{lineId} left a horizontal gap in the portrait viewport.");
@@ -268,6 +309,45 @@ public sealed class SubtitlePresentationRegressionTests
     {
         Assert.That(actual.x, Is.EqualTo(expected.x).Within(0.01f));
         Assert.That(actual.y, Is.EqualTo(expected.y).Within(0.01f));
+    }
+
+    private static string[] GetGuestPortraitPaths()
+    {
+        return new[]
+        {
+            $"{SubtitlePortraitRoot}/Guest1_MissIsoldeWren.png",
+            $"{SubtitlePortraitRoot}/Guest2_ProfessorLucienVale.png",
+            $"{SubtitlePortraitRoot}/Guest3_MisterFlorianKnell.png",
+            $"{SubtitlePortraitRoot}/Guest4_CountessElowenDusk.png",
+            $"{SubtitlePortraitRoot}/Guest5_BaronHectorGlass.png",
+            $"{SubtitlePortraitRoot}/Guest6_LadySabineMarrow.png",
+            $"{SubtitlePortraitRoot}/Guest7_LordAmbroseVeil.png",
+            $"{SubtitlePortraitRoot}/Guest8_MadameCoralieThread.png"
+        };
+    }
+
+    private static void AssertColumnIsNotSheetDivider(Color32[] pixels, int width, int height, int x, string portraitPath)
+    {
+        double luminanceSum = 0d;
+        double luminanceSquaredSum = 0d;
+
+        for (int y = 0; y < height; y++)
+        {
+            Color32 pixel = pixels[(y * width) + x];
+            double luminance = (0.2126d * pixel.r) + (0.7152d * pixel.g) + (0.0722d * pixel.b);
+            luminanceSum += luminance;
+            luminanceSquaredSum += luminance * luminance;
+        }
+
+        double mean = luminanceSum / height;
+        double variance = Math.Max(0d, (luminanceSquaredSum / height) - (mean * mean));
+        double standardDeviation = Math.Sqrt(variance);
+        bool looksLikeDivider = mean < 200d && standardDeviation < 15d;
+
+        Assert.That(
+            looksLikeDivider,
+            Is.False,
+            $"{portraitPath} still contains a sheet-divider line at boundary column {x} (mean {mean:F1}, deviation {standardDeviation:F1}).");
     }
 
     private static bool RectTransformOverlaps(RectTransform first, RectTransform second)
