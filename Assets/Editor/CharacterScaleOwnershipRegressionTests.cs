@@ -19,15 +19,33 @@ public sealed class CharacterScaleOwnershipRegressionTests
     private const string DrawingRoomProfilePath = "Assets/ScriptableObjects/Rooms/DrawingRoomPerspectiveProfile.asset";
     private const string DiningRoomProfilePath = "Assets/ScriptableObjects/Rooms/DiningRoomPerspectiveProfile.asset";
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
+    private const string Chapter2GuestSearchControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestSearchController.cs";
     private const string PanicControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter02/Chapter2GuestPanicController.cs";
+    private const string SpeakingCharacterIndicatorPath = "Assets/Scripts/UI/SpeakingCharacterIndicator.cs";
     private const string LayoutCaptureWindowPath = "Assets/Editor/PlayModeLayoutCaptureWindow.cs";
     private const string ActorRoomStatePath = "Assets/Scripts/Story/ActorRoomState.cs";
+    private const string RoomPerspectiveProfilePath = "Assets/Scripts/Characters/RoomPerspectiveProfile.cs";
     private const string RoomProjectedEntityPath = "Assets/Scripts/Characters/RoomProjectedEntity.cs";
     private const string RoomPersonWalkerPath = "Assets/Scripts/Characters/RoomPersonWalker2D.cs";
     private const string PointClickPlayerMovementPath = "Assets/Scripts/PointClickPlayerMovement.cs";
     private const string CharacterVisualProfileGuid = "9d7c5206bdd145f4bdd4426f7ccc37bd";
     private const string RoomProjectedEntityEditorGuid = "9ce1fe34319045699aa184a301f7f45f";
     private const string RoomProjectedEntityGuid = "361e3658088b41ab98d330ae6457640b";
+    private const string PlayerPrefabGuid = "3c2a23f8d68b2d05cace0338fba9a1d1";
+    private static readonly string[] LegacyGuestScaleGuids =
+    {
+        "31d79ef7452a4c5288644569bd958a60",
+        "2d396ad445bc46b9a6acb3ac62291ef0",
+        "c209e3f5ef8c464db5163927439bd6a4",
+        "b099f2b1c3494d8fa900d71915c16f31"
+    };
+    private static readonly string[] LegacyGuestScaleRuntimePaths =
+    {
+        "Assets/Scripts/Characters/GuestRoomScaleCalibration.cs",
+        "Assets/Scripts/Characters/GuestRoomScaleApplier.cs",
+        "Assets/Scripts/Characters/GuestRoomStageScaleUtility.cs",
+        "Assets/Scripts/Characters/GuestScaleParticipant.cs"
+    };
 
     private static readonly object[] GuestSittingRoster =
     {
@@ -64,6 +82,9 @@ public sealed class CharacterScaleOwnershipRegressionTests
         Assert.That(snapshot.guestRoomCalibration.rooms, Has.Length.EqualTo(19));
         Assert.That(snapshot.guests, Has.Length.EqualTo(8));
         Assert.That(snapshot.posePlacement.drawingRoom.assignments, Has.Length.EqualTo(8));
+        Assert.That(
+            snapshot.posePlacement.drawingRoom.standingCharacterIds,
+            Is.EqualTo(new[] { "Guest 3", "Guest 5", "Guest 7" }));
         Assert.That(snapshot.posePlacement.diningRoom.assignments, Has.Length.EqualTo(8));
         Assert.That(snapshot.posePlacement.diningRoom.occlusionBindings, Has.Length.EqualTo(8));
         Assert.That(snapshot.guests.All(guest => !string.IsNullOrWhiteSpace(guest.sittingMapping.replacementClipGuid)), Is.True);
@@ -101,10 +122,26 @@ public sealed class CharacterScaleOwnershipRegressionTests
     }
 
     [Test]
-    public void AnimationClipsDoNotWriteTransformScale()
+    public void ManagedCharacterAnimationClipsDoNotWriteTransformScale()
     {
-        string[] clipPaths = Directory.GetFiles("Assets", "*.anim", SearchOption.AllDirectories)
-            .Select(path => path.Replace('\\', '/'))
+        string[] managedCharacterAnimationRoots =
+        {
+            "Assets/Animation/Player",
+            "Assets/Animation/ButlerClassic",
+            "Assets/Animation/Lady",
+            "Assets/Animation/ButlerGuest",
+            "Assets/Animation/MisterFlorianKnell",
+            "Assets/Animation/CountessElowenDusk",
+            "Assets/Animation/BaronHectorGlass",
+            "Assets/Animation/LadySabineMarrow",
+            "Assets/Animation/LordAmbroseVeil",
+            "Assets/Animation/MadameCoralieThread",
+            "Assets/Animation/Chapter2Panic"
+        };
+        string[] clipPaths = AssetDatabase.FindAssets("t:AnimationClip", managedCharacterAnimationRoots)
+            .Select(AssetDatabase.GUIDToAssetPath)
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .Distinct(StringComparer.Ordinal)
             .OrderBy(path => path, StringComparer.Ordinal)
             .ToArray();
 
@@ -112,13 +149,20 @@ public sealed class CharacterScaleOwnershipRegressionTests
 
         foreach (string clipPath in clipPaths)
         {
-            AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(clipPath);
-            Assert.That(clip, Is.Not.Null, clipPath);
-            Assert.That(
-                AnimationUtility.GetCurveBindings(clip).Any(
-                    binding => binding.propertyName.StartsWith("m_LocalScale", StringComparison.Ordinal)),
-                Is.False,
-                clipPath);
+            AnimationClip[] clips = AssetDatabase.LoadAllAssetsAtPath(clipPath)
+                .OfType<AnimationClip>()
+                .ToArray();
+            Assert.That(clips, Is.Not.Empty, clipPath);
+
+            foreach (AnimationClip clip in clips)
+            {
+                Assert.That(
+                    AnimationUtility.GetCurveBindings(clip).Any(
+                        binding => (binding.propertyName ?? string.Empty)
+                            .IndexOf("localScale", StringComparison.OrdinalIgnoreCase) >= 0),
+                    Is.False,
+                    $"{clipPath}::{clip.name}");
+            }
         }
     }
 
@@ -127,12 +171,16 @@ public sealed class CharacterScaleOwnershipRegressionTests
     {
         GameObject actor = new GameObject("FacingActor");
         GameObject visual = new GameObject("Visual");
+        GameObject authoredOppositeVisual = new GameObject("AuthoredOppositeVisual");
 
         try
         {
             visual.transform.SetParent(actor.transform, false);
             SpriteRenderer renderer = visual.AddComponent<SpriteRenderer>();
             renderer.flipX = true;
+            authoredOppositeVisual.transform.SetParent(actor.transform, false);
+            SpriteRenderer authoredOppositeRenderer = authoredOppositeVisual.AddComponent<SpriteRenderer>();
+            authoredOppositeRenderer.flipX = false;
             CharacterController2D controller = actor.AddComponent<CharacterController2D>();
             typeof(CharacterController2D).GetMethod(
                 "Awake",
@@ -143,28 +191,111 @@ public sealed class CharacterScaleOwnershipRegressionTests
             MethodInfo flip = typeof(CharacterController2D).GetMethod(
                 "Flip",
                 BindingFlags.Instance | BindingFlags.NonPublic);
+            MethodInfo refreshFacingPresentation = typeof(CharacterController2D).GetMethod(
+                "RefreshFacingPresentationNow",
+                BindingFlags.Instance | BindingFlags.Public);
 
             Assert.That(flip, Is.Not.Null);
+            Assert.That(refreshFacingPresentation, Is.Not.Null,
+                "Late-added held-item and coat renderers need an explicit presentation refresh without touching root scale.");
             FieldInfo facingRight = typeof(CharacterController2D).GetField(
                 "m_FacingRight",
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(facingRight, Is.Not.Null);
             Assert.That(facingRight.GetValue(controller), Is.False, "An authored flipX actor starts facing left.");
+            Assert.That(authoredOppositeRenderer.flipX, Is.False,
+                "Initialization must preserve each renderer's authored relative orientation.");
 
             flip.Invoke(controller, null);
 
             Assert.That(actor.transform.localScale, Is.EqualTo(before));
             Assert.That(renderer.flipX, Is.False);
+            Assert.That(authoredOppositeRenderer.flipX, Is.True);
             Assert.That(facingRight.GetValue(controller), Is.True);
 
             flip.Invoke(controller, null);
 
             Assert.That(actor.transform.localScale, Is.EqualTo(before));
             Assert.That(renderer.flipX, Is.True);
+            Assert.That(authoredOppositeRenderer.flipX, Is.False);
             Assert.That(facingRight.GetValue(controller), Is.False);
+
+            GameObject heldCoat = new GameObject("LateAddedHeldCoat");
+            SpriteRenderer heldCoatRenderer = heldCoat.AddComponent<SpriteRenderer>();
+            heldCoat.transform.SetParent(actor.transform, false);
+            refreshFacingPresentation.Invoke(controller, null);
+
+            Assert.That(actor.transform.localScale, Is.EqualTo(before));
+            Assert.That(heldCoatRenderer.flipX, Is.True,
+                "A renderer added while facing left must immediately match the presentation orientation.");
+
+            flip.Invoke(controller, null);
+
+            Assert.That(actor.transform.localScale, Is.EqualTo(before));
+            Assert.That(renderer.flipX, Is.False);
+            Assert.That(heldCoatRenderer.flipX, Is.False);
+            Assert.That(facingRight.GetValue(controller), Is.True);
         }
         finally
         {
+            UnityEngine.Object.DestroyImmediate(actor);
+        }
+    }
+
+    [Test]
+    public void CarriedCoatAttachmentTracksButlerFacingWithoutChangingActorScale()
+    {
+        GameObject actor = new GameObject("CoatFacingActor");
+        GameObject coat = new GameObject("CarriedCoat");
+        GameObject chapterObject = new GameObject("ChapterOneCoatFacingFixture");
+
+        try
+        {
+            CharacterController2D controller = actor.AddComponent<CharacterController2D>();
+            typeof(CharacterController2D).GetMethod(
+                "Awake",
+                BindingFlags.Instance | BindingFlags.NonPublic)?.Invoke(controller, null);
+            Vector3 authoredScale = new Vector3(1.42f, 1.42f, 1.3f);
+            actor.transform.localScale = authoredScale;
+            coat.transform.SetParent(actor.transform, false);
+
+            Chapter1ArrivalController chapter = chapterObject.AddComponent<Chapter1ArrivalController>();
+            typeof(Chapter1ArrivalController).GetField(
+                "carriedCoatVisual",
+                BindingFlags.Instance | BindingFlags.NonPublic)?.SetValue(chapter, coat);
+            MethodInfo bindFacing = typeof(Chapter1ArrivalController).GetMethod(
+                "BindCarriedCoatFacing",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            MethodInfo unbindFacing = typeof(Chapter1ArrivalController).GetMethod(
+                "UnbindCarriedCoatFacing",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            MethodInfo flip = typeof(CharacterController2D).GetMethod(
+                "Flip",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+
+            Assert.That(bindFacing, Is.Not.Null);
+            Assert.That(unbindFacing, Is.Not.Null);
+            Assert.That(flip, Is.Not.Null);
+            Assert.That(controller.IsFacingRight, Is.True);
+
+            bindFacing.Invoke(chapter, new object[] { controller });
+            Assert.That(coat.transform.localPosition.x, Is.GreaterThan(0f));
+
+            flip.Invoke(controller, null);
+            Assert.That(controller.IsFacingRight, Is.False);
+            Assert.That(coat.transform.localPosition.x, Is.LessThan(0f));
+            Assert.That(actor.transform.localScale, Is.EqualTo(authoredScale));
+
+            flip.Invoke(controller, null);
+            Assert.That(controller.IsFacingRight, Is.True);
+            Assert.That(coat.transform.localPosition.x, Is.GreaterThan(0f));
+            Assert.That(actor.transform.localScale, Is.EqualTo(authoredScale));
+
+            unbindFacing.Invoke(chapter, null);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(chapterObject);
             UnityEngine.Object.DestroyImmediate(actor);
         }
     }
@@ -222,10 +353,16 @@ public sealed class CharacterScaleOwnershipRegressionTests
             actor.transform.localScale = authoredScale;
             ActorRoomState actorState = actor.AddComponent<ActorRoomState>();
 
-            actorState.SetSeated(true);
-            Assert.That(actor.transform.localScale, Is.EqualTo(authoredScale));
-            actorState.SetSeated(false);
-            Assert.That(actor.transform.localScale, Is.EqualTo(authoredScale));
+            for (int cycle = 0; cycle < 8; cycle++)
+            {
+                actorState.SetCurrentRoom(cycle % 2 == 0 ? "Drawing Room" : "Dining Room");
+                actorState.SetSeated(true);
+                Assert.That(actor.transform.localScale, Is.EqualTo(authoredScale),
+                    $"Room/seat cycle {cycle} must not drift the authored scale while seated.");
+                actorState.SetSeated(false);
+                Assert.That(actor.transform.localScale, Is.EqualTo(authoredScale),
+                    $"Room/seat cycle {cycle} must not drift the authored scale after standing.");
+            }
 
             string chapterOneSource = File.ReadAllText(Chapter1ArrivalControllerPath);
             string takeCoatBody = ExtractMethodBody(chapterOneSource, "TakeGuestCoat");
@@ -240,6 +377,32 @@ public sealed class CharacterScaleOwnershipRegressionTests
         {
             UnityEngine.Object.DestroyImmediate(actor);
         }
+    }
+
+    [Test]
+    public void CharacterAdjacentScaleWritesStayOnDedicatedPresentationChildren()
+    {
+        string chapterOneSource = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string coatBody = ExtractMethodBody(chapterOneSource, "ApplyAssignedCoatSprite");
+        string transferCoatBody = ExtractMethodBody(chapterOneSource, "TransferCoatVisualToButler");
+        string bindCoatFacingBody = ExtractMethodBody(chapterOneSource, "BindCarriedCoatFacing");
+        Assert.That(coatBody, Does.Contain("spriteRenderer.transform.localScale"));
+        Assert.That(coatBody, Does.Not.Contain("guest.GuestObject.transform.localScale"));
+        Assert.That(transferCoatBody, Does.Contain("BindCarriedCoatFacing"));
+        Assert.That(bindCoatFacingBody, Does.Contain("RefreshFacingPresentationNow"));
+
+        string guestSearchSource = File.ReadAllText(Chapter2GuestSearchControllerPath);
+        string clickTargetBody = ExtractMethodBody(guestSearchSource, "EnsureRuntimeClickTarget");
+        Assert.That(clickTargetBody, Does.Contain("new GameObject(ClickTargetName)"));
+        Assert.That(clickTargetBody, Does.Contain("targetTransform.SetParent(actorObject.transform, false)"));
+        Assert.That(clickTargetBody, Does.Contain("targetTransform.localScale = Vector3.one"));
+        Assert.That(clickTargetBody, Does.Not.Contain("actorObject.transform.localScale"));
+
+        string speakingIndicatorSource = File.ReadAllText(SpeakingCharacterIndicatorPath);
+        string bubbleBody = ExtractMethodBody(speakingIndicatorSource, "UpdateBubbleTransform");
+        Assert.That(bubbleBody, Does.Contain("bubbleRenderer.transform.localScale"));
+        Assert.That(bubbleBody, Does.Not.Contain("currentTarget.localScale"));
+        Assert.That(bubbleBody, Does.Not.Contain("currentActor.transform.localScale"));
     }
 
     [Test]
@@ -529,6 +692,12 @@ public sealed class CharacterScaleOwnershipRegressionTests
     public void PointClickSourceOwnsPositionAndSortingButNeverCharacterScale()
     {
         string source = File.ReadAllText(PointClickPlayerMovementPath);
+        PropertyInfo currentRoomId = typeof(PointClickPlayerMovement).GetProperty(
+            "CurrentRoomId",
+            BindingFlags.Instance | BindingFlags.Public);
+        MethodInfo currentRoomFootPoint = typeof(PointClickPlayerMovement).GetMethod(
+            "TryGetCurrentRoomLocalFootPoint",
+            BindingFlags.Instance | BindingFlags.Public);
 
         Assert.That(source, Does.Not.Contain("transform.localScale ="));
         Assert.That(source, Does.Not.Contain("ApplyPerspectiveScale"));
@@ -536,6 +705,17 @@ public sealed class CharacterScaleOwnershipRegressionTests
         Assert.That(source, Does.Not.Contain("RestoreAuthoredLocalScale"));
         Assert.That(source, Does.Not.Contain("authoredPerspectiveScaleReference"));
         Assert.That(source, Does.Not.Contain("HasActiveGuestScaleParticipant"));
+        Assert.That(currentRoomId, Is.Not.Null);
+        Assert.That(currentRoomId.CanWrite, Is.False);
+        Assert.That(currentRoomFootPoint, Is.Not.Null,
+            "Phase 2 needs one scale-neutral read-only room/local-foot input seam.");
+        string currentRoomFootPointBody = ExtractMethodBody(source, "TryGetCurrentRoomLocalFootPoint");
+        Assert.That(currentRoomFootPointBody, Does.Contain("GetCurrentVisibleMovementWorldPoint()"),
+            "Phase 2 room-local depth must be sampled from the character's current visible foot point.");
+        Assert.That(currentRoomFootPointBody, Does.Contain("TryGetActiveRoomStageLocalPoint"));
+        Assert.That(currentRoomFootPointBody, Does.Not.Contain("logicalPosition"),
+            "The read seam must not pair a new room id with cached logical/stage conversion state.");
+        Assert.That(currentRoomFootPointBody, Does.Not.Contain("TryGetRoomStageLocalPoint("));
 
         string[] requiredPositionAndSortingSymbols =
         {
@@ -546,7 +726,7 @@ public sealed class CharacterScaleOwnershipRegressionTests
             "LogicalToWalkableWorldPoint",
             "WalkableWorldToLogicalPoint",
             "ApplyPlayerSorting",
-            "TryGetRoomStageLocalPointForRoom"
+            "TryGetCurrentRoomLocalFootPoint"
         };
 
         foreach (string symbol in requiredPositionAndSortingSymbols)
@@ -557,31 +737,27 @@ public sealed class CharacterScaleOwnershipRegressionTests
     }
 
     [Test]
-    public void PointClickRetainsOnlyTemporaryReadOnlyButlerScaleBridge()
+    public void PointClickContainsNoDormantButlerScaleBridgeAfterSerializedMigration()
     {
         string source = File.ReadAllText(PointClickPlayerMovementPath);
-        string[] expectedScaleMembers =
+        string[] removedScaleSymbols =
         {
             "ButlerCharacterScaleSample",
             "ButlerScaleRevision",
             "GetButlerScaleOverrideRoomIds",
-            "TryEvaluateButlerCharacterScale"
+            "TryEvaluateButlerCharacterScale",
+            "ButlerRoomScaleOverride",
+            "butlerRoomScaleOverrides",
+            "editorSelectedButlerScaleRoomId",
+            "LegacyButlerRoomScaleEndpointEpsilon",
+            "SanitizeButlerFinalLocalScaleY"
         };
-        string[] actualScaleMembers = typeof(PointClickPlayerMovement)
-            .GetMembers(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
-            .Where(member =>
-                member.Name.IndexOf("Scale", StringComparison.Ordinal) >= 0 &&
-                !member.Name.StartsWith("get_", StringComparison.Ordinal) &&
-                !member.Name.StartsWith("set_", StringComparison.Ordinal))
-            .Select(member => member.Name)
-            .Distinct(StringComparer.Ordinal)
-            .OrderBy(name => name, StringComparer.Ordinal)
-            .ToArray();
 
-        Assert.That(actualScaleMembers, Is.EqualTo(expectedScaleMembers));
-        Assert.That(source, Does.Contain("FormerlySerializedAs(\"frontScale\")"));
-        Assert.That(source, Does.Contain("FormerlySerializedAs(\"backScale\")"));
-        Assert.That(source, Does.Contain("dormant migration evidence"));
+        foreach (string symbol in removedScaleSymbols)
+        {
+            Assert.That(source, Does.Not.Contain(symbol),
+                $"PointClick must not retain the dormant Butler scale bridge symbol '{symbol}'.");
+        }
 
         string[] removedLegacySources =
         {
@@ -600,6 +776,166 @@ public sealed class CharacterScaleOwnershipRegressionTests
     }
 
     [Test]
+    public void LegacyGuestScaleSourcesGuidsAndSceneRecordsAreAbsent()
+    {
+        foreach (string path in LegacyGuestScaleRuntimePaths)
+        {
+            Assert.That(File.Exists(path), Is.False, $"Legacy runtime sizing source must be removed: {path}");
+            Assert.That(File.Exists(path + ".meta"), Is.False, $"Legacy runtime sizing metadata must be removed: {path}.meta");
+        }
+
+        string[] liveAssetPaths = Directory.GetFiles("Assets", "*", SearchOption.AllDirectories)
+            .Where(path => !string.Equals(
+                path.Replace('\\', '/'),
+                "Assets/Editor/CharacterScaleOwnershipRegressionTests.cs",
+                StringComparison.OrdinalIgnoreCase))
+            .Where(path =>
+                path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase) ||
+                path.EndsWith(".unity", StringComparison.OrdinalIgnoreCase) ||
+                path.EndsWith(".prefab", StringComparison.OrdinalIgnoreCase) ||
+                path.EndsWith(".asset", StringComparison.OrdinalIgnoreCase) ||
+                path.EndsWith(".meta", StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+
+        foreach (string path in liveAssetPaths)
+        {
+            string text = File.ReadAllText(path);
+            foreach (string guid in LegacyGuestScaleGuids)
+            {
+                Assert.That(text, Does.Not.Contain(guid), $"Deleted legacy GUID {guid} remains in {path}.");
+            }
+        }
+
+        string gameplay = File.ReadAllText(GameplayPath);
+        string[] removedSceneObjectIds =
+        {
+            "86244176", "86244178", "86244179",
+            "1844861546", "1844861547", "1844861549",
+            "436671157", "13922402", "1485188971", "1206924327",
+            "2142464084", "1356668536", "1439972665", "2100000121"
+        };
+        foreach (string fileId in removedSceneObjectIds)
+        {
+            Assert.That(gameplay, Does.Not.Match($@"(?m)^--- !u!\d+ &{fileId}(?: stripped)?$"),
+                $"Deleted legacy scene object {fileId} remains serialized.");
+        }
+
+        string[] removedButlerPaths =
+        {
+            "editorSelectedButlerScaleRoomId",
+            "hasButlerCalibrationBaseLocalScale",
+            "butlerRoomScaleOverrides.Array.size",
+            "butlerRoomScaleOverrides.Array.data[",
+            "frontScale",
+            "backScale"
+        };
+        foreach (string propertyPath in removedButlerPaths)
+        {
+            Assert.That(gameplay, Does.Not.Contain(propertyPath),
+                $"Deleted Butler sizing property path '{propertyPath}' remains serialized.");
+        }
+    }
+
+    [Test]
+    public void GameplayPreservesCharacterRosterScalesAndAuthoredPoseInfrastructureAfterLegacyPurge()
+    {
+        string gameplay = File.ReadAllText(GameplayPath);
+        Assert.That(
+            Regex.Matches(gameplay, $@"m_SourcePrefab: \{{fileID: 100100000, guid: {PlayerPrefabGuid}, type: 3\}}").Count,
+            Is.EqualTo(9),
+            "Gameplay must retain Butler plus all eight guest Player prefab instances.");
+        Assert.That(
+            Regex.Matches(gameplay, @"propertyPath: walkableFloor\s+value:\s*\r?\n\s*objectReference: \{fileID: 551531667\}").Count,
+            Is.EqualTo(9),
+            "Every retained character must keep the Dining/room walkable-floor reference.");
+
+        string[] instanceIds =
+        {
+            "81962841", "436671155", "13922399", "1485188968", "1206924324",
+            "2100000100", "2100000105", "2100000110", "2100000115"
+        };
+        float[] expectedXy = { 2.150601f, 1.42f, 1.42f, 1.42f, 1.42f, 1.42f, 1.42f, 1.42f, 1.42f };
+        float[] expectedZ = { 1f, 1f, 1f, 1.12f, 1.12f, 1.3f, 1.3f, 1.3f, 1.3f };
+        GameObject playerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath);
+        Assert.That(playerPrefab, Is.Not.Null);
+        for (int i = 0; i < instanceIds.Length; i++)
+        {
+            string block = ExtractYamlObjectBlock(gameplay, instanceIds[i]);
+            AssertPrefabInstanceScale(block, "x", expectedXy[i], playerPrefab.transform.localScale.x);
+            AssertPrefabInstanceScale(block, "y", expectedXy[i], playerPrefab.transform.localScale.y);
+            AssertPrefabInstanceScale(block, "z", expectedZ[i], playerPrefab.transform.localScale.z);
+
+            if (i > 0)
+            {
+                object[] rosterRow = (object[])GuestSittingRoster[i - 1];
+                string expectedControllerGuid = AssetDatabase.AssetPathToGUID((string)rosterRow[1]);
+                Assert.That(
+                    block,
+                    Does.Match($@"(?ms)propertyPath: m_Controller\s+value:\s*objectReference: \{{fileID: 22100000, guid: {expectedControllerGuid}, type: 2\}}"),
+                    $"Guest {i} must retain its authored override controller assignment.");
+            }
+        }
+
+        for (int i = 1; i <= 8; i++)
+        {
+            string suffix = i.ToString("00");
+            Assert.That(gameplay, Does.Contain($"m_Name: DrawingRoomGuestPoint_{suffix}"));
+            Assert.That(gameplay, Does.Contain($"anchorId: DrawingRoomGuestPoint_{suffix}"));
+            Assert.That(gameplay, Does.Contain($"m_Name: Ch2_DiningSeat_{suffix}"));
+            Assert.That(gameplay, Does.Contain($"anchorId: Ch2_DiningSeat_{suffix}"));
+        }
+
+        string diningOcclusionBlock = ExtractYamlObjectBlock(gameplay, "3920000002");
+        Assert.That(Regex.Matches(diningOcclusionBlock, @"(?m)^  - seatAnchor: \{fileID: \d+\}$").Count, Is.EqualTo(8));
+    }
+
+    [Test]
+    public void PlayerPrefabAndGameplayReloadWithoutMissingOrObsoleteScaleComponents()
+    {
+        string[] obsoleteComponentTypeNames =
+        {
+            "GuestRoomScaleApplier",
+            "GuestRoomScaleCalibration",
+            "GuestScaleParticipant"
+        };
+        GameObject playerPrefabRoot = null;
+        Scene gameplayPreview = default;
+
+        try
+        {
+            playerPrefabRoot = PrefabUtility.LoadPrefabContents(PlayerPrefabPath);
+            Assert.That(playerPrefabRoot, Is.Not.Null);
+            AssertHierarchyHasNoMissingOrObsoleteComponents(
+                playerPrefabRoot,
+                obsoleteComponentTypeNames,
+                PlayerPrefabPath);
+
+            gameplayPreview = EditorSceneManager.OpenPreviewScene(GameplayPath);
+            Assert.That(gameplayPreview.IsValid() && gameplayPreview.isLoaded, Is.True);
+
+            foreach (GameObject root in gameplayPreview.GetRootGameObjects())
+            {
+                AssertHierarchyHasNoMissingOrObsoleteComponents(
+                    root,
+                    obsoleteComponentTypeNames,
+                    GameplayPath);
+            }
+        }
+        finally
+        {
+            if (gameplayPreview.IsValid() && gameplayPreview.isLoaded)
+            {
+                EditorSceneManager.ClosePreviewScene(gameplayPreview);
+            }
+
+            if (playerPrefabRoot != null)
+            {
+                PrefabUtility.UnloadPrefabContents(playerPrefabRoot);
+            }
+        }
+    }
+
+    [Test]
     public void FloorCharacterProjectionPreservesVisualScaleWhileKeepingPositionProjection()
     {
         RoomPerspectiveProfile profile = ScriptableObject.CreateInstance<RoomPerspectiveProfile>();
@@ -611,7 +947,6 @@ public sealed class CharacterScaleOwnershipRegressionTests
             actor.transform.localScale = authoredScale;
             RoomProjectedEntity projection = actor.AddComponent<RoomProjectedEntity>();
             profile.SetDepthYRange(-10f, 10f);
-            profile.SetScaleEndpoints(2f, 2f);
 
             projection.SetRoomLocalFootPoint(new Vector2(42f, -7f), false);
             projection.SetRoomProfile(profile);
@@ -709,7 +1044,54 @@ public sealed class CharacterScaleOwnershipRegressionTests
     }
 
     [Test]
-    public void SerializedProjectionScaleSeamIsPropOnlyAndDisabledInAllLiveRecords()
+    public void RoomPerspectiveProfileAndProjectedEntityExposeNoCharacterOrPropScaleSeam()
+    {
+        string profileSource = File.ReadAllText(RoomPerspectiveProfilePath);
+        string projectionSource = File.ReadAllText(RoomProjectedEntityPath);
+        string[] profileScaleSymbols =
+        {
+            "nativeRoomReferenceSize",
+            "NativeRoomReferenceSize",
+            "scaleByDepth",
+            "NearScale",
+            "FarScale",
+            "GetScale(",
+            "GetScaleAtDepth",
+            "SetScaleEndpoints",
+            "ApplyScaleMultiplier",
+            "CreateDepthScaleCurve"
+        };
+        string[] projectionScaleSymbols =
+        {
+            "applyScale",
+            "propProjectionBaseScale",
+            "hasPropProjectionBaseScale",
+            "CurrentPropProjectionScale",
+            "CurrentRoomStageScaleMultiplier",
+            "GetPropProjectionScale",
+            "ShouldApplyPropProjectionScale",
+            "IsPropProjectionMode",
+            "ApplyProjectedPropScale",
+            "SanitizeScale"
+        };
+
+        foreach (string symbol in profileScaleSymbols)
+        {
+            Assert.That(profileSource, Does.Not.Contain(symbol),
+                $"RoomPerspectiveProfile must not retain scale seam '{symbol}'.");
+        }
+
+        foreach (string symbol in projectionScaleSymbols)
+        {
+            Assert.That(projectionSource, Does.Not.Contain(symbol),
+                $"RoomProjectedEntity must not retain scale seam '{symbol}'.");
+        }
+
+        Assert.That(projectionSource, Does.Not.Contain("targetRoot.localScale ="));
+    }
+
+    [Test]
+    public void SerializedProjectionAndProfileAssetsContainNoScaleSeam()
     {
         string[] serializedPaths =
         {
@@ -731,7 +1113,22 @@ public sealed class CharacterScaleOwnershipRegressionTests
 
         Assert.That(projectionBlocks, Has.Count.EqualTo(13));
         Assert.That(projectionBlocks.All(block => Regex.IsMatch(block, @"(?m)^  projectionMode: 4$")), Is.True);
-        Assert.That(projectionBlocks.All(block => Regex.IsMatch(block, @"(?m)^  applyScale: 0$")), Is.True);
+        Assert.That(projectionBlocks.All(block => !Regex.IsMatch(block, @"(?m)^  applyScale:")), Is.True);
+        Assert.That(projectionBlocks.All(block => !Regex.IsMatch(block, @"(?m)^  propProjectionBaseScale:")), Is.True);
+        Assert.That(projectionBlocks.All(block => !Regex.IsMatch(block, @"(?m)^  hasPropProjectionBaseScale:")), Is.True);
+
+        foreach (string profilePath in new[] { DrawingRoomProfilePath, DiningRoomProfilePath })
+        {
+            string profile = File.ReadAllText(profilePath);
+            Assert.That(profile, Does.Not.Contain("\n  scaleByDepth:"), profilePath);
+            Assert.That(profile, Does.Not.Contain("\n  nativeRoomReferenceSize:"), profilePath);
+            Assert.That(profile, Does.Contain("\n  nearFootY:"), profilePath);
+            Assert.That(profile, Does.Contain("\n  farFootY:"), profilePath);
+            Assert.That(profile, Does.Contain("\n  tintByDepth:"), profilePath);
+            Assert.That(profile, Does.Contain("\n  sortingOrderByDepth:"), profilePath);
+            Assert.That(profile, Does.Contain("\n  shadowScaleByDepth:"), profilePath);
+            Assert.That(profile, Does.Contain("\n  shadowOpacityByDepth:"), profilePath);
+        }
     }
 
     [Test]
@@ -757,6 +1154,54 @@ public sealed class CharacterScaleOwnershipRegressionTests
         bool accepted = (bool)method.Invoke(null, arguments);
         captureItem = arguments[1];
         return accepted;
+    }
+
+    private static string ExtractYamlObjectBlock(string yaml, string fileId)
+    {
+        Match match = Regex.Match(
+            yaml,
+            $@"(?ms)^--- !u!\d+ &{Regex.Escape(fileId)}(?: stripped)?\r?\n.*?(?=^--- !u!|\z)");
+        Assert.That(match.Success, Is.True, $"Could not find serialized object {fileId}.");
+        return match.Value.Replace("\r\n", "\n");
+    }
+
+    private static void AssertPrefabInstanceScale(
+        string prefabInstanceBlock,
+        string axis,
+        float expected,
+        float prefabDefault)
+    {
+        Match valueMatch = Regex.Match(
+            prefabInstanceBlock,
+            $@"propertyPath: m_LocalScale\.{axis}\n      value: ([^\n]+)");
+        float effective = valueMatch.Success
+            ? float.Parse(valueMatch.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture)
+            : prefabDefault;
+        Assert.That(effective, Is.EqualTo(expected).Within(0.000001f), $"Unexpected effective {axis}-scale.");
+    }
+
+    private static void AssertHierarchyHasNoMissingOrObsoleteComponents(
+        GameObject root,
+        IReadOnlyCollection<string> obsoleteComponentTypeNames,
+        string assetPath)
+    {
+        foreach (Transform current in root.GetComponentsInChildren<Transform>(true))
+        {
+            Assert.That(
+                GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(current.gameObject),
+                Is.Zero,
+                $"{assetPath}::{current.name} contains a missing MonoBehaviour script slot.");
+
+            foreach (Component component in current.GetComponents<Component>())
+            {
+                Assert.That(component, Is.Not.Null,
+                    $"{assetPath}::{current.name} contains a missing component slot.");
+                Assert.That(
+                    obsoleteComponentTypeNames.Contains(component.GetType().Name),
+                    Is.False,
+                    $"{assetPath}::{current.name} retains obsolete component {component.GetType().Name}.");
+            }
+        }
     }
 
     private static string ExtractMethodBody(string source, string methodName)
@@ -860,6 +1305,7 @@ public sealed class CharacterScaleOwnershipRegressionTests
     private sealed class DrawingRoomPlacementSnapshot
     {
         public SerializedRecord[] assignments;
+        public string[] standingCharacterIds;
     }
 
     [Serializable]

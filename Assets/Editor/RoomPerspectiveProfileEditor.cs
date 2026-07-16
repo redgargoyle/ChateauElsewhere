@@ -5,8 +5,6 @@ using UnityEngine;
 [CustomEditor(typeof(RoomPerspectiveProfile))]
 public sealed class RoomPerspectiveProfileEditor : Editor
 {
-    private float uniformScaleMultiplier = 1f;
-
     public override void OnInspectorGUI()
     {
         RoomPerspectiveProfile profile = (RoomPerspectiveProfile)target;
@@ -24,33 +22,24 @@ public sealed class RoomPerspectiveProfileEditor : Editor
         }
 
         EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Character Y Scale", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Depth Range", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
-            "These controls affect characters that use this room profile. Front/Near is depth 0; Back/Far is depth 1.",
+            "Front/Near is depth 0 and Back/Far is depth 1 for tint, sorting, and contact-shadow presentation.",
             MessageType.Info);
 
         float currentNearY = profile.NearFootY;
         float currentFarY = profile.FarFootY;
-        float currentNearScale = profile.NearScale;
-        float currentFarScale = profile.FarScale;
 
         EditorGUI.BeginChangeCheck();
         float nearY = EditorGUILayout.FloatField("Front/Near Foot Y", currentNearY);
         float farY = EditorGUILayout.FloatField("Back/Far Foot Y", currentFarY);
-        float nearScale = Mathf.Max(0.001f, EditorGUILayout.FloatField("Front/Near Scale", currentNearScale));
-        float farScale = Mathf.Max(0.001f, EditorGUILayout.FloatField("Back/Far Scale", currentFarScale));
 
         if (EditorGUI.EndChangeCheck())
         {
-            Undo.RecordObject(profile, "Edit Room Character Y Scale");
+            Undo.RecordObject(profile, "Edit Room Depth Range");
             if (!Mathf.Approximately(currentNearY, nearY) || !Mathf.Approximately(currentFarY, farY))
             {
                 profile.SetDepthYRange(nearY, farY);
-            }
-
-            if (!Mathf.Approximately(currentNearScale, nearScale) || !Mathf.Approximately(currentFarScale, farScale))
-            {
-                profile.SetScaleEndpoints(nearScale, farScale);
             }
 
             EditorUtility.SetDirty(profile);
@@ -58,30 +47,9 @@ public sealed class RoomPerspectiveProfileEditor : Editor
         }
 
         EditorGUILayout.Space();
-        using (new EditorGUILayout.HorizontalScope())
+        if (GUILayout.Button("Refresh Scene Presentation"))
         {
-            uniformScaleMultiplier = Mathf.Max(0.001f, EditorGUILayout.FloatField("Uniform Multiplier", uniformScaleMultiplier));
-
-            if (GUILayout.Button("Apply Multiplier"))
-            {
-                Undo.RecordObject(profile, "Scale Room Character Projection");
-                profile.ApplyScaleMultiplier(uniformScaleMultiplier);
-                EditorUtility.SetDirty(profile);
-                RefreshProjectedEntitiesUsing(profile);
-            }
-        }
-
-        using (new EditorGUILayout.HorizontalScope())
-        {
-            if (GUILayout.Button("Refresh Scene Characters"))
-            {
-                RefreshProjectedEntitiesUsing(profile);
-            }
-
-            if (GUILayout.Button("Reset Multiplier"))
-            {
-                uniformScaleMultiplier = 1f;
-            }
+            RefreshProjectedEntitiesUsing(profile);
         }
     }
 
@@ -146,7 +114,7 @@ public sealed class RoomPerspectiveProfileEditor : Editor
                 continue;
             }
 
-            Undo.RecordObject(walker.transform, "Refresh Room Perspective Scale");
+            Undo.RecordObject(walker.transform, "Refresh Room Perspective Presentation");
             walker.RefreshDepthVisualsNow();
             EditorUtility.SetDirty(walker);
             EditorUtility.SetDirty(walker.transform);

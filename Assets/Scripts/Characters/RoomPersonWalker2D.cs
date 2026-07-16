@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 #if UNITY_EDITOR
@@ -38,7 +37,6 @@ public sealed class RoomPersonWalker2D : MonoBehaviour
 	[SerializeField] private bool pingPongPath;
 	[Header("Painted-Room Tint")]
 	[SerializeField] private RoomPerspectiveProfile roomProfile;
-	[FormerlySerializedAs("useRoomPerspectiveProfileScale")]
 	[SerializeField] private bool useRoomPerspectiveProfileTint = true;
 	[SerializeField] private float nearY = -360f;
 	[SerializeField] private float farY = 150f;

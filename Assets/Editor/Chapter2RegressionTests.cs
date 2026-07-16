@@ -1189,7 +1189,7 @@ public class Chapter2RegressionTests
     }
 
     [Test]
-    public void Chapter2GuestPanicBeginStopRestoresActorState()
+    public void RepeatedChapter2GuestPanicBeginStopRestoresActorStateWithoutScaleDrift()
     {
         GameObject root = new GameObject("Chapter2PanicTestRoot");
         GameObject actor = new GameObject("Guest1");
@@ -1241,35 +1241,40 @@ public class Chapter2RegressionTests
             Vector2 originalBodyVelocity = body.linearVelocity;
             Vector2 originalBodyPosition = body.position;
 
-            panic.BeginPanic();
+            for (int cycle = 0; cycle < 3; cycle++)
+            {
+                panic.BeginPanic();
 
-            Assert.That(panic.IsRunning, Is.True, "BeginPanic should start playback when approved Resources frames exist.");
-            Assert.That(actorState.IsInteractable, Is.False, "Panic should make guests non-interactable.");
-            Assert.That(actorState.IsSeated, Is.False, "Panic should stand guests up temporarily.");
-            Assert.That(animator.enabled, Is.False, "Panic should disable authored animators while sprite clips play.");
-            Assert.That(waypointMover.enabled, Is.False, "Panic should disable guest movement drivers that can overwrite panic offsets.");
-            Assert.That(actor.transform.position, Is.Not.EqualTo(originalPosition), "Panic should translate the guest left/right while the run animation sequence is active.");
-            Assert.That(actor.transform.localScale, Is.EqualTo(originalLocalScale), "Panic may replace sprites and move actors, but must not resize the actor root.");
-            Assert.That(body.bodyType, Is.EqualTo(RigidbodyType2D.Kinematic), "Panic should take Rigidbody2D authority away from normal physics.");
-            Assert.That(body.gravityScale, Is.Zero, "Panic should prevent Rigidbody2D gravity from fighting panic movement.");
-            Assert.That(body.position, Is.Not.EqualTo(originalBodyPosition), "Panic should move Rigidbody2D-backed guest actors, not just their sprite.");
+                Assert.That(panic.IsRunning, Is.True, "BeginPanic should start playback when approved Resources frames exist.");
+                Assert.That(actorState.IsInteractable, Is.False, "Panic should make guests non-interactable.");
+                Assert.That(actorState.IsSeated, Is.False, "Panic should stand guests up temporarily.");
+                Assert.That(animator.enabled, Is.False, "Panic should disable authored animators while sprite clips play.");
+                Assert.That(waypointMover.enabled, Is.False, "Panic should disable guest movement drivers that can overwrite panic offsets.");
+                Assert.That(actor.transform.position, Is.Not.EqualTo(originalPosition), "Panic should translate the guest left/right while the run animation sequence is active.");
+                Assert.That(actor.transform.localScale, Is.EqualTo(originalLocalScale),
+                    $"Panic cycle {cycle} may replace sprites and move actors, but must not resize the actor root.");
+                Assert.That(body.bodyType, Is.EqualTo(RigidbodyType2D.Kinematic), "Panic should take Rigidbody2D authority away from normal physics.");
+                Assert.That(body.gravityScale, Is.Zero, "Panic should prevent Rigidbody2D gravity from fighting panic movement.");
+                Assert.That(body.position, Is.Not.EqualTo(originalBodyPosition), "Panic should move Rigidbody2D-backed guest actors, not just their sprite.");
 
-            panic.StopPanic();
+                panic.StopPanic();
 
-            Assert.That(panic.IsRunning, Is.False);
-            Assert.That(renderer.sprite, Is.EqualTo(originalSprite));
-            Assert.That(animator.enabled, Is.True);
-            Assert.That(waypointMover.enabled, Is.True);
-            Assert.That(actorState.CurrentRoomId, Is.EqualTo("Drawing Room"));
-            Assert.That(actorState.IsVisibleByChapterState, Is.True);
-            Assert.That(actorState.IsInteractable, Is.True);
-            Assert.That(actorState.IsSeated, Is.True);
-            Assert.That(actor.transform.position, Is.EqualTo(originalPosition));
-            Assert.That(actor.transform.localScale, Is.EqualTo(originalLocalScale));
-            Assert.That(body.bodyType, Is.EqualTo(originalBodyType));
-            Assert.That(body.gravityScale, Is.EqualTo(originalGravityScale));
-            Assert.That(body.linearVelocity, Is.EqualTo(originalBodyVelocity));
-            Assert.That(body.position, Is.EqualTo(originalBodyPosition));
+                Assert.That(panic.IsRunning, Is.False);
+                Assert.That(renderer.sprite, Is.EqualTo(originalSprite));
+                Assert.That(animator.enabled, Is.True);
+                Assert.That(waypointMover.enabled, Is.True);
+                Assert.That(actorState.CurrentRoomId, Is.EqualTo("Drawing Room"));
+                Assert.That(actorState.IsVisibleByChapterState, Is.True);
+                Assert.That(actorState.IsInteractable, Is.True);
+                Assert.That(actorState.IsSeated, Is.True);
+                Assert.That(actor.transform.position, Is.EqualTo(originalPosition));
+                Assert.That(actor.transform.localScale, Is.EqualTo(originalLocalScale),
+                    $"Panic cycle {cycle} must restore the exact authored scale without cumulative drift.");
+                Assert.That(body.bodyType, Is.EqualTo(originalBodyType));
+                Assert.That(body.gravityScale, Is.EqualTo(originalGravityScale));
+                Assert.That(body.linearVelocity, Is.EqualTo(originalBodyVelocity));
+                Assert.That(body.position, Is.EqualTo(originalBodyPosition));
+            }
         }
         finally
         {

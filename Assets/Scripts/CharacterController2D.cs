@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -20,6 +21,7 @@ public class CharacterController2D : MonoBehaviour
 	private Rigidbody2D m_Rigidbody2D;
 	private Collider2D m_Collider2D;
 	private SpriteRenderer[] m_FacingRenderers;
+	private readonly Dictionary<SpriteRenderer, bool> m_RightFacingFlipByRenderer = new Dictionary<SpriteRenderer, bool>();
 	private bool m_FacingRight = true;  // For determining which way the player is currently facing.
 	private Vector3 m_Velocity = Vector3.zero;
 	private float m_IgnoreGroundCheckTimer;
@@ -35,6 +37,8 @@ public class CharacterController2D : MonoBehaviour
 	private bool m_wasCrouching = false;
 
 	public bool IsGrounded => m_Grounded;
+	public bool IsFacingRight => m_FacingRight;
+	public event System.Action<bool> FacingChanged;
 
 	private void Awake()
 	{
@@ -57,6 +61,26 @@ public class CharacterController2D : MonoBehaviour
 		CacheFacingRenderers();
 		if (m_FacingRenderers.Length > 0 && m_FacingRenderers[0] != null)
 			m_FacingRight = !m_FacingRenderers[0].flipX;
+
+		for (int i = 0; i < m_FacingRenderers.Length; i++)
+		{
+			SpriteRenderer renderer = m_FacingRenderers[i];
+			if (renderer != null)
+				m_RightFacingFlipByRenderer[renderer] = m_FacingRight ? renderer.flipX : !renderer.flipX;
+		}
+
+		ApplyFacingToRenderers();
+	}
+
+	private void OnTransformChildrenChanged()
+	{
+		RefreshFacingPresentationNow();
+	}
+
+	public void RefreshFacingPresentationNow()
+	{
+		CacheFacingRenderers();
+		ApplyFacingToRenderers();
 	}
 
 	private void FixedUpdate()
@@ -217,19 +241,37 @@ public class CharacterController2D : MonoBehaviour
 	{
 		// Switch the way the player is labelled as facing.
 		m_FacingRight = !m_FacingRight;
+		RefreshFacingPresentationNow();
+		FacingChanged?.Invoke(m_FacingRight);
+	}
 
-		if (m_FacingRenderers == null || m_FacingRenderers.Length == 0)
-			CacheFacingRenderers();
-
+	private void ApplyFacingToRenderers()
+	{
 		for (int i = 0; i < m_FacingRenderers.Length; i++)
 		{
-			if (m_FacingRenderers[i] != null)
-				m_FacingRenderers[i].flipX = !m_FacingRenderers[i].flipX;
+			SpriteRenderer renderer = m_FacingRenderers[i];
+			if (renderer == null)
+				continue;
+
+			if (!m_RightFacingFlipByRenderer.TryGetValue(renderer, out bool rightFacingFlip))
+			{
+				rightFacingFlip = renderer.flipX;
+				m_RightFacingFlipByRenderer[renderer] = rightFacingFlip;
+			}
+
+			renderer.flipX = m_FacingRight ? rightFacingFlip : !rightFacingFlip;
 		}
 	}
 
 	private void CacheFacingRenderers()
 	{
 		m_FacingRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+
+		for (int i = 0; i < m_FacingRenderers.Length; i++)
+		{
+			SpriteRenderer renderer = m_FacingRenderers[i];
+			if (renderer != null && !m_RightFacingFlipByRenderer.ContainsKey(renderer))
+				m_RightFacingFlipByRenderer.Add(renderer, renderer.flipX);
+		}
 	}
 }

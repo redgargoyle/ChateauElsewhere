@@ -1420,30 +1420,19 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier:
   roomProfile: {fileID: 11400000, guid: 426f8e326a60b3a0eaeb540d7d670267, type: 2}
-  visualProfile: {fileID: 0}
   projectionMode: 4
   roomLocalFootPoint: {x: -77.23, y: -208.14}
-  visualRoot: {fileID: 0}
+  visualRoot: {fileID: 3639458741953199328}
   applyPosition: 0
-  applyScale: 0
   applyTint: 0
   applySorting: 1
   includeInactiveRenderers: 1
   requireActorRoomMatch: 0
-  normalizeLogicalRootScale: 0
-  logicalRootScale: {x: 1, y: 1, z: 1}
   sortingOffset: 0
   cameraManager: {fileID: 0}
   contactShadowRoot: {fileID: 0}
   contactShadowRenderer: {fileID: 0}
   contactShadowGraphic: {fileID: 0}
-  useRoomVisualScaleOverrides: 0
-  editorSelectedVisualScaleRoomId:
-  roomVisualScaleOverrides: []
-  authoredVisualRootScale: {x: 1, y: 1, z: 1}
-  hasAuthoredVisualRootScale: 0
-  lastAppliedVisualRootScale: {x: 1, y: 1, z: 1}
-  hasLastAppliedVisualRootScale: 0
 --- !u!1 &1296646626005577092
 GameObject:
   m_ObjectHideFlags: 0
@@ -1549,30 +1538,19 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier:
   roomProfile: {fileID: 11400000, guid: 426f8e326a60b3a0eaeb540d7d670267, type: 2}
-  visualProfile: {fileID: 0}
   projectionMode: 4
   roomLocalFootPoint: {x: 59, y: -208.5}
-  visualRoot: {fileID: 0}
+  visualRoot: {fileID: 6483441564707510065}
   applyPosition: 0
-  applyScale: 0
   applyTint: 0
   applySorting: 1
   includeInactiveRenderers: 1
   requireActorRoomMatch: 0
-  normalizeLogicalRootScale: 0
-  logicalRootScale: {x: 1, y: 1, z: 1}
   sortingOffset: -5776
   cameraManager: {fileID: 0}
   contactShadowRoot: {fileID: 0}
   contactShadowRenderer: {fileID: 0}
   contactShadowGraphic: {fileID: 0}
-  useRoomVisualScaleOverrides: 0
-  editorSelectedVisualScaleRoomId:
-  roomVisualScaleOverrides: []
-  authoredVisualRootScale: {x: 1, y: 1, z: 1}
-  hasAuthoredVisualRootScale: 0
-  lastAppliedVisualRootScale: {x: 1, y: 1, z: 1}
-  hasLastAppliedVisualRootScale: 0
 --- !u!1 &4809435130468487516
 GameObject:
   m_ObjectHideFlags: 0
@@ -1918,30 +1896,19 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier:
   roomProfile: {fileID: 11400000, guid: 426f8e326a60b3a0eaeb540d7d670267, type: 2}
-  visualProfile: {fileID: 0}
   projectionMode: 4
   roomLocalFootPoint: {x: -490.46, y: -282.58}
-  visualRoot: {fileID: 0}
+  visualRoot: {fileID: 6868143003304670455}
   applyPosition: 0
-  applyScale: 0
   applyTint: 0
   applySorting: 1
   includeInactiveRenderers: 1
   requireActorRoomMatch: 0
-  normalizeLogicalRootScale: 0
-  logicalRootScale: {x: 1, y: 1, z: 1}
   sortingOffset: 0
   cameraManager: {fileID: 0}
   contactShadowRoot: {fileID: 0}
   contactShadowRenderer: {fileID: 0}
   contactShadowGraphic: {fileID: 0}
-  useRoomVisualScaleOverrides: 0
-  editorSelectedVisualScaleRoomId:
-  roomVisualScaleOverrides: []
-  authoredVisualRootScale: {x: 1, y: 1, z: 1}
-  hasAuthoredVisualRootScale: 0
-  lastAppliedVisualRootScale: {x: 1, y: 1, z: 1}
-  hasLastAppliedVisualRootScale: 0
 --- !u!1 &5079070975608087535
 GameObject:
   m_ObjectHideFlags: 0
@@ -2306,30 +2273,19 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier:
   roomProfile: {fileID: 11400000, guid: 426f8e326a60b3a0eaeb540d7d670267, type: 2}
-  visualProfile: {fileID: 0}
   projectionMode: 4
   roomLocalFootPoint: {x: 243.62, y: -315.58}
-  visualRoot: {fileID: 0}
+  visualRoot: {fileID: 941830645189917262}
   applyPosition: 0
-  applyScale: 0
   applyTint: 0
   applySorting: 1
   includeInactiveRenderers: 1
   requireActorRoomMatch: 0
-  normalizeLogicalRootScale: 0
-  logicalRootScale: {x: 1, y: 1, z: 1}
   sortingOffset: 0
   cameraManager: {fileID: 0}
   contactShadowRoot: {fileID: 0}
   contactShadowRenderer: {fileID: 0}
   contactShadowGraphic: {fileID: 0}
-  useRoomVisualScaleOverrides: 0
-  editorSelectedVisualScaleRoomId:
-  roomVisualScaleOverrides: []
-  authoredVisualRootScale: {x: 1, y: 1, z: 1}
-  hasAuthoredVisualRootScale: 0
-  lastAppliedVisualRootScale: {x: 1, y: 1, z: 1}
-  hasLastAppliedVisualRootScale: 0
 --- !u!1 &6617981745460704418
 GameObject:
   m_ObjectHideFlags: 0

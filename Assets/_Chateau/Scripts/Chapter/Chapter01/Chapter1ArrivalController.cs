@@ -136,6 +136,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     private bool hasPendingClosetApproachDestination;
     private Vector2 pendingClosetApproachDestination;
     private GameObject carriedCoatVisual;
+    private CharacterController2D carriedCoatFacingController;
     private Sprite runtimeCoatSprite;
     private bool subscribedToRoomChanges;
     private bool hasFrontDoorAnswerSpot;
@@ -213,6 +214,11 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void OnEnable()
     {
+        if (carriedCoatVisual != null)
+        {
+            BindCarriedCoatFacing(carriedCoatVisual.GetComponentInParent<CharacterController2D>());
+        }
+
         if (sequenceActive && !chapterCompletionRequested)
         {
             SubscribeToRoomChanges();
@@ -221,6 +227,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private void OnDisable()
     {
+        UnbindCarriedCoatFacing();
         CancelPendingCoatPickup();
         CancelPendingClosetStorage();
         StopAllGuestFootsteps();
@@ -275,6 +282,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         carriedCoatId = string.Empty;
         carriedCoatGuest = null;
         currentGuestIndex = -1;
+        UnbindCarriedCoatFacing();
 
         if (carriedCoatVisual != null)
         {
@@ -627,8 +635,46 @@ public class Chapter1ArrivalController : MonoBehaviour
         coatObject.transform.localRotation = Quaternion.identity;
         BringCoatRenderersAboveButler(coatObject, butlerTransform);
         carriedCoatVisual = coatObject;
+        BindCarriedCoatFacing(butlerTransform.GetComponent<CharacterController2D>());
 
         Debug.Log($"[Chapter1] Coat transferred to butler from guest {guestState.Config.GuestId}.", this);
+    }
+
+    private void BindCarriedCoatFacing(CharacterController2D controller)
+    {
+        UnbindCarriedCoatFacing();
+        carriedCoatFacingController = controller;
+
+        if (carriedCoatFacingController != null)
+        {
+            carriedCoatFacingController.FacingChanged += ApplyCarriedCoatFacing;
+            ApplyCarriedCoatFacing(carriedCoatFacingController.IsFacingRight);
+            carriedCoatFacingController.RefreshFacingPresentationNow();
+            return;
+        }
+
+        ApplyCarriedCoatFacing(true);
+    }
+
+    private void UnbindCarriedCoatFacing()
+    {
+        if (carriedCoatFacingController != null)
+        {
+            carriedCoatFacingController.FacingChanged -= ApplyCarriedCoatFacing;
+            carriedCoatFacingController = null;
+        }
+    }
+
+    private void ApplyCarriedCoatFacing(bool facingRight)
+    {
+        if (carriedCoatVisual == null)
+        {
+            return;
+        }
+
+        Vector3 offset = GetCoatOffsetWithSpritePivot(carriedCoatVisual, ButlerCarriedCoatOffset);
+        offset.x = Mathf.Abs(offset.x) * (facingRight ? 1f : -1f);
+        carriedCoatVisual.transform.localPosition = offset;
     }
 
     private static void BringCoatRenderersAboveButler(GameObject coatObject, Transform butlerTransform)
@@ -1062,6 +1108,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (carriedCoatVisual != null)
         {
+            UnbindCarriedCoatFacing();
             carriedCoatVisual.SetActive(false);
             carriedCoatVisual = null;
         }
@@ -1225,6 +1272,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         butlerCarryingCoat = false;
         carriedCoatId = string.Empty;
         carriedCoatGuest = null;
+        UnbindCarriedCoatFacing();
 
         if (carriedCoatVisual != null)
         {

@@ -364,16 +364,14 @@ public class StoryActorRoomStageLockingTests
     }
 
     [Test]
-    public void WorldActorBindingIgnoresRoomPerspectiveBodyScale()
+    public void WorldActorBindingPreservesAuthoredScaleWithRoomPerspectiveProfile()
     {
         TestRig rig = CreateRig();
         RoomPerspectiveProfile profile = ScriptableObject.CreateInstance<RoomPerspectiveProfile>();
         profile.Configure(
             rig.RoomContent.RoomName,
-            new Vector2(400f, 200f),
             -100f,
             100f,
-            AnimationCurve.Linear(0f, 1.25f, 1f, 0.75f),
             null,
             1000,
             8000,

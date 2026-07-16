@@ -5,10 +5,8 @@ using UnityEngine;
 public sealed class RoomPerspectiveProfile : ScriptableObject
 {
     [SerializeField] private string roomId = "Drawing Room";
-    [SerializeField] private Vector2 nativeRoomReferenceSize = new Vector2(1366f, 768f);
     [SerializeField] private float nearFootY = -360f;
     [SerializeField] private float farFootY = 120f;
-    [SerializeField] private AnimationCurve scaleByDepth = AnimationCurve.EaseInOut(0f, 1f, 1f, 0.52f);
     [SerializeField] private Gradient tintByDepth = CreateDefaultTintGradient();
     [SerializeField] private string sortingLayerName = "People";
     [SerializeField] private int sortingOrderBase = 1000;
@@ -19,11 +17,8 @@ public sealed class RoomPerspectiveProfile : ScriptableObject
     [SerializeField] private Vector2[] floorPolygon = Array.Empty<Vector2>();
 
     public string RoomId => roomId;
-    public Vector2 NativeRoomReferenceSize => nativeRoomReferenceSize;
     public float NearFootY => nearFootY;
     public float FarFootY => farFootY;
-    public float NearScale => GetScaleAtDepth(0f);
-    public float FarScale => GetScaleAtDepth(1f);
     public string SortingLayerName => GetSafeSortingLayerName();
     public int SortingOrderBase => sortingOrderBase;
     public int SortingOrderRange => sortingOrderRange;
@@ -36,20 +31,16 @@ public sealed class RoomPerspectiveProfile : ScriptableObject
 
     public void Configure(
         string profileRoomId,
-        Vector2 referenceSize,
         float nearY,
         float farY,
-        AnimationCurve scaleCurve,
         Gradient tintGradient,
         int orderBase,
         int orderRange,
         AnimationCurve orderCurve)
     {
         roomId = string.IsNullOrWhiteSpace(profileRoomId) ? "Room" : profileRoomId.Trim();
-        nativeRoomReferenceSize = referenceSize;
         nearFootY = nearY;
         farFootY = farY;
-        scaleByDepth = scaleCurve ?? AnimationCurve.EaseInOut(0f, 1f, 1f, 0.52f);
         tintByDepth = tintGradient ?? CreateDefaultTintGradient();
         sortingOrderBase = orderBase;
         sortingOrderRange = orderRange;
@@ -60,10 +51,8 @@ public sealed class RoomPerspectiveProfile : ScriptableObject
     public void ConfigureDrawingRoomDefaults()
     {
         roomId = "Drawing Room";
-        nativeRoomReferenceSize = new Vector2(1366f, 768f);
         nearFootY = -360f;
         farFootY = 140f;
-        scaleByDepth = AnimationCurve.EaseInOut(0f, 1f, 1f, 0.54f);
         tintByDepth = CreateDefaultTintGradient();
         sortingLayerName = "People";
         sortingOrderBase = 1000;
@@ -85,34 +74,11 @@ public sealed class RoomPerspectiveProfile : ScriptableObject
         return Mathf.Clamp01(Mathf.InverseLerp(nearFootY, farFootY, roomLocalFootPoint.y));
     }
 
-    public float GetScale(Vector2 roomLocalFootPoint)
-    {
-        return GetScaleAtDepth(GetDepth01(roomLocalFootPoint));
-    }
-
-    public float GetScaleAtDepth(float depth01)
-    {
-        EnsureCurves();
-        return Mathf.Max(0.001f, scaleByDepth.Evaluate(Mathf.Clamp01(depth01)));
-    }
-
     public void SetDepthYRange(float nearY, float farY)
     {
         nearFootY = nearY;
         farFootY = farY;
         Sanitize();
-    }
-
-    public void SetScaleEndpoints(float nearScale, float farScale)
-    {
-        scaleByDepth = CreateDepthScaleCurve(nearScale, farScale);
-        Sanitize();
-    }
-
-    public void ApplyScaleMultiplier(float multiplier)
-    {
-        multiplier = Mathf.Max(0.001f, multiplier);
-        SetScaleEndpoints(NearScale * multiplier, FarScale * multiplier);
     }
 
     public Color GetTint(Vector2 roomLocalFootPoint)
@@ -186,20 +152,12 @@ public sealed class RoomPerspectiveProfile : ScriptableObject
             roomId = "Room";
         }
 
-        nativeRoomReferenceSize = new Vector2(
-            Mathf.Max(1f, nativeRoomReferenceSize.x),
-            Mathf.Max(1f, nativeRoomReferenceSize.y));
         sortingOrderRange = Mathf.Max(0, sortingOrderRange);
         EnsureCurves();
     }
 
     private void EnsureCurves()
     {
-        if (scaleByDepth == null || scaleByDepth.length == 0)
-        {
-            scaleByDepth = AnimationCurve.EaseInOut(0f, 1f, 1f, 0.52f);
-        }
-
         if (sortingOrderByDepth == null || sortingOrderByDepth.length == 0)
         {
             sortingOrderByDepth = AnimationCurve.Linear(0f, 1f, 1f, 0f);
@@ -251,12 +209,4 @@ public sealed class RoomPerspectiveProfile : ScriptableObject
         return gradient;
     }
 
-    private static AnimationCurve CreateDepthScaleCurve(float nearScale, float farScale)
-    {
-        return AnimationCurve.EaseInOut(
-            0f,
-            Mathf.Max(0.001f, nearScale),
-            1f,
-            Mathf.Max(0.001f, farScale));
-    }
 }

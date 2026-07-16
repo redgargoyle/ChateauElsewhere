@@ -82,7 +82,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 4180722781
+  m_SortingLayerID: -114244515
   m_SortingLayer: 2
   m_SortingOrder: 1000
   m_MaskInteraction: 0
@@ -203,6 +203,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PointClickPlayerMovement
   walkableFloorName: PlayerBoundary_Entrance
   walkableFloor: {fileID: 0}
+  useCurrentRoomBoundary: 1
+  roomBoundaryNamePrefix: PlayerBoundary
+  roomBoundaryBlockerNamePrefix: PlayerBlocker
   moveSpeed: 3.2
   stopDistance: 0.04
   horizontalDirectionThreshold: 0.58
@@ -211,10 +214,7 @@ MonoBehaviour:
   playerSortingOrderBase: 1000
   playerSortingOrderPerYUnit: 100
   verticalMovementSpeedMultiplier: 0.7
-  nearY: -4.25
-  farY: -2.25
-  nearScale: 1
-  farScale: 0.58
+  applyPlayerSorting: 1
   runningAnimationSpeed: 40
   disablePlatformMovement: 1
   sortPlayerByVisibleFeet: 1

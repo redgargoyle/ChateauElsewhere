@@ -27,12 +27,12 @@ public sealed class RoomProjectionCalibrationWindow : EditorWindow
         if (profile == null)
         {
             profile = CreateInstance<RoomPerspectiveProfile>();
+            profile.ConfigureDrawingRoomDefaults();
             AssetDatabase.CreateAsset(profile, DrawingRoomProfilePath);
+            EditorUtility.SetDirty(profile);
+            AssetDatabase.SaveAssets();
         }
 
-        profile.ConfigureDrawingRoomDefaults();
-        EditorUtility.SetDirty(profile);
-        AssetDatabase.SaveAssets();
         Selection.activeObject = profile;
         return profile;
     }
@@ -126,17 +126,15 @@ public sealed class RoomProjectionCalibrationWindow : EditorWindow
 
         if (previewProfile == null)
         {
-            EditorGUILayout.HelpBox("Assign or create a room perspective profile to preview depth, tint, sorting, and prop projection.", MessageType.Info);
+            EditorGUILayout.HelpBox("Assign or create a room perspective profile to preview depth, tint, and sorting.", MessageType.Info);
             return;
         }
 
         float depth = previewProfile.GetDepth01(previewFootPoint);
-        float scale = previewProfile.GetScale(previewFootPoint);
         Color tint = previewProfile.GetTint(previewFootPoint);
         int sortingOrder = previewProfile.GetSortingOrder(previewFootPoint);
 
         EditorGUILayout.LabelField("Depth 0-1", depth.ToString("0.000"));
-        EditorGUILayout.LabelField("Prop Projection Scale", scale.ToString("0.000"));
         EditorGUILayout.ColorField("Tint", tint);
         EditorGUILayout.LabelField("Sorting Order", sortingOrder.ToString());
     }
@@ -160,11 +158,6 @@ public sealed class RoomProjectionCalibrationWindow : EditorWindow
 
         if (selectedEntity.HasUsableProfile)
         {
-            if (selectedEntity.Mode != RoomProjectedEntity.ProjectionMode.FloorCharacter)
-            {
-                EditorGUILayout.LabelField("Current Prop Projection Scale", selectedEntity.CurrentPropProjectionScale.ToString("0.000"));
-            }
-
             EditorGUILayout.LabelField("Current Sorting", selectedEntity.CurrentSortingOrder.ToString());
         }
 
@@ -196,24 +189,20 @@ public sealed class RoomProjectionCalibrationWindow : EditorWindow
     private static void ConfigureRoomProfileDefaults(RoomPerspectiveProfile profile, RoomContentGroup room)
     {
         RectTransform roomStage = room != null ? room.transform as RectTransform : null;
-        Vector2 referenceSize = new Vector2(1366f, 768f);
         float nearY = -360f;
         float farY = 140f;
 
         if (roomStage != null)
         {
             Rect rect = roomStage.rect;
-            referenceSize = new Vector2(Mathf.Max(1f, rect.width), Mathf.Max(1f, rect.height));
             nearY = rect.yMin;
             farY = rect.yMax;
         }
 
         profile.Configure(
             room != null ? room.RoomName : "Room",
-            referenceSize,
             nearY,
             farY,
-            AnimationCurve.EaseInOut(0f, 1f, 1f, 0.54f),
             null,
             1000,
             8000,

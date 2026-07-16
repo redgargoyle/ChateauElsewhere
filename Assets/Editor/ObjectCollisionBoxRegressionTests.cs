@@ -172,7 +172,6 @@ public class ObjectCollisionBoxRegressionTests
             SerializedObject serializedProjection = new SerializedObject(projection);
             serializedProjection.FindProperty("roomProfile").objectReferenceValue = projectionProfile;
             serializedProjection.FindProperty("applyPosition").boolValue = false;
-            serializedProjection.FindProperty("applyScale").boolValue = false;
             serializedProjection.FindProperty("applyTint").boolValue = false;
             serializedProjection.FindProperty("applySorting").boolValue = true;
             serializedProjection.FindProperty("requireActorRoomMatch").boolValue = false;

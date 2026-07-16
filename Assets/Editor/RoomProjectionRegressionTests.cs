@@ -12,6 +12,7 @@ public class RoomProjectionRegressionTests
 {
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
     private const string ActorRoomStatePath = "Assets/Scripts/Story/ActorRoomState.cs";
+    private const string RoomPerspectiveProfilePath = "Assets/Scripts/Characters/RoomPerspectiveProfile.cs";
     private const string RoomProjectedEntityPath = "Assets/Scripts/Characters/RoomProjectedEntity.cs";
     private const string RoomPersonWalkerPath = "Assets/Scripts/Characters/RoomPersonWalker2D.cs";
     private const string WorldYSortPath = "Assets/Scripts/Characters/WorldYSortSpriteRenderer.cs";
@@ -23,7 +24,7 @@ public class RoomProjectionRegressionTests
     private const string CharacterVisualProfilePath = "Assets/Scripts/Characters/CharacterVisualProfile.cs";
 
     [Test]
-    public void RoomPerspectiveProfileRetainsDepthTintSortingAndPropScaleData()
+    public void RoomPerspectiveProfileRetainsDepthTintSortingAndShadowData()
     {
         RoomPerspectiveProfile profile = CreatePerspectiveProfile();
 
@@ -33,7 +34,6 @@ public class RoomProjectionRegressionTests
             Vector2 farPoint = new Vector2(0f, 120f);
 
             Assert.That(profile.GetDepth01(nearPoint), Is.LessThan(profile.GetDepth01(farPoint)));
-            Assert.That(profile.GetScale(nearPoint), Is.GreaterThan(profile.GetScale(farPoint)));
             Assert.That(profile.GetSortingOrder(nearPoint), Is.GreaterThan(profile.GetSortingOrder(farPoint)));
             Assert.That(profile.GetTint(nearPoint), Is.Not.EqualTo(profile.GetTint(farPoint)));
             Assert.That(profile.GetShadowScale(nearPoint), Is.GreaterThan(0f));
@@ -49,7 +49,9 @@ public class RoomProjectionRegressionTests
     {
         string editorText = File.ReadAllText(RoomPerspectiveProfileEditorPath);
         string calibrationText = File.ReadAllText(RoomProjectionCalibrationWindowPath);
+        string createDrawingProfileBody = ExtractMethodBody(calibrationText, "CreateDrawingRoomPerspectiveProfile");
 
+        Assert.That(editorText, Does.Contain("DrawDefaultInspector"));
         Assert.That(editorText, Does.Contain("RefreshProjectedEntitiesUsing"));
         Assert.That(editorText, Does.Contain("RefreshRoomPersonWalkersUsing"));
         Assert.That(editorText, Does.Not.Contain("PointClickPlayerMovement"));
@@ -57,7 +59,19 @@ public class RoomProjectionRegressionTests
         Assert.That(calibrationText, Does.Contain("Create Perspective Profiles For Scene Rooms"));
         Assert.That(calibrationText, Does.Contain("Create/Assign Profiles For Scene Rooms"));
         Assert.That(calibrationText, Does.Contain("room.SetPerspectiveProfile(profile)"));
-        Assert.That(calibrationText, Does.Contain("Prop Projection Scale"));
+        Assert.That(calibrationText, Does.Not.Contain("Prop Projection Scale"));
+        Assert.That(editorText, Does.Not.Contain("Character Y Scale"));
+        Assert.That(editorText, Does.Not.Contain("SetScaleEndpoints"));
+        Assert.That(editorText, Does.Not.Contain("ApplyScaleMultiplier"));
+        Assert.That(editorText, Does.Not.Contain("Front/Near Scale"));
+        Assert.That(editorText, Does.Not.Contain("Back/Far Scale"));
+        Assert.That(editorText, Does.Not.Contain("Uniform Multiplier"));
+        Assert.That(editorText, Does.Not.Contain("Apply Multiplier"));
+        Assert.That(calibrationText, Does.Not.Contain("GetScale("));
+        Assert.That(calibrationText, Does.Not.Contain("Current Prop Projection Scale"));
+        Assert.That(calibrationText, Does.Not.Contain("CurrentPropProjectionScale"));
+        Assert.That(createDrawingProfileBody, Does.Match(@"if \(profile == null\)[\s\S]*profile\.ConfigureDrawingRoomDefaults\(\)"));
+        Assert.That(Regex.Matches(createDrawingProfileBody, "ConfigureDrawingRoomDefaults").Count, Is.EqualTo(1));
         Assert.That(calibrationText, Does.Not.Contain("Standard Adult"));
         Assert.That(calibrationText, Does.Not.Contain("Projected Adult Height"));
     }
@@ -113,7 +127,7 @@ public class RoomProjectionRegressionTests
     }
 
     [Test]
-    public void PropProjectionMayScaleItsVisualWithoutOpeningCharacterScalePath()
+    public void PropProjectionPreservesItsAuthoredVisualScale()
     {
         RoomPerspectiveProfile profile = CreatePerspectiveProfile();
         GameObject root = new GameObject("ProjectedProp");
@@ -131,16 +145,15 @@ public class RoomProjectionRegressionTests
         {
             entity.SetRoomLocalFootPoint(footPoint, false);
             entity.SetRoomProfile(profile);
-            float expectedScale = profile.GetScale(footPoint);
 
-            Assert.That(visual.transform.localScale.x, Is.EqualTo(baseScale.x * expectedScale).Within(0.0001f));
-            Assert.That(visual.transform.localScale.y, Is.EqualTo(baseScale.y * expectedScale).Within(0.0001f));
-            Assert.That(visual.transform.localScale.z, Is.EqualTo(baseScale.z).Within(0.0001f));
+            Assert.That(visual.transform.localScale, Is.EqualTo(baseScale));
 
             string source = File.ReadAllText(RoomProjectedEntityPath);
-            string scaleBody = ExtractMethodBody(source, "ShouldApplyPropProjectionScale");
-            Assert.That(scaleBody, Does.Contain("applyScale"));
-            Assert.That(source, Does.Contain("projectionMode == ProjectionMode.FloorProp"));
+            Assert.That(source, Does.Not.Contain("applyScale"));
+            Assert.That(source, Does.Not.Contain("CurrentPropProjectionScale"));
+            Assert.That(source, Does.Not.Contain("ApplyProjectedPropScale"));
+            Assert.That(source, Does.Not.Contain("visualRoot.localScale"));
+            Assert.That(source, Does.Not.Contain("targetRoot.localScale ="));
             Assert.That(source, Does.Not.Contain("GuestScaleParticipant"));
         }
         finally
@@ -151,8 +164,112 @@ public class RoomProjectionRegressionTests
     }
 
     [Test]
+    public void ContactShadowDepthScaleDoesNotChangeAuthoredVisualScale()
+    {
+        RoomPerspectiveProfile profile = CreatePerspectiveProfile();
+        GameObject room = new GameObject("Drawing Room");
+        room.AddComponent<RoomContentGroup>();
+        GameObject root = new GameObject("ProjectedCharacterWithShadow");
+        root.transform.SetParent(room.transform, false);
+        GameObject visual = new GameObject("Visual");
+        visual.transform.SetParent(root.transform, false);
+        visual.AddComponent<SpriteRenderer>();
+        visual.transform.localScale = new Vector3(1.4f, 0.75f, 2f);
+        GameObject shadow = new GameObject("ContactShadow");
+        shadow.transform.SetParent(root.transform, false);
+        shadow.transform.localScale = new Vector3(2.5f, 1.25f, 3f);
+        SpriteRenderer shadowRenderer = shadow.AddComponent<SpriteRenderer>();
+        RoomProjectedEntity entity = root.AddComponent<RoomProjectedEntity>();
+        entity.SetVisualRoot(visual.transform);
+
+        Vector3 authoredRootScale = new Vector3(1.15f, 1.35f, 1f);
+        root.transform.localScale = authoredRootScale;
+        Vector3 authoredVisualScale = visual.transform.localScale;
+
+        try
+        {
+            AssignContactShadow(entity, root.transform, shadowRenderer);
+            entity.SetRoomLocalFootPoint(new Vector2(0f, -160f), false);
+            entity.SetRoomProfile(profile);
+            Assert.That(root.transform.localScale, Is.EqualTo(authoredRootScale),
+                "A miswired contact-shadow target must never resize the projected entity root.");
+
+            AssignContactShadow(entity, visual.transform, shadowRenderer);
+            entity.ApplyProjection();
+            Assert.That(visual.transform.localScale, Is.EqualTo(authoredVisualScale),
+                "A miswired contact-shadow target must never resize the authored visual root.");
+
+            AssignContactShadow(entity, shadow.transform, shadowRenderer);
+            entity.SetRoomLocalFootPoint(new Vector2(0f, -160f), false);
+            entity.ApplyProjection();
+            Vector3 nearShadowScale = shadow.transform.localScale;
+
+            entity.SetRoomLocalFootPoint(new Vector2(0f, 160f));
+            Vector3 farShadowScale = shadow.transform.localScale;
+
+            Assert.That(visual.transform.localScale, Is.EqualTo(authoredVisualScale));
+            Assert.That(nearShadowScale.x, Is.GreaterThan(farShadowScale.x));
+            Assert.That(nearShadowScale.y, Is.GreaterThan(farShadowScale.y));
+            Assert.That(nearShadowScale.z, Is.EqualTo(3f));
+            Assert.That(farShadowScale.z, Is.EqualTo(3f));
+
+            GameObject mixedShadowContainer = new GameObject("MixedBodyAndShadowContainer");
+            mixedShadowContainer.transform.SetParent(root.transform, false);
+            mixedShadowContainer.transform.localScale = new Vector3(1.7f, 1.9f, 1f);
+            GameObject mixedBody = new GameObject("BodyRendererInsideShadowContainer");
+            mixedBody.transform.SetParent(mixedShadowContainer.transform, false);
+            mixedBody.AddComponent<SpriteRenderer>();
+            GameObject mixedShadow = new GameObject("AssignedShadowRenderer");
+            mixedShadow.transform.SetParent(mixedShadowContainer.transform, false);
+            SpriteRenderer mixedShadowRenderer = mixedShadow.AddComponent<SpriteRenderer>();
+            entity.SetVisualRoot(null);
+            AssignContactShadow(entity, mixedShadowContainer.transform, mixedShadowRenderer);
+            Vector3 authoredMixedContainerScale = mixedShadowContainer.transform.localScale;
+            Vector3 authoredMixedBodyWorldScale = mixedBody.transform.lossyScale;
+
+            entity.SetRoomLocalFootPoint(new Vector2(0f, -160f), false);
+            entity.ApplyProjection();
+
+            Assert.That(mixedShadowContainer.transform.localScale, Is.EqualTo(authoredMixedContainerScale),
+                "A contact-shadow container that also owns body presentation must never be scaled.");
+            Assert.That(mixedBody.transform.lossyScale, Is.EqualTo(authoredMixedBodyWorldScale),
+                "Shadow depth must not leak through a mixed container into body presentation.");
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(room);
+            UnityEngine.Object.DestroyImmediate(profile);
+        }
+    }
+
+    [Test]
+    public void ContactShadowEligibilityIsCachedOutsideThePerFrameProjectionPath()
+    {
+        string source = File.ReadAllText(RoomProjectedEntityPath);
+        string applyContactShadowBody = ExtractMethodBody(source, "ApplyContactShadow");
+        string refreshVisualTargetsBody = ExtractMethodBody(source, "RefreshVisualTargets");
+
+        Assert.That(applyContactShadowBody, Does.Contain("canScaleContactShadowRoot"));
+        Assert.That(applyContactShadowBody, Does.Not.Contain("GetComponentsInChildren"));
+        Assert.That(refreshVisualTargetsBody, Does.Contain("RefreshContactShadowScaleEligibility"));
+    }
+
+    private static void AssignContactShadow(
+        RoomProjectedEntity entity,
+        Transform shadowRoot,
+        SpriteRenderer shadowRenderer)
+    {
+        SerializedObject serializedEntity = new SerializedObject(entity);
+        serializedEntity.FindProperty("contactShadowRoot").objectReferenceValue = shadowRoot;
+        serializedEntity.FindProperty("contactShadowRenderer").objectReferenceValue = shadowRenderer;
+        serializedEntity.ApplyModifiedPropertiesWithoutUndo();
+        entity.RefreshVisualTargets();
+    }
+
+    [Test]
     public void CharacterScaleProfileAndProjectionOverrideEditorAreRemoved()
     {
+        string profileText = File.ReadAllText(RoomPerspectiveProfilePath);
         string projectionText = File.ReadAllText(RoomProjectedEntityPath);
         string calibrationText = File.ReadAllText(RoomProjectionCalibrationWindowPath);
 
@@ -161,6 +278,11 @@ public class RoomProjectionRegressionTests
         Assert.That(projectionText, Does.Not.Contain("CharacterVisualProfile"));
         Assert.That(projectionText, Does.Not.Contain("roomVisualScaleOverrides"));
         Assert.That(projectionText, Does.Not.Contain("ButlerCharacterScale"));
+        Assert.That(profileText, Does.Not.Contain("scaleByDepth"));
+        Assert.That(profileText, Does.Not.Contain("GetScale("));
+        Assert.That(profileText, Does.Not.Contain("GetScaleAtDepth"));
+        Assert.That(profileText, Does.Not.Contain("SetScaleEndpoints"));
+        Assert.That(profileText, Does.Not.Contain("ApplyScaleMultiplier"));
         Assert.That(calibrationText, Does.Not.Contain("CharacterVisualProfile"));
     }
 
@@ -245,7 +367,7 @@ public class RoomProjectionRegressionTests
         Assert.That(shouldFollowBody, Does.Contain("!HasActiveProjection()"));
         Assert.That(actorRoomStateText, Does.Contain("TryGetRoomLocalFootPoint"));
         Assert.That(actorRoomStateText, Does.Not.Contain("localScale"));
-        Assert.That(projectionText, Does.Contain("GetRoomStageScaleMultiplier"));
+        Assert.That(projectionText, Does.Not.Contain("CurrentRoomStageScaleMultiplier"));
     }
 
     [Test]
@@ -384,10 +506,8 @@ public class RoomProjectionRegressionTests
         RoomPerspectiveProfile profile = ScriptableObject.CreateInstance<RoomPerspectiveProfile>();
         profile.Configure(
             "Drawing Room",
-            new Vector2(1366f, 768f),
             -160f,
             160f,
-            AnimationCurve.Linear(0f, 1f, 1f, 0.5f),
             null,
             1000,
             8000,

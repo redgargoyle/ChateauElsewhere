@@ -21,7 +21,6 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     [SerializeField] private Vector2 roomLocalFootPoint;
     [SerializeField] private Transform visualRoot;
     [SerializeField] private bool applyPosition = true;
-    [SerializeField] private bool applyScale = true;
     [SerializeField] private bool applyTint = true;
     [SerializeField] private bool applySorting = true;
     [SerializeField] private bool includeInactiveRenderers = true;
@@ -31,8 +30,6 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     [SerializeField] private Transform contactShadowRoot;
     [SerializeField] private SpriteRenderer contactShadowRenderer;
     [SerializeField] private Graphic contactShadowGraphic;
-    [SerializeField, HideInInspector] private Vector3 propProjectionBaseScale = Vector3.one;
-    [SerializeField, HideInInspector] private bool hasPropProjectionBaseScale;
 
     private RectTransform rectTransform;
     private SpriteRenderer[] spriteRenderers = Array.Empty<SpriteRenderer>();
@@ -40,13 +37,12 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     private Color[] spriteRendererBaseColors = Array.Empty<Color>();
     private Color[] graphicBaseColors = Array.Empty<Color>();
     private ActorRoomState actorRoomState;
-    private float currentPropProjectionScale = 1f;
-    private float currentRoomStageScaleMultiplier = 1f;
     private int currentSortingOrder;
     private bool hasRoomStageScaleReference;
     private float roomStageScaleReference = 1f;
     private string roomStageScaleReferenceRoom = string.Empty;
     private bool projectedSortingSuppressed;
+    private bool canScaleContactShadowRoot;
 
     public RoomPerspectiveProfile RoomProfile => roomProfile;
     public ProjectionMode Mode => projectionMode;
@@ -56,8 +52,6 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     public bool IsProjectionActive => ShouldApplyProjection();
     public bool OwnsProjectedPosition => applyPosition && IsProjectionActive;
     public bool OwnsProjectedSorting => applySorting && !projectedSortingSuppressed && IsProjectionActive;
-    public float CurrentPropProjectionScale => currentPropProjectionScale;
-    public float CurrentRoomStageScaleMultiplier => currentRoomStageScaleMultiplier;
     public int CurrentSortingOrder => currentSortingOrder;
     public bool IsProjectedSortingSuppressed => projectedSortingSuppressed;
 
@@ -69,14 +63,12 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             ? rectTransform.anchoredPosition
             : new Vector2(transform.localPosition.x, transform.localPosition.y);
         ResolveReferences();
-        CapturePropProjectionBaseScale(true);
         RefreshVisualTargets();
     }
 
     private void Awake()
     {
         ResolveReferences();
-        CapturePropProjectionBaseScale(false);
         RefreshVisualTargets();
         ApplyProjection();
     }
@@ -84,7 +76,6 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     private void OnEnable()
     {
         ResolveReferences();
-        CapturePropProjectionBaseScale(false);
         RefreshVisualTargets();
         ApplyProjection();
     }
@@ -92,7 +83,6 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     private void OnValidate()
     {
         ResolveReferences();
-        CapturePropProjectionBaseScale(false);
         RefreshVisualTargets();
         ApplyProjection();
     }
@@ -126,8 +116,6 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     public void SetVisualRoot(Transform root)
     {
         visualRoot = root != null ? root : transform;
-        hasPropProjectionBaseScale = false;
-        CapturePropProjectionBaseScale(true);
         RefreshVisualTargets();
         ApplyProjection();
     }
@@ -252,12 +240,13 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         {
             graphicBaseColors[i] = graphics[i] != null ? graphics[i].color : Color.white;
         }
+
+        RefreshContactShadowScaleEligibility();
     }
 
     public void ApplyProjection()
     {
         ResolveReferences();
-        CapturePropProjectionBaseScale(false);
 
         if (!ShouldApplyProjection())
         {
@@ -265,18 +254,11 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             return;
         }
 
-        currentPropProjectionScale = GetPropProjectionScale();
-        currentRoomStageScaleMultiplier = GetRoomStageScaleMultiplier();
         currentSortingOrder = roomProfile.GetSortingOrder(roomLocalFootPoint, sortingOffset);
 
         if (applyPosition)
         {
             ApplyProjectedPosition();
-        }
-
-        if (ShouldApplyPropProjectionScale())
-        {
-            ApplyProjectedPropScale();
         }
 
         if (applyTint)
@@ -290,11 +272,6 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         }
 
         ApplyContactShadow();
-    }
-
-    private float GetPropProjectionScale()
-    {
-        return roomProfile != null ? roomProfile.GetScale(roomLocalFootPoint) : 1f;
     }
 
     public int GetSortingOrder(int localOffset = 0)
@@ -330,25 +307,6 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         {
             actorRoomState = GetComponentInParent<ActorRoomState>();
         }
-    }
-
-    private void CapturePropProjectionBaseScale(bool force)
-    {
-        if (!IsPropProjectionMode())
-        {
-            return;
-        }
-
-        if (!force && hasPropProjectionBaseScale)
-        {
-            return;
-        }
-
-        Transform targetRoot = VisualRoot;
-        propProjectionBaseScale = targetRoot != null
-            ? SanitizeScale(targetRoot.localScale)
-            : Vector3.one;
-        hasPropProjectionBaseScale = true;
     }
 
     private void ApplyProjectedPosition()
@@ -416,36 +374,6 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         return true;
     }
 
-    private bool ShouldApplyPropProjectionScale()
-    {
-        return applyScale && IsPropProjectionMode();
-    }
-
-    private bool IsPropProjectionMode()
-    {
-        return projectionMode == ProjectionMode.FloorProp ||
-            projectionMode == ProjectionMode.WallProp ||
-            projectionMode == ProjectionMode.FurnitureSurfaceProp ||
-            projectionMode == ProjectionMode.ForegroundOccluder;
-    }
-
-    private void ApplyProjectedPropScale()
-    {
-        Transform targetRoot = VisualRoot;
-        if (targetRoot == null)
-        {
-            return;
-        }
-
-        CapturePropProjectionBaseScale(false);
-        float appliedScale = currentPropProjectionScale * currentRoomStageScaleMultiplier;
-        Vector3 baseScale = hasPropProjectionBaseScale ? propProjectionBaseScale : Vector3.one;
-        targetRoot.localScale = new Vector3(
-            baseScale.x * appliedScale,
-            baseScale.y * appliedScale,
-            baseScale.z);
-    }
-
     private void ApplyProjectedTint()
     {
         Color tint = roomProfile.GetTint(roomLocalFootPoint);
@@ -493,12 +421,12 @@ public sealed class RoomProjectedEntity : MonoBehaviour
 
     private void ApplyContactShadow()
     {
-        if (roomProfile == null || contactShadowRoot == null)
+        if (roomProfile == null || !canScaleContactShadowRoot)
         {
             return;
         }
 
-        float shadowScale = roomProfile.GetShadowScale(roomLocalFootPoint) * currentRoomStageScaleMultiplier;
+        float shadowScale = roomProfile.GetShadowScale(roomLocalFootPoint) * GetContactShadowRoomStageScaleMultiplier();
         contactShadowRoot.localScale = new Vector3(shadowScale, shadowScale, contactShadowRoot.localScale.z);
         float opacity = roomProfile.GetShadowOpacity(roomLocalFootPoint);
 
@@ -517,6 +445,67 @@ public sealed class RoomProjectedEntity : MonoBehaviour
             color.a = opacity;
             contactShadowGraphic.color = color;
         }
+    }
+
+    private void RefreshContactShadowScaleEligibility()
+    {
+        canScaleContactShadowRoot = EvaluateContactShadowScaleEligibility();
+    }
+
+    private bool EvaluateContactShadowScaleEligibility()
+    {
+        Transform targetRoot = VisualRoot;
+
+        if (contactShadowRoot == null ||
+            contactShadowRoot == transform ||
+            contactShadowRoot == targetRoot ||
+            !contactShadowRoot.IsChildOf(transform))
+        {
+            return false;
+        }
+
+        if (targetRoot != null &&
+            targetRoot != transform &&
+            targetRoot.IsChildOf(contactShadowRoot))
+        {
+            return false;
+        }
+
+        bool hasAssignedShadowPresentation =
+            IsSameOrChildOf(contactShadowRenderer != null ? contactShadowRenderer.transform : null, contactShadowRoot) ||
+            IsSameOrChildOf(contactShadowGraphic != null ? contactShadowGraphic.transform : null, contactShadowRoot);
+
+        if (!hasAssignedShadowPresentation)
+        {
+            return false;
+        }
+
+        SpriteRenderer[] descendantRenderers = contactShadowRoot.GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < descendantRenderers.Length; i++)
+        {
+            if (descendantRenderers[i] != contactShadowRenderer)
+            {
+                return false;
+            }
+        }
+
+        Graphic[] descendantGraphics = contactShadowRoot.GetComponentsInChildren<Graphic>(true);
+        for (int i = 0; i < descendantGraphics.Length; i++)
+        {
+            if (descendantGraphics[i] != contactShadowGraphic)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool IsSameOrChildOf(Transform candidate, Transform parent)
+    {
+        return candidate != null &&
+            parent != null &&
+            (candidate == parent || candidate.IsChildOf(parent));
     }
 
     private void UseProfileFromRoomTargetIfNeeded(Transform target)
@@ -560,7 +549,7 @@ public sealed class RoomProjectedEntity : MonoBehaviour
         return SameRoom(actorRoomState.CurrentRoomId, roomProfile.RoomId);
     }
 
-    private float GetRoomStageScaleMultiplier()
+    private float GetContactShadowRoomStageScaleMultiplier()
     {
         if (IsAlreadyOwnedByRoomStage())
         {
@@ -638,7 +627,6 @@ public sealed class RoomProjectedEntity : MonoBehaviour
 
     private void ClearRoomStageScaleReference()
     {
-        currentRoomStageScaleMultiplier = 1f;
         hasRoomStageScaleReference = false;
         roomStageScaleReference = 1f;
         roomStageScaleReferenceRoom = string.Empty;
@@ -656,14 +644,6 @@ public sealed class RoomProjectedEntity : MonoBehaviour
     private static bool SameRoom(string left, string right)
     {
         return string.Equals(NormalizeRoomName(left), NormalizeRoomName(right), StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static Vector3 SanitizeScale(Vector3 scale)
-    {
-        return new Vector3(
-            Mathf.Approximately(scale.x, 0f) ? 1f : scale.x,
-            Mathf.Approximately(scale.y, 0f) ? 1f : scale.y,
-            Mathf.Approximately(scale.z, 0f) ? 1f : scale.z);
     }
 
     private static string NormalizeRoomName(string value)
