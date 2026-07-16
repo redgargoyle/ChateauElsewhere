@@ -823,7 +823,8 @@ public class ActorRoomState : MonoBehaviour
                 : boundLocalScale;
         }
 
-        if (CharacterFootPositionUtility.TryGetWorldPoint(targetObject, true, false, out Vector3 feetWorldPoint))
+        if (!HasActiveGuestScaleParticipant(targetTransform) &&
+            CharacterFootPositionUtility.TryGetWorldPoint(targetObject, true, false, out Vector3 feetWorldPoint))
         {
             Vector3 footCorrection = worldPoint - feetWorldPoint;
             footCorrection.z = 0f;

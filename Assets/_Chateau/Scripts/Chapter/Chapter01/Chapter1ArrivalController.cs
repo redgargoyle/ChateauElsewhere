@@ -73,9 +73,6 @@ public class Chapter1ArrivalController : MonoBehaviour
     [SerializeField, FormerlySerializedAs("butlerDoorSpot")] private Transform drawingRoomSideButlerSpot;
     [SerializeField] private Transform closetPoint;
     [SerializeField] private Transform drawingRoomEntryPoint;
-    [SerializeField] private Transform drawingRoomSeat01;
-    [SerializeField] private Transform drawingRoomSeat02;
-    [SerializeField] private Transform drawingRoomSeat03;
 
     [Header("Drawing Room Seated Occlusion")]
     [SerializeField] private SpriteRenderer drawingRoomTeaTableRenderer;
@@ -95,7 +92,6 @@ public class Chapter1ArrivalController : MonoBehaviour
     [Header("Guests")]
     [SerializeField] private List<GuestArrivalConfig> guests = new List<GuestArrivalConfig>();
     [SerializeField] private bool useExistingSceneGuestsFirst = true;
-    [SerializeField] private float drawingRoomSeatSpacing = 86f;
     [SerializeField] private float guestMoveSpeed = 180f;
     [SerializeField] private float worldDrawingRoomSeatSpacing = 0.75f;
     [SerializeField] private float worldGuestMoveSpeed = 2.2f;
@@ -125,7 +121,6 @@ public class Chapter1ArrivalController : MonoBehaviour
     private readonly List<GuestGroupRuntimeState> guestGroups = new List<GuestGroupRuntimeState>();
     private readonly List<GuestGroupRuntimeState> pendingGuestGroups = new List<GuestGroupRuntimeState>();
     private readonly List<GuestGroupRuntimeState> activeEntranceGroups = new List<GuestGroupRuntimeState>();
-    private readonly List<Transform> runtimeSeatAnchors = new List<Transform>();
     private readonly HashSet<GameObject> runtimeGeneratedGuestObjects = new HashSet<GameObject>();
     private readonly Dictionary<string, Sprite> guestCoatSpriteCache = new Dictionary<string, Sprite>(StringComparer.OrdinalIgnoreCase);
     private int currentGuestIndex = -1;
@@ -1198,21 +1193,6 @@ public class Chapter1ArrivalController : MonoBehaviour
             Debug.LogWarning("Chapter1ArrivalController missing required field: drawingRoomEntryPoint.", this);
         }
 
-        if (drawingRoomSeat01 == null)
-        {
-            Debug.LogWarning("Chapter1ArrivalController missing required field: drawingRoomSeat01.", this);
-        }
-
-        if (drawingRoomSeat02 == null)
-        {
-            Debug.LogWarning("Chapter1ArrivalController missing required field: drawingRoomSeat02.", this);
-        }
-
-        if (drawingRoomSeat03 == null)
-        {
-            Debug.LogWarning("Chapter1ArrivalController missing required field: drawingRoomSeat03.", this);
-        }
-
         int sceneGuestCandidateCount = useExistingSceneGuestsFirst ? FindSceneGuestCandidates().Count : 0;
         int configuredGuestObjectCount = CountConfiguredGuestObjects();
         int requestedGuestCount = GetRequestedGuestCount();
@@ -2201,7 +2181,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         DisableGuestMovement(guest);
         MoveGuestObjectToRoomContent(guest, drawingRoomId);
         SetGuestVisibleAfterDrawingRoomExit(guest, true);
-        PlaceGuestAt(guest, drawingRoomSpot, "drawing room waiting spot");
 
         if (guest.ActorState != null)
         {
@@ -2216,6 +2195,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         EnsureGuestScaleParticipant(guest, drawingRoomId, CharacterPose.Seated);
         RefreshGuestScalingNow();
+        PlaceGuestAt(guest, drawingRoomSpot, "drawing room waiting spot");
         ApplyDrawingRoomSeatedOcclusion(guest, drawingRoomSpot);
 
         guest.MovingToDrawingRoom = false;
@@ -2439,7 +2419,6 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         MoveGuestObjectToRoomContent(guest, drawingRoomId);
         SetGuestVisibleAfterDrawingRoomExit(guest, true);
-        PlaceGuestAt(guest, drawingRoomSpot, "drawing room waiting spot");
         DisableGuestMovement(guest);
 
         if (guest.CoatPickup != null)
@@ -2461,6 +2440,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         EnsureGuestScaleParticipant(guest, drawingRoomId, CharacterPose.Seated);
         RefreshGuestScalingNow();
         HideGuestCoatVisualsForChapter2Skip(guest);
+        PlaceGuestAt(guest, drawingRoomSpot, "drawing room waiting spot");
         ApplyDrawingRoomSeatedOcclusion(guest, drawingRoomSpot);
 
         guest.WaitingOutside = false;
@@ -2665,25 +2645,19 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         if (guest == null)
         {
-            return drawingRoomEntryPoint;
+            return null;
         }
 
-        Transform editableGuestPoint = FindDrawingRoomGuestPoint(guest.GuestIndex);
+        Transform drawingRoomGuestPoint = FindDrawingRoomGuestPoint(guest.GuestIndex);
 
-        if (editableGuestPoint != null)
+        if (drawingRoomGuestPoint == null)
         {
-            return editableGuestPoint;
+            Debug.LogError(
+                $"[Chapter1] Missing required Drawing Room guest anchor '{DrawingRoomGuestPointPrefix}{guest.GuestIndex + 1:00}'.",
+                this);
         }
 
-        if (IsWorldSpaceGuestObject(guest.GuestObject))
-        {
-            return CreateRuntimeAnchor(
-                $"DrawingRoomSeat_{guest.Config.GuestId}",
-                GetWorldDrawingRoomSeatPosition(guest.GuestIndex),
-                null);
-        }
-
-        return guest.Seat != null ? guest.Seat : ResolveSeatForGuest(guest.GuestIndex);
+        return drawingRoomGuestPoint;
     }
 
     private void CheckChapterCompletionGate()
@@ -4972,39 +4946,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     private Transform ResolveSeatForGuest(int index)
     {
-        Transform editableGuestPoint = FindDrawingRoomGuestPoint(index);
-
-        if (editableGuestPoint != null)
-        {
-            return editableGuestPoint;
-        }
-
-        switch (index)
-        {
-            case 0:
-                if (drawingRoomSeat01 != null) return drawingRoomSeat01;
-                break;
-            case 1:
-                if (drawingRoomSeat02 != null) return drawingRoomSeat02;
-                break;
-            case 2:
-                if (drawingRoomSeat03 != null) return drawingRoomSeat03;
-                break;
-        }
-
-        while (runtimeSeatAnchors.Count <= index)
-        {
-            int seatIndex = runtimeSeatAnchors.Count;
-            Vector3 basePosition = drawingRoomSeat03 != null
-                ? drawingRoomSeat03.position
-                : drawingRoomEntryPoint != null ? drawingRoomEntryPoint.position : transform.position;
-            int column = seatIndex % 4;
-            int row = seatIndex / 4;
-            Vector3 position = basePosition + new Vector3((column - 1.5f) * drawingRoomSeatSpacing, -row * drawingRoomSeatSpacing, 0f);
-            runtimeSeatAnchors.Add(CreateRuntimeAnchor($"DrawingRoomSeat_Runtime_{seatIndex + 1:00}", position, drawingRoomEntryPoint));
-        }
-
-        return runtimeSeatAnchors[index];
+        return FindDrawingRoomGuestPoint(index);
     }
 
     private Transform FindDrawingRoomGuestPoint(int guestIndex)
@@ -5427,19 +5369,6 @@ public class Chapter1ArrivalController : MonoBehaviour
             TryGetWorldPositionForGuestTarget(depthReference, fallbackTrigger.transform, out worldPosition);
     }
 
-    private Vector3 GetWorldDrawingRoomSeatPosition(int guestIndex)
-    {
-        Vector3 basePosition = GetWorldDrawingRoomCenterPosition();
-        int columns = Mathf.Max(1, Mathf.Min(4, guestsPerArrivalGroup * 2));
-        int column = guestIndex % columns;
-        int row = guestIndex / columns;
-        float centeredColumn = column - (columns - 1) * 0.5f;
-        return basePosition + new Vector3(
-            centeredColumn * worldDrawingRoomSeatSpacing,
-            -row * worldDrawingRoomSeatSpacing * 0.8f,
-            0f);
-    }
-
     private Vector2 GetWorldGuestGridOffset(int index, int count, float spacing)
     {
         int columns = Mathf.Max(1, Mathf.Min(4, count));
@@ -5447,14 +5376,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         int row = index / columns;
         float centeredColumn = column - (columns - 1) * 0.5f;
         return new Vector2(centeredColumn * spacing, -row * spacing * 0.8f);
-    }
-
-    private Vector3 GetWorldDrawingRoomCenterPosition()
-    {
-        Vector3 fallbackPosition = playerButlerReference != null
-            ? playerButlerReference.transform.position
-            : transform.position;
-        return GetWorldVisibleAnchorPosition(null, drawingRoomEntryPoint, fallbackPosition) + new Vector3(0f, 0.35f, 0f);
     }
 
     private bool TryGetAnchoredPositionForGuestTarget(GuestRuntimeState guestState, Transform target, out Vector2 anchoredPosition)
@@ -6129,21 +6050,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (drawingRoomEntryPoint == null)
         {
             drawingRoomEntryPoint = FindAnchor("DrawingRoomEntry", drawingRoomId);
-        }
-
-        if (drawingRoomSeat01 == null)
-        {
-            drawingRoomSeat01 = FindAnchor("Seat_01", drawingRoomId);
-        }
-
-        if (drawingRoomSeat02 == null)
-        {
-            drawingRoomSeat02 = FindAnchor("Seat_02", drawingRoomId);
-        }
-
-        if (drawingRoomSeat03 == null)
-        {
-            drawingRoomSeat03 = FindAnchor("Seat_03", drawingRoomId);
         }
 
         if (closetPoint == null)
