@@ -625,13 +625,31 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         GameObject coatObject = guestState.CoatPickup.gameObject;
         coatObject.SetActive(true);
-        coatObject.transform.SetParent(butlerTransform, false);
+        AttachCoatToCharacterDisplay(coatObject, butlerTransform);
         coatObject.transform.localPosition = GetCoatOffsetWithSpritePivot(coatObject, ButlerCarriedCoatOffset);
         coatObject.transform.localRotation = Quaternion.identity;
         BringCoatRenderersAboveButler(coatObject, butlerTransform);
         carriedCoatVisual = coatObject;
 
         Debug.Log($"[Chapter1] Coat transferred to butler from guest {guestState.Config.GuestId}.", this);
+    }
+
+    private static void AttachCoatToCharacterDisplay(GameObject coatObject, Transform characterTransform)
+    {
+        if (coatObject == null || characterTransform == null)
+        {
+            return;
+        }
+
+        Transform attachmentRoot = characterTransform;
+        CharacterAnimationDisplay animationDisplay = characterTransform.GetComponent<CharacterAnimationDisplay>();
+
+        if (animationDisplay != null && animationDisplay.HasValidDisplayRoot())
+        {
+            attachmentRoot = animationDisplay.AnimationDisplay;
+        }
+
+        coatObject.transform.SetParent(attachmentRoot, false);
     }
 
     private static void BringCoatRenderersAboveButler(GameObject coatObject, Transform butlerTransform)
@@ -1610,11 +1628,15 @@ public class Chapter1ArrivalController : MonoBehaviour
         coatObject.SetActive(true);
         bool useWorldSpaceCoat = IsWorldSpaceGuestObject(guest.GuestObject);
 
-        if (!usingAuthoredCoatObject && useWorldSpaceCoat && guest.GuestObject != null)
+        if (useWorldSpaceCoat && guest.GuestObject != null)
         {
-            coatObject.transform.SetParent(guest.GuestObject.transform, false);
-            coatObject.transform.localPosition = WorldCoatOffset;
-            coatObject.transform.localRotation = Quaternion.identity;
+            AttachCoatToCharacterDisplay(coatObject, guest.GuestObject.transform);
+
+            if (!usingAuthoredCoatObject)
+            {
+                coatObject.transform.localPosition = WorldCoatOffset;
+                coatObject.transform.localRotation = Quaternion.identity;
+            }
         }
         else if (!usingAuthoredCoatObject)
         {
