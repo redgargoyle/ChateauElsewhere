@@ -262,7 +262,10 @@ public class StoryActorRoomStageLockingTests
 
             PlaceActorAt(rig, rig.Anchor);
 
-            Assert.That(display.AnimationDisplay.localScale, Is.EqualTo(new Vector3(2f, 2f, 1f)),
+            float expectedDisplayScale = 2f * rig.RoomCoordinates.CurrentStageScale;
+            Assert.That(
+                display.AnimationDisplay.localScale,
+                Is.EqualTo(new Vector3(expectedDisplayScale, expectedDisplayScale, 1f)),
                 "Static placement must apply the target room's display scale before it samples visible feet.");
             AssertVisibleFeetLockedToAnchor(rig, bodyRenderer, "scaled static foot binding");
             Assert.That(rig.ActorState.transform.localScale, Is.EqualTo(authoredRootScale),
@@ -455,9 +458,9 @@ public class StoryActorRoomStageLockingTests
 
     private static CharacterScaleCatalog CreateScaleCatalog(TestRig rig, float frontScale, float backScale)
     {
-        GameObject catalogObject = new GameObject("Character Scale Catalog", typeof(CharacterScaleCatalog));
-        catalogObject.transform.SetParent(rig.Root.transform, false);
-        CharacterScaleCatalog catalog = catalogObject.GetComponent<CharacterScaleCatalog>();
+        CharacterScaleCatalog catalog = ScriptableObject.CreateInstance<CharacterScaleCatalog>();
+        catalog.name = "Character Scale Catalog";
+        rig.ScaleCatalog = catalog;
 
         GameObject markerRoot = new GameObject("Character Scale");
         markerRoot.transform.SetParent(rig.RoomContent.transform, false);
@@ -472,13 +475,22 @@ public class StoryActorRoomStageLockingTests
         back.transform.localPosition = new Vector3(0f, 100f, 0f);
         back.transform.localScale = new Vector3(backScale, backScale, 1f);
 
-        CharacterScaleRoom roomScale = rig.RoomContent.gameObject.AddComponent<CharacterScaleRoom>();
-        roomScale.Configure(
+        CharacterScaleRoom roomCoordinates = rig.RoomContent.gameObject.AddComponent<CharacterScaleRoom>();
+        roomCoordinates.ConfigureHandles(
             rig.RoomContent,
             front.transform,
-            back.transform,
-            Mathf.Abs(rig.RoomContent.transform.localScale.x));
-        catalog.SetRooms(new[] { roomScale });
+            back.transform);
+        rig.RoomCoordinates = roomCoordinates;
+
+        catalog.SetRooms(new[]
+        {
+            new CharacterScaleRoomDefinition(
+                rig.RoomContent.RoomName,
+                -100f,
+                frontScale,
+                100f,
+                backScale)
+        });
         return catalog;
     }
 
@@ -489,8 +501,13 @@ public class StoryActorRoomStageLockingTests
         string context)
     {
         float anchorRoomY = rig.Stage.InverseTransformPoint(rig.Anchor.position).y;
+        Assert.That(rig.RoomCoordinates, Is.Not.Null, context);
         Assert.That(
-            catalog.TryEvaluateScaleAtRoomY(rig.RoomContent.RoomName, anchorRoomY, out float expectedScale),
+            catalog.TryEvaluateScaleAtRoomY(
+                rig.RoomContent.RoomName,
+                anchorRoomY,
+                rig.RoomCoordinates.CurrentStageScale,
+                out float expectedScale),
             Is.True,
             context);
         Assert.That(display.TryApplyCurrentRoomScale(), Is.True, context);
@@ -628,6 +645,8 @@ public class StoryActorRoomStageLockingTests
         public RectTransform Viewport, Stage, Anchor;
         public RoomContentGroup RoomContent;
         public ActorRoomState ActorState;
+        public CharacterScaleRoom RoomCoordinates;
+        public CharacterScaleCatalog ScaleCatalog;
         public List<GameObject> PreviousMainCameras;
 
         public void Destroy()
@@ -636,6 +655,7 @@ public class StoryActorRoomStageLockingTests
             Object.DestroyImmediate(Root);
             Object.DestroyImmediate(Texture);
             Object.DestroyImmediate(CameraTarget);
+            Object.DestroyImmediate(ScaleCatalog);
 
             for (int i = 0; i < PreviousMainCameras.Count; i++)
             {

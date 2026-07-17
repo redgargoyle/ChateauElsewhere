@@ -7,27 +7,29 @@ public sealed class CharacterScaleRoom : MonoBehaviour
 {
     private const float MinimumStageScale = 0.0001f;
 
-    [Header("Room")]
+    [Header("Runtime Room Coordinates")]
     [SerializeField] private RoomContentGroup room;
 
-    [Header("Character Scale")]
-    [Tooltip("Manual Front object. Its room-local X/Y is the guide position and its uniform local scale is the character size.")]
+#if UNITY_EDITOR
+    [Header("Editor-Only Calibration Handles")]
+    [Tooltip("Editor handle only. Runtime scale never reads this Transform.")]
     [SerializeField] private Transform front;
-    [Tooltip("Manual Back object. Its room-local X/Y is the guide position and its uniform local scale is the character size.")]
+    [Tooltip("Editor handle only. Runtime scale never reads this Transform.")]
     [SerializeField] private Transform back;
-
-    [SerializeField, HideInInspector] private float referenceStageScale = 1f;
+#endif
 
     public string RoomName => room != null ? room.RoomName : string.Empty;
     public RoomContentGroup Room => room;
-    public Transform Front => front;
-    public Transform Back => back;
-    public float ReferenceStageScale => referenceStageScale;
+    public float CurrentStageScale => GetCurrentStageScale();
+
+#if UNITY_EDITOR
+    public Transform FrontHandle => front;
+    public Transform BackHandle => back;
+#endif
 
     private void Reset()
     {
         room = GetComponent<RoomContentGroup>();
-        CaptureReferenceStageScale();
     }
 
     private void OnValidate()
@@ -36,64 +38,9 @@ public sealed class CharacterScaleRoom : MonoBehaviour
         {
             room = GetComponent<RoomContentGroup>();
         }
-
-        referenceStageScale = Mathf.Max(MinimumStageScale, referenceStageScale);
     }
 
-    public void Configure(
-        RoomContentGroup roomContent,
-        Transform frontObject,
-        Transform backObject,
-        float authoredStageScale)
-    {
-        room = roomContent != null ? roomContent : GetComponent<RoomContentGroup>();
-        front = frontObject;
-        back = backObject;
-        referenceStageScale = Mathf.Max(MinimumStageScale, Mathf.Abs(authoredStageScale));
-    }
-
-    public void CaptureReferenceStageScale()
-    {
-        referenceStageScale = GetCurrentStageScale();
-    }
-
-    public bool TryEvaluateScale(Vector3 characterWorldPosition, out float scale)
-    {
-        scale = 1f;
-
-        if (!IsConfigured(out _) || !TryGetCharacterRoomY(characterWorldPosition, out float characterRoomY))
-        {
-            return false;
-        }
-
-        return TryEvaluateScaleAtRoomY(characterRoomY, out scale);
-    }
-
-    public bool TryEvaluateScaleAtRoomY(float characterRoomY, out float scale)
-    {
-        scale = 1f;
-
-        if (!IsConfigured(out _))
-        {
-            return false;
-        }
-
-        float authoredScale = CharacterScaleFunction.Evaluate(
-            characterRoomY,
-            GetRoomLocalPosition(front).y,
-            GetUniformScale(front),
-            GetRoomLocalPosition(back).y,
-            GetUniformScale(back));
-
-        // CameraManager owns room-stage zoom. This conversion keeps a detached
-        // world-space animation display visually attached to that room surface
-        // without giving the camera or movement systems character-scale ownership.
-        float stageRatio = GetCurrentStageScale() / Mathf.Max(MinimumStageScale, referenceStageScale);
-        scale = Mathf.Max(MinimumStageScale, authoredScale * stageRatio);
-        return true;
-    }
-
-    private bool TryGetCharacterRoomY(Vector3 characterWorldPosition, out float characterRoomY)
+    public bool TryGetCharacterRoomY(Vector3 characterWorldPosition, out float characterRoomY)
     {
         characterRoomY = 0f;
         RectTransform roomRect = room != null ? room.transform as RectTransform : null;
@@ -133,8 +80,8 @@ public sealed class CharacterScaleRoom : MonoBehaviour
             }
         }
 
-        // This path supports world-space rooms and deterministic EditMode fixtures
-        // that intentionally have no Canvas or render camera.
+        // Supports world-space rooms and deterministic EditMode fixtures that
+        // intentionally have no Canvas or render camera.
         if (room != null)
         {
             characterRoomY = room.transform.InverseTransformPoint(characterWorldPosition).y;
@@ -144,7 +91,18 @@ public sealed class CharacterScaleRoom : MonoBehaviour
         return false;
     }
 
-    public bool IsConfigured(out string reason)
+#if UNITY_EDITOR
+    public void ConfigureHandles(
+        RoomContentGroup roomContent,
+        Transform frontHandle,
+        Transform backHandle)
+    {
+        room = roomContent != null ? roomContent : GetComponent<RoomContentGroup>();
+        front = frontHandle;
+        back = backHandle;
+    }
+
+    public bool AreHandlesConfigured(out string reason)
     {
         if (room == null)
         {
@@ -154,37 +112,48 @@ public sealed class CharacterScaleRoom : MonoBehaviour
 
         if (front == null || back == null)
         {
-            reason = "Front and Back objects are both required.";
+            reason = "Front and Back editor handles are both required.";
             return false;
         }
 
         if (!front.IsChildOf(room.transform) || !back.IsChildOf(room.transform))
         {
-            reason = "Front and Back must be children of this room.";
+            reason = "Front and Back handles must be children of this room.";
             return false;
         }
 
-        float frontY = GetRoomLocalPosition(front).y;
-        float backY = GetRoomLocalPosition(back).y;
+        float frontY = GetHandleRoomLocalPosition(front).y;
+        float backY = GetHandleRoomLocalPosition(back).y;
+
+        if (!IsFinite(frontY) || !IsFinite(backY))
+        {
+            reason = "Front and Back handle Y positions must be finite.";
+            return false;
+        }
 
         if (Mathf.Approximately(frontY, backY))
         {
-            reason = "Front and Back need different Y positions.";
+            reason = "Front and Back handles need different Y positions.";
             return false;
         }
 
-        if (front.localScale.x <= 0f ||
+        if (!IsFinite(front.localScale.x) ||
+            !IsFinite(front.localScale.y) ||
+            !IsFinite(back.localScale.x) ||
+            !IsFinite(back.localScale.y) ||
+            front.localScale.x <= 0f ||
             front.localScale.y <= 0f ||
             back.localScale.x <= 0f ||
             back.localScale.y <= 0f)
         {
-            reason = "Front and Back scales must be positive.";
+            reason = "Front and Back handle X/Y scales must be finite and positive.";
             return false;
         }
 
-        if (!IsUniformScale(front.localScale) || !IsUniformScale(back.localScale))
+        if (!Mathf.Approximately(front.localScale.x, front.localScale.y) ||
+            !Mathf.Approximately(back.localScale.x, back.localScale.y))
         {
-            reason = "Front and Back must use a uniform X/Y scale.";
+            reason = "Front and Back handles must use uniform X/Y scales.";
             return false;
         }
 
@@ -192,30 +161,16 @@ public sealed class CharacterScaleRoom : MonoBehaviour
         return true;
     }
 
-    public Vector2 GetRoomLocalPosition(Transform marker)
+    public Vector2 GetHandleRoomLocalPosition(Transform marker)
     {
         return marker == null || room == null
             ? Vector2.zero
             : (Vector2)room.transform.InverseTransformPoint(marker.position);
     }
 
-    public float GetUniformScale(Transform marker)
+    public float GetHandleUniformScale(Transform marker)
     {
         return marker == null ? 1f : Mathf.Max(MinimumStageScale, Mathf.Abs(marker.localScale.x));
-    }
-
-    private float GetCurrentStageScale()
-    {
-        Transform roomTransform = room != null ? room.transform : transform;
-        // CameraManager zooms the room stage by changing this local scale. Parent
-        // CanvasScaler changes are deliberately excluded; screen resolution must
-        // not become a second character-size input.
-        return Mathf.Max(MinimumStageScale, Mathf.Abs(roomTransform.localScale.x));
-    }
-
-    private static bool IsUniformScale(Vector3 scale)
-    {
-        return Mathf.Approximately(Mathf.Abs(scale.x), Mathf.Abs(scale.y));
     }
 
     private void OnDrawGizmosSelected()
@@ -239,5 +194,20 @@ public sealed class CharacterScaleRoom : MonoBehaviour
 
         Gizmos.color = color;
         Gizmos.DrawWireSphere(marker.position, 0.12f);
+    }
+
+    private static bool IsFinite(float value)
+    {
+        return !float.IsNaN(value) && !float.IsInfinity(value);
+    }
+#endif
+
+    private float GetCurrentStageScale()
+    {
+        Transform roomTransform = room != null ? room.transform : transform;
+        // CameraManager zooms the room stage by changing this local scale. Parent
+        // CanvasScaler changes are deliberately excluded; screen resolution must
+        // not become a second character-size input.
+        return Mathf.Max(MinimumStageScale, Mathf.Abs(roomTransform.localScale.x));
     }
 }

@@ -16,6 +16,8 @@ public sealed class CharacterAnimationDisplay : MonoBehaviour
     [SerializeField] private RoomNavigationManager navigationManager;
 
     private string lastConfigurationWarning;
+    private CharacterScaleRoom resolvedScaleRoom;
+    private string resolvedScaleRoomKey;
 
     public Transform AnimationDisplay => animationDisplay;
     public CharacterScaleCatalog Catalog => catalog;
@@ -106,17 +108,74 @@ public sealed class CharacterAnimationDisplay : MonoBehaviour
     {
         scale = 1f;
 
+        if (!TryResolveScaleRoom(roomName, out CharacterScaleRoom scaleRoom))
+        {
+            return false;
+        }
+
         // Authored story anchors are visible-foot points already expressed in
         // room-local space. Reading that stable value avoids renderer-bound
         // feedback while an anchored character's display scale changes.
         if (actorRoomState != null &&
             actorRoomState.TryGetBoundRoomStageLocalFootPoint(roomName, out Vector2 boundFootPoint))
         {
-            return catalog.TryEvaluateScaleAtRoomY(roomName, boundFootPoint.y, out scale);
+            return catalog.TryEvaluateScaleAtRoomY(
+                roomName,
+                boundFootPoint.y,
+                scaleRoom.CurrentStageScale,
+                out scale);
         }
 
         Vector3 footWorldPosition = ResolveFootWorldPosition();
-        return catalog.TryEvaluateScale(roomName, footWorldPosition, out scale);
+
+        return scaleRoom.TryGetCharacterRoomY(footWorldPosition, out float roomY) &&
+            catalog.TryEvaluateScaleAtRoomY(
+                roomName,
+                roomY,
+                scaleRoom.CurrentStageScale,
+                out scale);
+    }
+
+    private bool TryResolveScaleRoom(string roomName, out CharacterScaleRoom scaleRoom)
+    {
+        string requestedKey = CharacterScaleCatalog.NormalizeRoomName(roomName);
+
+        if (resolvedScaleRoom != null &&
+            string.Equals(resolvedScaleRoomKey, requestedKey, System.StringComparison.Ordinal))
+        {
+            scaleRoom = resolvedScaleRoom;
+            return true;
+        }
+
+        resolvedScaleRoom = null;
+        resolvedScaleRoomKey = string.Empty;
+
+        if (string.IsNullOrEmpty(requestedKey))
+        {
+            scaleRoom = null;
+            return false;
+        }
+
+        CharacterScaleRoom[] roomStages = FindObjectsByType<CharacterScaleRoom>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        for (int i = 0; i < roomStages.Length; i++)
+        {
+            CharacterScaleRoom candidate = roomStages[i];
+
+            if (candidate != null &&
+                CharacterScaleCatalog.NormalizeRoomName(candidate.RoomName) == requestedKey)
+            {
+                resolvedScaleRoom = candidate;
+                resolvedScaleRoomKey = requestedKey;
+                scaleRoom = candidate;
+                return true;
+            }
+        }
+
+        scaleRoom = null;
+        return false;
     }
 
     private Vector3 ResolveFootWorldPosition()
@@ -144,7 +203,9 @@ public sealed class CharacterAnimationDisplay : MonoBehaviour
         return transform.position;
     }
 
-    public static CharacterAnimationDisplay EnsureForActor(GameObject actorRoot)
+    public static CharacterAnimationDisplay EnsureForActor(
+        GameObject actorRoot,
+        CharacterScaleCatalog scaleCatalog = null)
     {
         if (actorRoot == null)
         {
@@ -179,7 +240,7 @@ public sealed class CharacterAnimationDisplay : MonoBehaviour
         }
 
         display = actorRoot.AddComponent<CharacterAnimationDisplay>();
-        display.Configure(displayRoot);
+        display.Configure(displayRoot, scaleCatalog != null ? scaleCatalog : CharacterScaleCatalog.LoadDefault());
         return display;
     }
 
@@ -207,7 +268,7 @@ public sealed class CharacterAnimationDisplay : MonoBehaviour
 
         if (catalog == null)
         {
-            catalog = FindAnyObjectByType<CharacterScaleCatalog>(FindObjectsInactive.Include);
+            catalog = CharacterScaleCatalog.LoadDefault();
         }
     }
 

@@ -8,12 +8,14 @@ using UnityEngine.SceneManagement;
 
 public sealed class CharacterScaleTool : EditorWindow
 {
-    private const string CatalogObjectName = "Rooms";
+    public const string DefaultCatalogAssetPath = "Assets/Resources/CharacterScaleCatalog.asset";
+
     private const string MarkerRootName = "Character Scale";
     private const string FrontName = "Front";
     private const string BackName = "Back";
 
     private CharacterScaleCatalog catalog;
+    private CharacterScaleRoom[] roomHandles = Array.Empty<CharacterScaleRoom>();
     private int selectedRoomIndex;
     private float sampleY;
     private string statusMessage;
@@ -23,7 +25,7 @@ public sealed class CharacterScaleTool : EditorWindow
     public static void Open()
     {
         CharacterScaleTool window = GetWindow<CharacterScaleTool>("Character Scale Tool");
-        window.minSize = new Vector2(430f, 520f);
+        window.minSize = new Vector2(470f, 620f);
         window.Show();
     }
 
@@ -31,7 +33,8 @@ public sealed class CharacterScaleTool : EditorWindow
     {
         SceneView.duringSceneGui -= DrawSceneHandles;
         SceneView.duringSceneGui += DrawSceneHandles;
-        FindCatalog();
+        FindCatalogAsset();
+        RefreshRoomHandles();
     }
 
     private void OnDisable()
@@ -41,28 +44,25 @@ public sealed class CharacterScaleTool : EditorWindow
 
     private void OnHierarchyChange()
     {
-        if (catalog == null)
-        {
-            FindCatalog();
-        }
-
+        RefreshRoomHandles();
         Repaint();
     }
 
     private void OnGUI()
     {
-        EditorGUILayout.LabelField("Character Scale Catalog", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Character Scale Catalog Asset", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
-            "Each room owns one Front object and one Back object. Their X/Y positions are manual guides; " +
-            "their uniform scales are the character sizes. Runtime uses only Y to smoothly interpolate size.",
+            "Runtime reads only the saved ScriptableObject values. Front and Back scene objects are editor handles: " +
+            "moving or scaling them does not change gameplay until Save Handles To Asset is pressed. " +
+            "Only handle Y and uniform scale are saved; X is a Scene-view placement aid.",
             MessageType.Info);
 
         EditorGUI.BeginChangeCheck();
         catalog = (CharacterScaleCatalog)EditorGUILayout.ObjectField(
-            "Catalog",
+            "Catalog Asset",
             catalog,
             typeof(CharacterScaleCatalog),
-            true);
+            false);
         if (EditorGUI.EndChangeCheck())
         {
             selectedRoomIndex = 0;
@@ -70,14 +70,15 @@ public sealed class CharacterScaleTool : EditorWindow
 
         using (new EditorGUILayout.HorizontalScope())
         {
-            if (GUILayout.Button("Find Catalog"))
+            if (GUILayout.Button("Find Catalog Asset"))
             {
-                FindCatalog();
+                FindCatalogAsset();
             }
 
-            if (GUILayout.Button("Create / Repair Missing Room Setup"))
+            if (GUILayout.Button("Create / Repair Editor Handles"))
             {
                 catalog = CreateOrRepairMissingRoomSetup();
+                RefreshRoomHandles();
                 selectedRoomIndex = 0;
             }
         }
@@ -85,28 +86,27 @@ public sealed class CharacterScaleTool : EditorWindow
         if (catalog == null)
         {
             EditorGUILayout.HelpBox(
-                "No CharacterScaleCatalog is present. Use Create / Repair Missing Room Setup in Gameplay.",
+                $"No CharacterScaleCatalog asset exists at {DefaultCatalogAssetPath}.",
                 MessageType.Warning);
             DrawStatus();
             return;
         }
 
-        CharacterScaleRoom[] rooms = catalog.Rooms
-            .Where(room => room != null)
-            .OrderBy(room => room.RoomName, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
+        RefreshRoomHandlesIfNeeded();
 
-        if (rooms.Length == 0)
+        if (roomHandles.Length == 0)
         {
-            EditorGUILayout.HelpBox("The catalog has no rooms.", MessageType.Warning);
-            DrawStatus();
+            EditorGUILayout.HelpBox(
+                "No loaded rooms have CharacterScaleRoom editor handles. Open Gameplay and repair the handles.",
+                MessageType.Warning);
+            DrawValidationAndStatus();
             return;
         }
 
-        selectedRoomIndex = Mathf.Clamp(selectedRoomIndex, 0, rooms.Length - 1);
-        string[] roomNames = rooms.Select(room => room.RoomName).ToArray();
+        selectedRoomIndex = Mathf.Clamp(selectedRoomIndex, 0, roomHandles.Length - 1);
+        string[] roomNames = roomHandles.Select(room => room.RoomName).ToArray();
         selectedRoomIndex = EditorGUILayout.Popup("Room", selectedRoomIndex, roomNames);
-        CharacterScaleRoom selectedRoom = rooms[selectedRoomIndex];
+        CharacterScaleRoom selectedRoom = roomHandles[selectedRoomIndex];
 
         EditorGUILayout.Space(8f);
         DrawRoomEditor(selectedRoom);
@@ -115,50 +115,94 @@ public sealed class CharacterScaleTool : EditorWindow
         EditorGUILayout.LabelField("Shared Y Scale Function", EditorStyles.boldLabel);
         sampleY = EditorGUILayout.FloatField("Sample Room Y", sampleY);
 
-        if (selectedRoom.Front != null && selectedRoom.Back != null)
+        if (catalog.TryEvaluateScaleAtRoomY(selectedRoom.RoomName, sampleY, out float savedPreviewScale))
         {
-            float previewScale = CharacterScaleFunction.Evaluate(
+            EditorGUILayout.LabelField("Saved Asset Preview", savedPreviewScale.ToString("0.####"));
+        }
+
+        if (TryReadHandleDefinition(selectedRoom, out CharacterScaleRoomDefinition handleDraft))
+        {
+            float handlePreviewScale = CharacterScaleFunction.Evaluate(
                 sampleY,
-                selectedRoom.GetRoomLocalPosition(selectedRoom.Front).y,
-                selectedRoom.GetUniformScale(selectedRoom.Front),
-                selectedRoom.GetRoomLocalPosition(selectedRoom.Back).y,
-                selectedRoom.GetUniformScale(selectedRoom.Back));
-            EditorGUILayout.LabelField("Preview Character Scale", previewScale.ToString("0.####"));
+                handleDraft.FrontY,
+                handleDraft.FrontScale,
+                handleDraft.BackY,
+                handleDraft.BackScale);
+            EditorGUILayout.LabelField("Unsaved Handle Preview", handlePreviewScale.ToString("0.####"));
         }
 
-        EditorGUILayout.Space(8f);
-
-        if (GUILayout.Button("Validate Catalog"))
-        {
-            bool valid = catalog.ValidateCatalog(out string report);
-            SetStatus(report, valid ? MessageType.Info : MessageType.Error);
-        }
-
-        DrawStatus();
+        DrawValidationAndStatus();
     }
 
-    private void DrawRoomEditor(CharacterScaleRoom room)
+    private void DrawRoomEditor(CharacterScaleRoom roomHandlesForRoom)
     {
-        EditorGUILayout.LabelField(room.RoomName, EditorStyles.boldLabel);
-        EditorGUILayout.ObjectField("Room Object", room.Room, typeof(RoomContentGroup), true);
+        EditorGUILayout.LabelField(roomHandlesForRoom.RoomName, EditorStyles.boldLabel);
+        EditorGUILayout.ObjectField("Room Object", roomHandlesForRoom.Room, typeof(RoomContentGroup), true);
+        EditorGUILayout.LabelField("Current Stage Zoom", roomHandlesForRoom.CurrentStageScale.ToString("0.########"));
 
-        DrawMarkerEditor("Front", room, room.Front);
+        if (catalog.TryGetRoom(roomHandlesForRoom.RoomName, out CharacterScaleRoomDefinition saved))
+        {
+            using (new EditorGUI.DisabledScope(true))
+            {
+                EditorGUILayout.FloatField("Saved Front Y", saved.FrontY);
+                EditorGUILayout.FloatField("Saved Front Scale", saved.FrontScale);
+                EditorGUILayout.FloatField("Saved Back Y", saved.BackY);
+                EditorGUILayout.FloatField("Saved Back Scale", saved.BackScale);
+            }
+        }
+        else
+        {
+            EditorGUILayout.HelpBox(
+                "This loaded room has no saved catalog record. Saving its handles will create one.",
+                MessageType.Warning);
+        }
+
         EditorGUILayout.Space(4f);
-        DrawMarkerEditor("Back", room, room.Back);
+        DrawMarkerEditor("Front", roomHandlesForRoom, roomHandlesForRoom.FrontHandle);
+        EditorGUILayout.Space(4f);
+        DrawMarkerEditor("Back", roomHandlesForRoom, roomHandlesForRoom.BackHandle);
 
         using (new EditorGUILayout.HorizontalScope())
         {
-            EditorGUILayout.LabelField("Reference Stage Scale", room.ReferenceStageScale.ToString("0.########"));
-
-            if (GUILayout.Button("Capture", GUILayout.Width(80f)))
+            using (new EditorGUI.DisabledScope(saved == null))
             {
-                Undo.RecordObject(room, "Capture Character Scale Room Stage");
-                room.CaptureReferenceStageScale();
-                MarkDirty(room);
+                if (GUILayout.Button("Load Asset Into Handles"))
+                {
+                    LoadAssetRoomIntoHandles(catalog, roomHandlesForRoom);
+                    SetStatus($"Loaded saved {roomHandlesForRoom.RoomName} values into the editor handles.", MessageType.Info);
+                }
+            }
+
+            if (GUILayout.Button("Save Handles To Asset"))
+            {
+                if (SaveRoomHandlesToCatalog(catalog, roomHandlesForRoom, true, out string report))
+                {
+                    SetStatus(report, MessageType.Info);
+                }
+                else
+                {
+                    SetStatus(report, MessageType.Error);
+                }
             }
         }
 
-        if (!room.IsConfigured(out string reason))
+        if (catalog.TryGetRoom(roomHandlesForRoom.RoomName, out saved) &&
+            TryReadHandleDefinition(roomHandlesForRoom, out CharacterScaleRoomDefinition draft))
+        {
+            bool hasUnsavedChanges =
+                !Mathf.Approximately(saved.FrontY, draft.FrontY) ||
+                !Mathf.Approximately(saved.FrontScale, draft.FrontScale) ||
+                !Mathf.Approximately(saved.BackY, draft.BackY) ||
+                !Mathf.Approximately(saved.BackScale, draft.BackScale);
+
+            EditorGUILayout.HelpBox(
+                hasUnsavedChanges
+                    ? "Handles differ from the saved asset. Runtime still uses the saved values."
+                    : "Handles match the saved asset.",
+                hasUnsavedChanges ? MessageType.Warning : MessageType.Info);
+        }
+
+        if (!roomHandlesForRoom.AreHandlesConfigured(out string reason))
         {
             EditorGUILayout.HelpBox(reason, MessageType.Error);
         }
@@ -166,7 +210,7 @@ public sealed class CharacterScaleTool : EditorWindow
 
     private static void DrawMarkerEditor(string label, CharacterScaleRoom room, Transform marker)
     {
-        EditorGUILayout.LabelField(label, EditorStyles.miniBoldLabel);
+        EditorGUILayout.LabelField($"{label} Editor Handle", EditorStyles.miniBoldLabel);
         EditorGUILayout.ObjectField($"{label} Object", marker, typeof(Transform), true);
 
         if (marker == null)
@@ -174,18 +218,17 @@ public sealed class CharacterScaleTool : EditorWindow
             return;
         }
 
-        Vector2 oldPosition = room.GetRoomLocalPosition(marker);
-        Vector2 newPosition = EditorGUILayout.Vector2Field("Position X / Y", oldPosition);
-        float oldScale = room.GetUniformScale(marker);
-        float newScale = Mathf.Max(0.0001f, EditorGUILayout.FloatField("Scale", oldScale));
+        Vector2 oldPosition = room.GetHandleRoomLocalPosition(marker);
+        Vector2 newPosition = EditorGUILayout.Vector2Field("Handle Position X / Y", oldPosition);
+        float oldScale = room.GetHandleUniformScale(marker);
+        float newScale = Mathf.Max(0.0001f, EditorGUILayout.FloatField("Handle Scale", oldScale));
 
         if (newPosition != oldPosition || !Mathf.Approximately(newScale, oldScale))
         {
-            Undo.RecordObject(marker, $"Edit Character Scale {label}");
-            Vector3 worldPosition = room.Room.transform.TransformPoint(new Vector3(newPosition.x, newPosition.y, 0f));
-            marker.position = worldPosition;
+            Undo.RecordObject(marker, $"Edit Character Scale {label} Handle");
+            marker.position = room.Room.transform.TransformPoint(new Vector3(newPosition.x, newPosition.y, 0f));
             marker.localScale = new Vector3(newScale, newScale, 1f);
-            MarkDirty(marker);
+            MarkSceneObjectDirty(marker);
         }
 
         using (new EditorGUILayout.HorizontalScope())
@@ -198,38 +241,28 @@ public sealed class CharacterScaleTool : EditorWindow
 
             if (GUILayout.Button("Use Selected Position") && Selection.activeTransform != null)
             {
-                Undo.RecordObject(marker, $"Place Character Scale {label}");
+                Undo.RecordObject(marker, $"Place Character Scale {label} Handle");
                 Vector3 selectedRoomLocal = room.Room.transform.InverseTransformPoint(Selection.activeTransform.position);
                 marker.position = room.Room.transform.TransformPoint(new Vector3(
                     selectedRoomLocal.x,
                     selectedRoomLocal.y,
                     0f));
-                MarkDirty(marker);
+                MarkSceneObjectDirty(marker);
             }
         }
     }
 
     private void DrawSceneHandles(SceneView sceneView)
     {
-        if (catalog == null || catalog.Rooms == null)
+        if (catalog == null || roomHandles.Length == 0)
         {
             return;
         }
 
-        CharacterScaleRoom[] rooms = catalog.Rooms
-            .Where(room => room != null)
-            .OrderBy(room => room.RoomName, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        if (rooms.Length == 0)
-        {
-            return;
-        }
-
-        selectedRoomIndex = Mathf.Clamp(selectedRoomIndex, 0, rooms.Length - 1);
-        CharacterScaleRoom room = rooms[selectedRoomIndex];
-        DrawPositionHandle(room, room.Front, new Color(0.95f, 0.35f, 0.2f, 1f), $"{room.RoomName} Front");
-        DrawPositionHandle(room, room.Back, new Color(0.2f, 0.65f, 1f, 1f), $"{room.RoomName} Back");
+        selectedRoomIndex = Mathf.Clamp(selectedRoomIndex, 0, roomHandles.Length - 1);
+        CharacterScaleRoom room = roomHandles[selectedRoomIndex];
+        DrawPositionHandle(room, room.FrontHandle, new Color(0.95f, 0.35f, 0.2f, 1f), $"{room.RoomName} Front");
+        DrawPositionHandle(room, room.BackHandle, new Color(0.2f, 0.65f, 1f, 1f), $"{room.RoomName} Back");
     }
 
     private static void DrawPositionHandle(CharacterScaleRoom room, Transform marker, Color color, string label)
@@ -240,21 +273,22 @@ public sealed class CharacterScaleTool : EditorWindow
         }
 
         Handles.color = color;
-        Handles.Label(marker.position, $"{label}  scale {Mathf.Abs(marker.localScale.x):0.###}");
+        Handles.Label(marker.position, $"{label} handle  scale {Mathf.Abs(marker.localScale.x):0.###}");
         EditorGUI.BeginChangeCheck();
         Vector3 newPosition = Handles.PositionHandle(marker.position, Quaternion.identity);
 
         if (EditorGUI.EndChangeCheck())
         {
-            Undo.RecordObject(marker, $"Move {label}");
+            Undo.RecordObject(marker, $"Move {label} Handle");
             Vector3 roomLocal = room.Room.transform.InverseTransformPoint(newPosition);
             marker.position = room.Room.transform.TransformPoint(new Vector3(roomLocal.x, roomLocal.y, 0f));
-            MarkDirty(marker);
+            MarkSceneObjectDirty(marker);
         }
     }
 
     public static CharacterScaleCatalog CreateOrRepairMissingRoomSetup()
     {
+        CharacterScaleCatalog catalogAsset = LoadOrCreateCatalogAsset();
         RoomContentGroup[] roomGroups = FindObjectsByType<RoomContentGroup>(FindObjectsInactive.Include)
             .Where(room => room != null && room.gameObject.scene.IsValid() && room.gameObject.scene.isLoaded)
             .GroupBy(room => CharacterScaleCatalog.NormalizeRoomName(room.RoomName), StringComparer.OrdinalIgnoreCase)
@@ -265,38 +299,28 @@ public sealed class CharacterScaleTool : EditorWindow
         if (roomGroups.Length == 0)
         {
             Debug.LogError("Character Scale Tool could not find any loaded RoomContentGroup objects.");
-            return null;
+            return catalogAsset;
         }
-
-        GameObject catalogObject = GameObject.Find(CatalogObjectName);
-
-        if (catalogObject == null)
-        {
-            catalogObject = roomGroups[0].transform.parent != null
-                ? roomGroups[0].transform.parent.gameObject
-                : new GameObject(CatalogObjectName);
-        }
-
-        CharacterScaleCatalog catalog = catalogObject.GetComponent<CharacterScaleCatalog>();
-
-        if (catalog == null)
-        {
-            catalog = Undo.AddComponent<CharacterScaleCatalog>(catalogObject);
-        }
-
-        List<CharacterScaleRoom> roomDefinitions = new List<CharacterScaleRoom>(roomGroups.Length);
 
         for (int i = 0; i < roomGroups.Length; i++)
         {
             RoomContentGroup roomGroup = roomGroups[i];
-            CharacterScaleRoom roomDefinition = roomGroup.GetComponent<CharacterScaleRoom>();
+            CharacterScaleRoom roomHandles = roomGroup.GetComponent<CharacterScaleRoom>();
 
-            if (roomDefinition == null)
+            if (roomHandles == null)
             {
-                roomDefinition = Undo.AddComponent<CharacterScaleRoom>(roomGroup.gameObject);
+                roomHandles = Undo.AddComponent<CharacterScaleRoom>(roomGroup.gameObject);
             }
 
             Transform markerRoot = FindOrCreateChild(roomGroup.transform, MarkerRootName, out _);
+
+            if (!markerRoot.CompareTag("EditorOnly"))
+            {
+                Undo.RecordObject(markerRoot.gameObject, "Mark Character Scale Handles Editor Only");
+                markerRoot.gameObject.tag = "EditorOnly";
+                MarkSceneObjectDirty(markerRoot.gameObject);
+            }
+
             Transform front = FindOrCreateChild(markerRoot, FrontName, out bool createdFront);
             Transform back = FindOrCreateChild(markerRoot, BackName, out bool createdBack);
 
@@ -315,25 +339,133 @@ public sealed class CharacterScaleTool : EditorWindow
                 InitializeNewMarker(back, new Vector2(0f, halfHeight * 0.8f));
             }
 
-            if (roomDefinition.Front == null || roomDefinition.Back == null)
+            if (roomHandles.Room != roomGroup ||
+                roomHandles.FrontHandle != front ||
+                roomHandles.BackHandle != back)
             {
-                Undo.RecordObject(roomDefinition, "Repair Character Scale Room");
-                roomDefinition.Configure(
-                    roomGroup,
-                    front,
-                    back,
-                    Mathf.Max(0.0001f, Mathf.Abs(roomGroup.transform.localScale.x)));
-                MarkDirty(roomDefinition);
+                Undo.RecordObject(roomHandles, "Repair Character Scale Editor Handles");
+                roomHandles.ConfigureHandles(roomGroup, front, back);
+                MarkSceneObjectDirty(roomHandles);
             }
 
-            roomDefinitions.Add(roomDefinition);
         }
 
-        Undo.RecordObject(catalog, "Sync Character Scale Catalog Rooms");
-        catalog.SetRooms(roomDefinitions.ToArray());
-        MarkDirty(catalog);
-        Debug.Log($"Character Scale Catalog now contains {roomDefinitions.Count} room definitions.", catalog);
-        return catalog;
+        Debug.Log(
+            $"Character Scale editor handles now cover {roomGroups.Length} loaded rooms. " +
+            "Runtime calibration remains in the catalog asset.",
+            catalogAsset);
+        return catalogAsset;
+    }
+
+    public static bool LoadAssetRoomIntoHandles(
+        CharacterScaleCatalog catalogAsset,
+        CharacterScaleRoom roomHandlesForRoom)
+    {
+        if (catalogAsset == null ||
+            roomHandlesForRoom == null ||
+            !catalogAsset.TryGetRoom(roomHandlesForRoom.RoomName, out CharacterScaleRoomDefinition definition) ||
+            roomHandlesForRoom.FrontHandle == null ||
+            roomHandlesForRoom.BackHandle == null)
+        {
+            return false;
+        }
+
+        Transform front = roomHandlesForRoom.FrontHandle;
+        Transform back = roomHandlesForRoom.BackHandle;
+        Undo.RecordObjects(new UnityEngine.Object[] { front, back }, "Load Character Scale Asset Into Handles");
+        SetHandleValues(roomHandlesForRoom, front, definition.FrontY, definition.FrontScale);
+        SetHandleValues(roomHandlesForRoom, back, definition.BackY, definition.BackScale);
+        MarkSceneObjectDirty(front);
+        MarkSceneObjectDirty(back);
+        return true;
+    }
+
+    public static bool SaveRoomHandlesToCatalog(
+        CharacterScaleCatalog catalogAsset,
+        CharacterScaleRoom roomHandlesForRoom,
+        bool persistAsset,
+        out string report)
+    {
+        if (catalogAsset == null)
+        {
+            report = "Character Scale Catalog asset is missing.";
+            return false;
+        }
+
+        if (!TryReadHandleDefinition(roomHandlesForRoom, out CharacterScaleRoomDefinition definition))
+        {
+            if (roomHandlesForRoom == null)
+            {
+                report = "Character scale room handles are missing.";
+            }
+            else if (!roomHandlesForRoom.AreHandlesConfigured(out string reason))
+            {
+                report = reason;
+            }
+            else
+            {
+                report = "Character scale handles could not be read.";
+            }
+
+            return false;
+        }
+
+        if (!definition.IsConfigured(out string definitionReason))
+        {
+            report = definitionReason;
+            return false;
+        }
+
+        Undo.RecordObject(catalogAsset, $"Save {definition.RoomName} Character Scale");
+        catalogAsset.SetRoom(definition);
+
+        if (persistAsset)
+        {
+            SaveCatalogAsset(catalogAsset);
+        }
+
+        report = $"Saved {definition.RoomName} Front/Back calibration to {AssetDatabase.GetAssetPath(catalogAsset)}.";
+        return true;
+    }
+
+    private static bool TryReadHandleDefinition(
+        CharacterScaleRoom roomHandlesForRoom,
+        out CharacterScaleRoomDefinition definition)
+    {
+        definition = null;
+
+        if (roomHandlesForRoom == null || !roomHandlesForRoom.AreHandlesConfigured(out _))
+        {
+            return false;
+        }
+
+        definition = new CharacterScaleRoomDefinition(
+            roomHandlesForRoom.RoomName,
+            roomHandlesForRoom.GetHandleRoomLocalPosition(roomHandlesForRoom.FrontHandle).y,
+            roomHandlesForRoom.GetHandleUniformScale(roomHandlesForRoom.FrontHandle),
+            roomHandlesForRoom.GetHandleRoomLocalPosition(roomHandlesForRoom.BackHandle).y,
+            roomHandlesForRoom.GetHandleUniformScale(roomHandlesForRoom.BackHandle));
+        return true;
+    }
+
+    private static CharacterScaleCatalog LoadOrCreateCatalogAsset()
+    {
+        CharacterScaleCatalog existing = AssetDatabase.LoadAssetAtPath<CharacterScaleCatalog>(DefaultCatalogAssetPath);
+
+        if (existing != null)
+        {
+            return existing;
+        }
+
+        if (!AssetDatabase.IsValidFolder("Assets/Resources"))
+        {
+            AssetDatabase.CreateFolder("Assets", "Resources");
+        }
+
+        CharacterScaleCatalog created = CreateInstance<CharacterScaleCatalog>();
+        AssetDatabase.CreateAsset(created, DefaultCatalogAssetPath);
+        AssetDatabase.SaveAssetIfDirty(created);
+        return created;
     }
 
     private static Transform FindOrCreateChild(Transform parent, string childName, out bool created)
@@ -358,20 +490,129 @@ public sealed class CharacterScaleTool : EditorWindow
 
     private static void InitializeNewMarker(Transform marker, Vector2 defaultPosition)
     {
-        if (marker == null)
+        if (marker != null)
+        {
+            marker.localPosition = new Vector3(defaultPosition.x, defaultPosition.y, 0f);
+        }
+    }
+
+    private static void SetHandleValues(
+        CharacterScaleRoom roomHandlesForRoom,
+        Transform handle,
+        float roomY,
+        float scale)
+    {
+        Vector3 roomLocal = roomHandlesForRoom.Room.transform.InverseTransformPoint(handle.position);
+        handle.position = roomHandlesForRoom.Room.transform.TransformPoint(new Vector3(roomLocal.x, roomY, 0f));
+        handle.localScale = new Vector3(scale, scale, 1f);
+    }
+
+    private static void SaveCatalogAsset(CharacterScaleCatalog catalogAsset)
+    {
+        if (catalogAsset == null)
         {
             return;
         }
 
-        marker.localPosition = new Vector3(defaultPosition.x, defaultPosition.y, 0f);
+        EditorUtility.SetDirty(catalogAsset);
+        AssetDatabase.SaveAssetIfDirty(catalogAsset);
     }
 
-    private void FindCatalog()
+    private void FindCatalogAsset()
     {
-        catalog = FindAnyObjectByType<CharacterScaleCatalog>(FindObjectsInactive.Include);
+        catalog = AssetDatabase.LoadAssetAtPath<CharacterScaleCatalog>(DefaultCatalogAssetPath);
         SetStatus(
-            catalog != null ? "Character Scale Catalog found." : "No Character Scale Catalog found.",
+            catalog != null
+                ? $"Character Scale Catalog asset found at {DefaultCatalogAssetPath}."
+                : $"No Character Scale Catalog asset found at {DefaultCatalogAssetPath}.",
             catalog != null ? MessageType.Info : MessageType.Warning);
+    }
+
+    private void RefreshRoomHandles()
+    {
+        roomHandles = FindObjectsByType<CharacterScaleRoom>(FindObjectsInactive.Include)
+            .Where(room => room != null && room.gameObject.scene.IsValid() && room.gameObject.scene.isLoaded)
+            .GroupBy(room => CharacterScaleCatalog.NormalizeRoomName(room.RoomName), StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .OrderBy(room => room.RoomName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private void RefreshRoomHandlesIfNeeded()
+    {
+        if (roomHandles == null || roomHandles.Any(room => room == null))
+        {
+            RefreshRoomHandles();
+        }
+    }
+
+    private void DrawValidationAndStatus()
+    {
+        EditorGUILayout.Space(8f);
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button("Validate Catalog Asset"))
+            {
+                bool valid = catalog.ValidateCatalog(out string report);
+                SetStatus(report, valid ? MessageType.Info : MessageType.Error);
+            }
+
+            if (GUILayout.Button("Save All Loaded Handles To Asset"))
+            {
+                List<CharacterScaleRoomDefinition> drafts = new List<CharacterScaleRoomDefinition>();
+                List<string> failures = new List<string>();
+
+                for (int i = 0; i < roomHandles.Length; i++)
+                {
+                    CharacterScaleRoom room = roomHandles[i];
+
+                    if (!TryReadHandleDefinition(room, out CharacterScaleRoomDefinition draft))
+                    {
+                        string handleReason = "Character scale handles could not be read.";
+
+                        if (room == null)
+                        {
+                            handleReason = "Character scale room handles are missing.";
+                        }
+                        else if (!room.AreHandlesConfigured(out string configuredReason))
+                        {
+                            handleReason = configuredReason;
+                        }
+
+                        failures.Add($"{(room != null ? room.RoomName : "Missing room")}: {handleReason}");
+                        continue;
+                    }
+
+                    if (!draft.IsConfigured(out string definitionReason))
+                    {
+                        failures.Add($"{room.RoomName}: {definitionReason}");
+                        continue;
+                    }
+
+                    drafts.Add(draft);
+                }
+
+                if (failures.Count == 0)
+                {
+                    Undo.RecordObject(catalog, "Save All Character Scale Rooms");
+
+                    for (int i = 0; i < drafts.Count; i++)
+                    {
+                        catalog.SetRoom(drafts[i]);
+                    }
+
+                    SaveCatalogAsset(catalog);
+                    SetStatus($"Saved {drafts.Count} loaded room calibrations to the catalog asset.", MessageType.Info);
+                }
+                else
+                {
+                    SetStatus(string.Join("\n", failures), MessageType.Error);
+                }
+            }
+        }
+
+        DrawStatus();
     }
 
     private void SetStatus(string message, MessageType type)
@@ -390,7 +631,7 @@ public sealed class CharacterScaleTool : EditorWindow
         }
     }
 
-    private static void MarkDirty(UnityEngine.Object target)
+    private static void MarkSceneObjectDirty(UnityEngine.Object target)
     {
         if (target == null)
         {

@@ -1,6 +1,6 @@
 # Character presentation legacy-removal and scale-architecture audit
 
-This report covers the destructive legacy cleanup and the subsequently requested replacement architecture. The original Phase 1 brief said not to build the replacement tool; the later explicit request superseded that restriction and authorized the `Character Scale Catalog -> Rooms -> Room -> Front/Back` implementation documented below.
+This report covers the destructive legacy cleanup and the subsequently requested replacement architecture. The original Phase 1 brief said not to build the replacement tool; the later explicit request superseded that restriction and authorized the saved `CharacterScaleCatalog` asset plus editor-only room calibration handles documented below.
 
 ## 1. Starting and ending commit/branch state
 
@@ -68,21 +68,27 @@ Also deleted were the two legacy perspective profile assets, their now-empty `As
 The recognizable replacement hierarchy is:
 
 ```text
-Rooms                                CharacterScaleCatalog
-└── Room_<Name>                      RoomContentGroup + CharacterScaleRoom
-    └── Character Scale
-        ├── Front                    room-local X/Y + uniform size
-        └── Back                     room-local X/Y + uniform size
+Assets/Resources/CharacterScaleCatalog.asset
+└── CharacterScaleCatalog            sole runtime calibration authority
+    └── room definition               room name + Front/Back Y and scale
+
+Rooms
+└── Room_<Name>                      RoomContentGroup + room-coordinate adapter
+    └── Character Scale               editor-only calibration drafts
+        ├── Front                    Scene-view draft handle
+        └── Back                     Scene-view draft handle
 
 Butler or Guest                      movement / physics / placement root (scale 1)
 └── AnimationDisplay                 Animator + SpriteRenderer + visual scale
 ```
 
-- `CharacterScaleFunction` is the one clamped linear Y-to-scale function. Front/Back X is authoring context only; every Butler and guest gets the same result for the same room-local Y.
-- `CharacterScaleCatalog` is the one room lookup. `CharacterScaleRoom` owns its Front/Back references and converts world/anchored foot position to room-local Y.
-- `CharacterAnimationDisplay` resolves the current room and stable visible-foot point, evaluates the catalog, and writes only `AnimationDisplay.localScale`.
-- `Dreadforge > Characters > Character Scale Tool` creates/repairs definitions, selects a room, edits Front/Back X/Y and positive uniform size, validates the catalog, and exposes Scene-view handles. Repair does not overwrite valid authored marker values.
-- Room pan/zoom stays with `CameraManager`. `CharacterScaleRoom` applies the room-stage local zoom ratio relative to its authored reference so a detached world-space character remains visually attached to the room surface. Canvas resolution is deliberately excluded.
+- `CharacterScaleFunction` is the one clamped linear Y-to-scale function. The saved asset contains only Front/Back Y and scale; handle X exists solely to make editor calibration convenient. Every Butler and guest gets the same result for the same room-local Y.
+- `Assets/Resources/CharacterScaleCatalog.asset` is the sole runtime calibration authority and the one normalized room lookup. `Player.prefab` references it directly, and dynamically ensured displays use the same Resources default.
+- `CharacterScaleRoom` no longer owns runtime Front/Back values. It remains on each room as a coordinate adapter that converts a world-space foot position to room-local Y and reports current room-stage scale. Its Front/Back Transform fields and handle APIs are editor-only.
+- `CharacterAnimationDisplay` resolves the current room and stable visible-foot point, combines the room coordinate and stage scale with the saved catalog definition, and writes only `AnimationDisplay.localScale`.
+- `Dreadforge > Characters > Character Scale Tool` creates or repairs editor handles, loads saved asset values into those handles, previews saved versus unsaved values, validates the asset, and exposes Scene-view handles. Scene changes remain drafts until an explicit Save action publishes them.
+- `Save Handles To Asset` publishes only the selected room; `Save All Loaded Handles To Asset` publishes every loaded room. These are the only actions that persist handle calibration to runtime data. Moving handles, saving the scene, loading, validating, repairing, or entering Play mode does not publish draft edits.
+- Room pan/zoom stays with `CameraManager`. The current room-stage scale is applied to the saved catalog result so a detached world-space character remains visually attached to the room surface. Canvas resolution is deliberately excluded.
 - Butler click-to-move, pathfinding, room transitions, logical foot position, facing, walking/idle animation, footsteps, and sorting remain.
 - Guest arrivals/departures, waiting spots, room transitions, room-anchor placement, hiding/finding, panic routes, interaction, and seat placement remain.
 - `ActorRoomState` retains actor/room identity, availability, visibility, interactability, `IsSeated`, pose state, `PlaceAt`, and position-only room-anchor following.
@@ -93,13 +99,14 @@ Butler or Guest                      movement / physics / placement root (scale 
 
 Before deleting data, `Docs/Migration/LegacyCharacterScaleSnapshot.json` captured 19 room IDs, Butler endpoints/fallbacks, 19 guest-room calibration records, two perspective profiles, eight character scale records, two ambient walkers, Drawing/Dining pose and seat mappings, and 11 panic compensation records. Runtime code does not load this snapshot.
 
-The deterministic Unity migration then made these serialized changes:
+The deterministic Unity migration and approved authority follow-up made these serialized changes:
 
-- Added exactly one `CharacterScaleCatalog` to `Gameplay.unity`.
-- Added exactly 19 `CharacterScaleRoom` definitions, one for every authoritative `RoomContentGroup`.
-- Added one `Character Scale/Front/Back` hierarchy per room. All marker Z values are zero, Front/Back Y values differ, and X/Y marker scales are positive and uniform.
-- Seeded direct room values from the snapshot's final Butler front/back endpoints. Legacy guest multipliers and per-character fine-tunes were intentionally not carried forward.
-- Set every room's authored `referenceStageScale` to its room-local scale (`1` for the current 19 definitions), preventing `CanvasScaler`/screen resolution from becoming another size input.
+- Created `Assets/Resources/CharacterScaleCatalog.asset` with exactly 19 saved room definitions, one for every authoritative Gameplay `RoomContentGroup`. The scene no longer owns a catalog component.
+- Retained one `CharacterScaleRoom` per room only for runtime room-coordinate/stage-scale conversion and editor handle references; it does not contain runtime calibration values.
+- Added one editor-only `Character Scale/Front/Back` draft hierarchy per room. All handle Z values are zero, Front/Back Y values differ, and X/Y handle scales are positive and uniform.
+- Seeded the 19 asset records from the snapshot's final Butler Front/Back endpoints. Legacy guest multipliers and per-character fine-tunes were intentionally not carried forward.
+- Removed per-room `referenceStageScale` calibration. Saved values are authored in the room's baseline coordinate space, and runtime applies the current room-stage local scale while continuing to exclude `CanvasScaler`/screen resolution.
+- Pointed `Player.prefab` at the Resources catalog asset. All Gameplay Butler/guest prefab instances inherit that same authority, and runtime-created displays load the same default asset rather than finding scene calibration data.
 - Converted the Player prefab to a unit movement/physics root plus an `AnimationDisplay` child containing the `Animator` and `SpriteRenderer`.
 - Migrated Gameplay Player and Guest 1-8 to nine dedicated displays with unit actor roots and no root/display scale overrides.
 - Removed four stale `SpriteRenderer.m_Size` prefab overrides from Guests 2, 3, 4, and 7.
@@ -131,7 +138,7 @@ The passing architecture/ownership coverage proves:
 - Front/Back X does not affect scale;
 - Butler and guest results are identical at identical room/Y, including when seated;
 - only the visual child changes size; actor root, root position, and collider bounds do not;
-- all 19 room definitions validate;
+- all 19 saved catalog-asset room definitions validate;
 - all nine Gameplay actors have dedicated unit displays;
 - stage zoom conversion is non-cumulative;
 - legacy names/GUIDs/runtime recreation cannot return;
@@ -144,12 +151,12 @@ The passing architecture/ownership coverage proves:
 
 - The full EditMode suite is not green. It began at 53 failures and currently has 30. Current failures are pre-existing/out-of-scope scene, navigation, dialogue/audio, lighting, oddity, asset-source, or broad collision expectations. The suite membership also changed because obsolete scale/projection tests were deleted, so the count reduction is context rather than a claim that every baseline failure was fixed.
 - There are no authored PlayMode tests in the project, so both baseline and final PlayMode runs discover zero tests. The batch runner passed, but this does not replace an in-Editor visual playthrough.
-- Direct Front/Back values were seeded from final Butler endpoints. Because the requested model deliberately deletes guest multipliers/fine-tunes, artists should visually review all 19 rooms and adjust only the shared room markers if desired.
+- Saved Front/Back values were seeded from final Butler endpoints. Because the requested model deliberately deletes guest multipliers/fine-tunes, artists should visually review all 19 rooms. Any handle adjustment remains an editor draft until `Save Handles To Asset` or `Save All Loaded Handles To Asset` is deliberately pressed.
 - Unity regenerated equivalent embedded room-light preview sprite/texture object IDs while saving `Gameplay.unity`. Their unrelated preview colors were restored, but those generated ID changes remain scene-diff noise.
-- `Player.prefab` intentionally leaves its catalog reference empty and discovers the scene's single catalog at runtime. Any additive or new gameplay scene must retain exactly one `CharacterScaleCatalog`.
+- `Player.prefab` references `Assets/Resources/CharacterScaleCatalog.asset`, and missing display references resolve through `CharacterScaleCatalog.LoadDefault()`. Additive or new gameplay scenes must provide the appropriate `CharacterScaleRoom` coordinate adapter for each room, not another runtime catalog.
 - Unbound moving guests use the rendered visible foot to evaluate room Y. Current art is normalized to bottom-center pivots; future character art must keep that invariant to avoid visible-foot feedback while scale changes.
 - The repository has one pre-existing serialized issue outside enabled gameplay content: `Assets/Scenes/New Scene.unity` references an Input System UI module whose package GUID is absent. It is present at the starting commit and was not introduced or broadened here.
-- No manual GUI playthrough was performed in this headless environment. Before merging, use the Character Scale Tool to inspect Front/Back guides and walk the Butler plus representative guests through each room, especially Drawing/Dining forced poses.
+- No manual GUI playthrough was performed in this headless environment. Before merging, use the Character Scale Tool to load the asset into the Front/Back handles and inspect it, then walk the Butler plus representative guests through each room, especially Drawing/Dining forced poses. Do not press either Save action unless a reviewed draft is intended to replace runtime calibration.
 
 These are review risks, not competing body-scale owners. The ownership guard and required behavior suite are green.
 
@@ -159,6 +166,7 @@ Tracked diff at report time: 283 files changed, 6,086 insertions, and 18,788 del
 
 Primary additions:
 
+- `Assets/Resources/CharacterScaleCatalog.asset`
 - `Assets/Scripts/Characters/CharacterScaleFunction.cs`
 - `Assets/Scripts/Characters/CharacterScaleRoom.cs`
 - `Assets/Scripts/Characters/CharacterScaleCatalog.cs`

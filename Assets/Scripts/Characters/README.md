@@ -7,19 +7,27 @@ The legacy migration reference and cleanup audit live in `Docs/Migration/LegacyC
 ## Recognizable hierarchy
 
 ```text
-Rooms                                CharacterScaleCatalog
-└── Room_<Name>                      RoomContentGroup + CharacterScaleRoom
-    └── Character Scale
-        ├── Front                    manual room-local X/Y + uniform scale
-        └── Back                     manual room-local X/Y + uniform scale
+Assets/Resources/CharacterScaleCatalog.asset
+└── CharacterScaleCatalog            sole runtime Front/Back calibration
+    └── room definition               room name + Front/Back Y and scale values
+
+Rooms
+└── Room_<Name>                      RoomContentGroup + room-coordinate adapter
+    └── Character Scale               editor-only calibration drafts
+        ├── Front                    Scene-view draft handle
+        └── Back                     Scene-view draft handle
 
 Butler or Guest                      movement / physics / placement root (scale 1)
 └── AnimationDisplay                 Animator + SpriteRenderer + visual scale
 ```
 
-Open `Dreadforge > Characters > Character Scale Tool` to choose a room and edit its Front and Back objects. Position is authored in that room's X/Y space; uniform object scale is the desired character display size at that endpoint. X makes the guides easy to place in the painted room, while the shared runtime function intentionally reads Y only. Values between Front and Back are linearly interpolated and values beyond them are clamped.
+`Assets/Resources/CharacterScaleCatalog.asset` is the sole runtime authority for character-size calibration. Each saved room definition contains its canonical room name plus Front Y/scale and Back Y/scale. Values between the saved endpoints are linearly interpolated and values beyond them are clamped.
 
-`CharacterScaleCatalog` is the lookup for every authoritative room. `CharacterScaleRoom` converts a world-space actor foot/root position into the selected room's local Y and evaluates `CharacterScaleFunction`. It also converts the room stage's current local zoom relative to its authored reference. Canvas resolution is not a scale input. `CharacterAnimationDisplay` applies that result only to `AnimationDisplay`; it never moves or scales the actor root.
+Open `Dreadforge > Characters > Character Scale Tool` to calibrate a room. The scene's Front and Back objects are editor-only draft handles: their room-local X/Y positions make them easy to place over the painting, and their uniform scales preview the desired endpoint sizes. Runtime never reads those Transforms. Moving or scaling a handle, using Scene-view handles, saving the scene, validating, repairing handles, or entering Play mode does not publish calibration changes.
+
+To edit an existing room safely, use `Load Asset Into Handles`, adjust the draft handles, compare `Saved Asset Preview` with `Unsaved Handle Preview`, then explicitly press `Save Handles To Asset`. Use `Save All Loaded Handles To Asset` only when every loaded room draft is intentionally ready to publish. These explicit Save actions are the only way handle values persist to the runtime catalog asset.
+
+`CharacterScaleCatalog` loads from Resources and looks up every authoritative saved room definition. `CharacterScaleRoom` remains on each room only as the runtime coordinate adapter: it converts a world-space actor foot position into room-local Y and reports the current room-stage scale. It does not read Front/Back handles at runtime. `CharacterAnimationDisplay` combines that room coordinate with the saved catalog definition, applies the shared `CharacterScaleFunction` and current stage zoom, and writes the result only to `AnimationDisplay`; it never moves or scales the actor root. Canvas resolution is not a scale input.
 
 There are no guest multipliers, per-character fine tunes, perspective profiles, tint/opacity changes, shadow scaling, sprite-bounds compensation, or sitting scale overrides. The Butler and every guest receive the same result for the same room and Y. Drawing Room and Dining Room forced sitting remain Animator/state overrides only.
 
@@ -29,7 +37,7 @@ There are no guest multipliers, per-character fine tunes, perspective profiles, 
 - `RoomPersonWalker2D` owns its ambient room person's authored local path, bob/sway, facing, and Animator parameters. Its size is a fixed authored value; it has no perspective, tint, or shadow behavior.
 - `ActorRoomState` owns actor identity, current room, chapter visibility, interactability, seated state, authored `PlaceAt` behavior, and position-only room-anchor following.
 - `NPCWaypointMover` owns direct scripted movement. It releases passive anchor following before taking movement ownership.
-- `CameraManager` owns room-stage pan and zoom. Only `CharacterScaleRoom` converts that room zoom into display size.
+- `CameraManager` owns room-stage pan and zoom. `CharacterScaleRoom` exposes the active room coordinate and stage scale; the Resources catalog remains the only calibration-value owner.
 - `WorldYSortSpriteRenderer` and `DiningRoomSeatedGuestOcclusionException` own sorting only. The Dining Room exception places a seated guest between assigned chair and table layers without changing position, scale, or appearance.
 - Chapter controllers own story placement, room transitions, hiding/finding, panic routes, animation state, and seat assignment. They do not resize a body.
 
@@ -49,4 +57,4 @@ Use `Dreadforge > Characters > Rebuild Character Animation Assets` after changin
 - Edit `RoomPersonWalker2D` path points to change an ambient person's route. Keep `Preview Path In Edit Mode` off during ordinary placement.
 - Add `WorldYSortSpriteRenderer` to world-space props that must sort against the Butler by base/pivot Y.
 - Add `YSortSolidObstacle2D` only when a prop needs an editable physical-base footprint for sorting or occlusion safety. Player navigation remains controlled by the active `PlayerBoundary` collider.
-- Do not add a scale exception for a character, animation, seated/standing state, panic state, or room. Change the room's Front/Back definition or the shared function instead.
+- Do not add a scale exception for a character, animation, seated/standing state, panic state, or room. Calibrate the room's draft handles and explicitly save them to the catalog asset, or change the shared function instead.

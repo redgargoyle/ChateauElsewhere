@@ -1,5 +1,8 @@
 using System;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -10,6 +13,8 @@ public class CharacterScaleArchitectureTests
 {
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
     private const string PlayerPrefabPath = "Assets/Prefabs/Player.prefab";
+    private const string CatalogSourcePath = "Assets/Scripts/Characters/CharacterScaleCatalog.cs";
+    private const string TestRoomName = "Test Room";
 
     [TestCase(-400f, -400f, 2f, -100f, 1f, 2f)]
     [TestCase(-250f, -400f, 2f, -100f, 1f, 1.5f)]
@@ -31,20 +36,152 @@ public class CharacterScaleArchitectureTests
     }
 
     [Test]
-    public void FrontAndBackXNeverAffectScale()
+    public void CatalogIsAValueOnlyScriptableObject()
+    {
+        Assert.That(typeof(CharacterScaleCatalog).IsSubclassOf(typeof(ScriptableObject)), Is.True);
+        Assert.That(typeof(Component).IsAssignableFrom(typeof(CharacterScaleCatalog)), Is.False);
+
+        FieldInfo roomsField = typeof(CharacterScaleCatalog).GetField(
+            "rooms",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(roomsField, Is.Not.Null);
+        Assert.That(roomsField.GetCustomAttribute<SerializeField>(), Is.Not.Null);
+        Assert.That(
+            roomsField.GetCustomAttribute<HideInInspector>(),
+            Is.Not.Null,
+            "Saved room rows should be edited through the explicit handle workflow, not the ordinary Inspector.");
+
+        FieldInfo[] definitionFields = typeof(CharacterScaleRoomDefinition).GetFields(
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+        Assert.That(definitionFields, Is.Not.Empty);
+
+        foreach (FieldInfo field in definitionFields)
+        {
+            Assert.That(
+                typeof(UnityEngine.Object).IsAssignableFrom(field.FieldType),
+                Is.False,
+                $"Runtime catalog field '{field.Name}' must contain saved values, not a scene object reference.");
+        }
+
+        string source = File.ReadAllText(CatalogSourcePath);
+        Assert.That(
+            Regex.IsMatch(
+                source,
+                @"#if\s+UNITY_EDITOR[\s\S]*?public\s+void\s+SetRooms\s*\([\s\S]*?public\s+void\s+SetRoom\s*\([\s\S]*?#endif"),
+            Is.True,
+            "Catalog mutation APIs must be absent from player/runtime compilation.");
+    }
+
+    [Test]
+    public void FrontAndBackHandleXNeverAffectsSavedOrRuntimeScale()
     {
         using (ScaleRig rig = ScaleRig.Create())
         {
             rig.Front.localPosition = new Vector3(-500f, -400f, 0f);
             rig.Back.localPosition = new Vector3(900f, -100f, 0f);
 
-            Vector3 leftPoint = rig.Room.transform.TransformPoint(new Vector3(-1000f, -250f, 0f));
-            Vector3 rightPoint = rig.Room.transform.TransformPoint(new Vector3(1000f, -250f, 0f));
+            Assert.That(
+                CharacterScaleTool.SaveRoomHandlesToCatalog(
+                    rig.Catalog,
+                    rig.ScaleRoom,
+                    false,
+                    out string report),
+                Is.True,
+                report);
 
-            Assert.That(rig.ScaleRoom.TryEvaluateScale(leftPoint, out float leftScale), Is.True);
-            Assert.That(rig.ScaleRoom.TryEvaluateScale(rightPoint, out float rightScale), Is.True);
-            Assert.That(leftScale, Is.EqualTo(rightScale).Within(0.0001f));
-            Assert.That(leftScale, Is.EqualTo(1.5f).Within(0.0001f));
+            GameObject left = CreateActor("Left", rig.Catalog, out CharacterAnimationDisplay leftDisplay);
+            GameObject right = CreateActor("Right", rig.Catalog, out CharacterAnimationDisplay rightDisplay);
+
+            try
+            {
+                left.transform.position = rig.GetWorldPoint(-250f, -1000f);
+                right.transform.position = rig.GetWorldPoint(-250f, 1000f);
+
+                Assert.That(leftDisplay.TryApplyScaleForRoom(TestRoomName), Is.True);
+                Assert.That(rightDisplay.TryApplyScaleForRoom(TestRoomName), Is.True);
+                Assert.That(leftDisplay.AnimationDisplay.localScale.x, Is.EqualTo(1.5f).Within(0.0001f));
+                Assert.That(rightDisplay.AnimationDisplay.localScale, Is.EqualTo(leftDisplay.AnimationDisplay.localScale));
+
+                Assert.That(rig.Catalog.TryGetRoom(TestRoomName, out CharacterScaleRoomDefinition saved), Is.True);
+                Assert.That(saved.FrontY, Is.EqualTo(-400f).Within(0.0001f));
+                Assert.That(saved.BackY, Is.EqualTo(-100f).Within(0.0001f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(left);
+                UnityEngine.Object.DestroyImmediate(right);
+            }
+        }
+    }
+
+    [Test]
+    public void MovingSceneHandlesCannotChangeRuntimeScaleUntilExplicitSave()
+    {
+        using (ScaleRig rig = ScaleRig.Create())
+        {
+            GameObject actor = CreateActor("UnsavedHandleProbe", rig.Catalog, out CharacterAnimationDisplay display);
+
+            try
+            {
+                actor.transform.position = rig.GetWorldPoint(-400f);
+                Assert.That(display.TryApplyScaleForRoom(TestRoomName), Is.True);
+                Assert.That(display.AnimationDisplay.localScale.x, Is.EqualTo(2f).Within(0.0001f));
+
+                // These are deliberately extreme but valid editor-handle values.
+                // Runtime must continue to use the ScriptableObject snapshot.
+                rig.SetHandleCalibration(-600f, 4f, -200f, 2f);
+
+                Assert.That(display.TryApplyScaleForRoom(TestRoomName), Is.True);
+                Assert.That(
+                    display.AnimationDisplay.localScale.x,
+                    Is.EqualTo(2f).Within(0.0001f),
+                    "Moving or scaling editor handles must not become an implicit runtime save.");
+                Assert.That(rig.Catalog.TryGetRoom(TestRoomName, out CharacterScaleRoomDefinition stillSaved), Is.True);
+                Assert.That(stillSaved.FrontY, Is.EqualTo(-400f).Within(0.0001f));
+                Assert.That(stillSaved.FrontScale, Is.EqualTo(2f).Within(0.0001f));
+                Assert.That(stillSaved.BackY, Is.EqualTo(-100f).Within(0.0001f));
+                Assert.That(stillSaved.BackScale, Is.EqualTo(1f).Within(0.0001f));
+
+                Assert.That(
+                    CharacterScaleTool.SaveRoomHandlesToCatalog(
+                        rig.Catalog,
+                        rig.ScaleRoom,
+                        false,
+                        out string report),
+                    Is.True,
+                    report);
+
+                Assert.That(display.TryApplyScaleForRoom(TestRoomName), Is.True);
+                Assert.That(
+                    display.AnimationDisplay.localScale.x,
+                    Is.EqualTo(3f).Within(0.0001f),
+                    "The same handles should affect runtime only after the explicit Save action copies them into the catalog.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(actor);
+            }
+        }
+    }
+
+    [Test]
+    public void ExplicitLoadCopiesSavedValuesToHandlesWithoutChangingRuntimeData()
+    {
+        using (ScaleRig rig = ScaleRig.Create())
+        {
+            rig.SetHandleCalibration(-700f, 6f, -20f, 0.25f);
+            Assert.That(rig.TryGetScaleAtRoomY(-250f, out float beforeLoad), Is.True);
+            Assert.That(beforeLoad, Is.EqualTo(1.5f).Within(0.0001f));
+
+            Assert.That(CharacterScaleTool.LoadAssetRoomIntoHandles(rig.Catalog, rig.ScaleRoom), Is.True);
+            Assert.That(rig.Front.localPosition.y, Is.EqualTo(-400f).Within(0.0001f));
+            Assert.That(rig.Front.localScale.x, Is.EqualTo(2f).Within(0.0001f));
+            Assert.That(rig.Back.localPosition.y, Is.EqualTo(-100f).Within(0.0001f));
+            Assert.That(rig.Back.localScale.x, Is.EqualTo(1f).Within(0.0001f));
+
+            Assert.That(rig.TryGetScaleAtRoomY(-250f, out float afterLoad), Is.True);
+            Assert.That(afterLoad, Is.EqualTo(beforeLoad).Within(0.0001f));
         }
     }
 
@@ -59,7 +196,7 @@ public class CharacterScaleArchitectureTests
             CharacterAnimationDisplay display = actor.AddComponent<CharacterAnimationDisplay>();
             display.Configure(visual.transform, rig.Catalog);
 
-            actor.transform.position = rig.Room.transform.TransformPoint(new Vector3(25f, -250f, 0f));
+            actor.transform.position = rig.GetWorldPoint(-250f, 25f);
             Vector3 rootPosition = actor.transform.position;
             Vector3 rootScale = actor.transform.localScale;
             BoxCollider2D collider = actor.GetComponent<BoxCollider2D>();
@@ -67,7 +204,7 @@ public class CharacterScaleArchitectureTests
             Physics2D.SyncTransforms();
             Bounds colliderBounds = collider.bounds;
 
-            Assert.That(display.TryApplyScaleForRoom("Test Room"), Is.True);
+            Assert.That(display.TryApplyScaleForRoom(TestRoomName), Is.True);
             Assert.That(visual.transform.localScale, Is.EqualTo(new Vector3(1.5f, 1.5f, 1f)));
             Assert.That(actor.transform.position, Is.EqualTo(rootPosition));
             Assert.That(actor.transform.localScale, Is.EqualTo(rootScale));
@@ -87,25 +224,26 @@ public class CharacterScaleArchitectureTests
             GameObject butler = CreateActor("Butler", rig.Catalog, out CharacterAnimationDisplay butlerDisplay);
             GameObject guest = CreateActor("Guest", rig.Catalog, out CharacterAnimationDisplay guestDisplay);
             ActorRoomState guestState = guest.AddComponent<ActorRoomState>();
-            guestState.SetCurrentRoom("Test Room");
+            guestState.SetCurrentRoom(TestRoomName);
 
             GameObject guestFootAnchor = new GameObject("Guest Foot Anchor");
             guestFootAnchor.transform.SetParent(rig.Room.transform, false);
             guestFootAnchor.transform.localPosition = new Vector3(0f, -220f, 0f);
             guestState.BindToRoomStagePoint(guestFootAnchor.transform);
 
-            Vector3 position = rig.Room.transform.TransformPoint(new Vector3(0f, -220f, 0f));
-            butler.transform.position = position;
-            guest.transform.position = rig.Room.transform.TransformPoint(new Vector3(0f, -100f, 0f));
+            butler.transform.position = rig.GetWorldPoint(-220f);
+            guest.transform.position = rig.GetWorldPoint(-100f);
 
-            Assert.That(butlerDisplay.TryApplyScaleForRoom("Test Room"), Is.True);
+            Assert.That(butlerDisplay.TryApplyScaleForRoom(TestRoomName), Is.True);
             Assert.That(guestDisplay.TryApplyCurrentRoomScale(), Is.True);
             Vector3 standingScale = guestDisplay.AnimationDisplay.localScale;
             Assert.That(standingScale, Is.EqualTo(butlerDisplay.AnimationDisplay.localScale));
 
             guestState.SetSeated(true);
             Assert.That(guestDisplay.TryApplyCurrentRoomScale(), Is.True);
-            Assert.That(guestDisplay.AnimationDisplay.localScale, Is.EqualTo(standingScale),
+            Assert.That(
+                guestDisplay.AnimationDisplay.localScale,
+                Is.EqualTo(standingScale),
                 "Forced sitting changes the Animator pose, never the room scale function.");
 
             UnityEngine.Object.DestroyImmediate(butler);
@@ -114,68 +252,150 @@ public class CharacterScaleArchitectureTests
     }
 
     [Test]
-    public void MarkerScalesMustBePositiveAndUniform()
+    public void CatalogDefinitionsRejectInvalidValuesAndDuplicateRooms()
     {
-        using (ScaleRig rig = ScaleRig.Create())
-        {
-            rig.Front.localScale = new Vector3(-2f, -2f, 1f);
-            Assert.That(rig.ScaleRoom.IsConfigured(out string negativeReason), Is.False);
-            Assert.That(negativeReason, Does.Contain("positive"));
+        CharacterScaleRoomDefinition valid = new CharacterScaleRoomDefinition(TestRoomName, -400f, 2f, -100f, 1f);
+        Assert.That(valid.IsConfigured(out _), Is.True);
 
-            rig.Front.localScale = new Vector3(2f, 1.5f, 1f);
-            Assert.That(rig.ScaleRoom.IsConfigured(out string nonUniformReason), Is.False);
-            Assert.That(nonUniformReason, Does.Contain("uniform"));
+        AssertInvalidDefinition(
+            new CharacterScaleRoomDefinition(TestRoomName, -100f, 2f, -100f, 1f),
+            "different Y");
+        AssertInvalidDefinition(
+            new CharacterScaleRoomDefinition(TestRoomName, float.NaN, 2f, -100f, 1f),
+            "finite");
+        AssertInvalidDefinition(
+            new CharacterScaleRoomDefinition(TestRoomName, -400f, -2f, -100f, 1f),
+            "positive");
+        AssertInvalidDefinition(
+            new CharacterScaleRoomDefinition(TestRoomName, -400f, 2f, -100f, float.PositiveInfinity),
+            "finite");
+
+        CharacterScaleCatalog catalog = ScriptableObject.CreateInstance<CharacterScaleCatalog>();
+
+        try
+        {
+            catalog.SetRooms(new[]
+            {
+                valid,
+                new CharacterScaleRoomDefinition("Test-Room", -500f, 3f, -50f, 0.5f)
+            });
+
+            Assert.That(catalog.ValidateCatalog(out string report), Is.False);
+            Assert.That(report, Does.Contain("appears more than once"));
+            Assert.That(catalog.Rooms[0], Is.Not.SameAs(valid), "The asset must own a defensive value copy.");
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(catalog);
         }
     }
 
     [Test]
-    public void RoomStageZoomIsConvertedInsideTheCatalogOwner()
+    public void RoomStageCoordinatesAndZoomAreCombinedWithoutReadingHandles()
     {
         using (ScaleRig rig = ScaleRig.Create())
         {
-            Vector3 authoredPoint = rig.Room.transform.TransformPoint(new Vector3(0f, -250f, 0f));
-            Assert.That(rig.ScaleRoom.TryEvaluateScale(authoredPoint, out float authoredScale), Is.True);
+            Vector3 authoredPoint = rig.GetWorldPoint(-250f);
+            Assert.That(rig.ScaleRoom.TryGetCharacterRoomY(authoredPoint, out float authoredY), Is.True);
+            Assert.That(authoredY, Is.EqualTo(-250f).Within(0.0001f));
+            Assert.That(rig.TryGetScaleAtRoomY(authoredY, out float authoredScale), Is.True);
             Assert.That(authoredScale, Is.EqualTo(1.5f).Within(0.0001f));
 
+            rig.SetHandleCalibration(-900f, 9f, 400f, 8f);
+            Assert.That(rig.ScaleRoom.TryGetCharacterRoomY(authoredPoint, out float afterHandleMoveY), Is.True);
+            Assert.That(afterHandleMoveY, Is.EqualTo(authoredY).Within(0.0001f));
+            Assert.That(rig.TryGetScaleAtRoomY(afterHandleMoveY, out float afterHandleMoveScale), Is.True);
+            Assert.That(afterHandleMoveScale, Is.EqualTo(authoredScale).Within(0.0001f));
+
             rig.Room.transform.localScale = Vector3.one * 2f;
-            Vector3 zoomedPoint = rig.Room.transform.TransformPoint(new Vector3(0f, -250f, 0f));
-            Assert.That(rig.ScaleRoom.TryEvaluateScale(zoomedPoint, out float zoomedScale), Is.True);
+            Vector3 zoomedPoint = rig.GetWorldPoint(-250f);
+            Assert.That(rig.ScaleRoom.TryGetCharacterRoomY(zoomedPoint, out float zoomedY), Is.True);
+            Assert.That(zoomedY, Is.EqualTo(-250f).Within(0.0001f));
+            Assert.That(rig.TryGetScaleAtRoomY(zoomedY, out float zoomedScale), Is.True);
             Assert.That(zoomedScale, Is.EqualTo(3f).Within(0.0001f));
         }
     }
 
     [Test]
-    public void GameplayHasOneCompleteDefinitionForEveryAuthoritativeRoom()
+    public void GameplayHasOneValidCatalogRecordAndRoomMappingForEveryAuthoritativeRoom()
     {
+        CharacterScaleCatalog catalog = LoadRealCatalog();
         Scene previousScene = SceneManager.GetActiveScene();
         Scene scene = OpenGameplayScene(out bool openedHere);
 
         try
         {
-            CharacterScaleCatalog[] catalogs = scene.GetRootGameObjects()
-                .SelectMany(root => root.GetComponentsInChildren<CharacterScaleCatalog>(true))
-                .ToArray();
             RoomContentGroup[] roomGroups = scene.GetRootGameObjects()
                 .SelectMany(root => root.GetComponentsInChildren<RoomContentGroup>(true))
                 .GroupBy(room => CharacterScaleCatalog.NormalizeRoomName(room.RoomName), StringComparer.OrdinalIgnoreCase)
                 .Select(group => group.First())
+                .OrderBy(room => room.RoomName, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+            CharacterScaleRoom[] roomMappings = scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<CharacterScaleRoom>(true))
                 .ToArray();
 
-            Assert.That(catalogs, Has.Length.EqualTo(1));
+            Assert.That(AssetDatabase.GetAssetPath(catalog), Is.EqualTo(CharacterScaleTool.DefaultCatalogAssetPath));
             Assert.That(roomGroups, Has.Length.EqualTo(19));
-            Assert.That(catalogs[0].Rooms.Count, Is.EqualTo(19));
-            Assert.That(catalogs[0].ValidateCatalog(out string report), Is.True, report);
+            Assert.That(roomMappings, Has.Length.EqualTo(19));
+            Assert.That(catalog.Rooms.Count, Is.EqualTo(19));
+            Assert.That(catalog.ValidateCatalog(out string report), Is.True, report);
+            Assert.That(
+                catalog.Rooms.Select(room => CharacterScaleCatalog.NormalizeRoomName(room.RoomName)),
+                Is.EquivalentTo(roomGroups.Select(room => CharacterScaleCatalog.NormalizeRoomName(room.RoomName))));
 
             foreach (RoomContentGroup room in roomGroups)
             {
-                Assert.That(catalogs[0].TryGetRoom(room.RoomName, out CharacterScaleRoom definition), Is.True, room.RoomName);
-                Assert.That(definition.Room, Is.EqualTo(room));
-                Assert.That(definition.Front.name, Is.EqualTo("Front"));
-                Assert.That(definition.Back.name, Is.EqualTo("Back"));
-                Assert.That(definition.Front.parent, Is.EqualTo(definition.Back.parent));
-                Assert.That(definition.Front.parent.name, Is.EqualTo("Character Scale"));
-                Assert.That(definition.Front.parent.IsChildOf(room.transform), Is.True);
-                Assert.That(definition.ReferenceStageScale, Is.EqualTo(Mathf.Abs(room.transform.localScale.x)).Within(0.0001f));
+                CharacterScaleRoom roomMapping = room.GetComponent<CharacterScaleRoom>();
+                Assert.That(roomMapping, Is.Not.Null, $"{room.RoomName} runtime coordinate mapping");
+                Assert.That(roomMapping.Room, Is.EqualTo(room), room.RoomName);
+                Assert.That(roomMapping.AreHandlesConfigured(out string handleReason), Is.True, handleReason);
+                Assert.That(roomMapping.FrontHandle.name, Is.EqualTo("Front"), room.RoomName);
+                Assert.That(roomMapping.BackHandle.name, Is.EqualTo("Back"), room.RoomName);
+                Assert.That(roomMapping.FrontHandle.parent, Is.EqualTo(roomMapping.BackHandle.parent), room.RoomName);
+                Assert.That(roomMapping.FrontHandle.parent.name, Is.EqualTo("Character Scale"), room.RoomName);
+                Assert.That(
+                    roomMapping.FrontHandle.parent.CompareTag("EditorOnly"),
+                    Is.True,
+                    $"{room.RoomName} calibration handles must be stripped from player builds.");
+
+                Assert.That(
+                    catalog.TryGetRoom(room.RoomName, out CharacterScaleRoomDefinition definition),
+                    Is.True,
+                    room.RoomName);
+                Assert.That(definition.IsConfigured(out string definitionReason), Is.True, definitionReason);
+
+                Vector2 frontHandlePosition = roomMapping.GetHandleRoomLocalPosition(roomMapping.FrontHandle);
+                Vector2 backHandlePosition = roomMapping.GetHandleRoomLocalPosition(roomMapping.BackHandle);
+                Assert.That(
+                    definition.FrontY,
+                    Is.EqualTo(frontHandlePosition.y).Within(0.0001f),
+                    $"{room.RoomName} seeded Front Y must match the migration source handle.");
+                Assert.That(
+                    definition.FrontScale,
+                    Is.EqualTo(roomMapping.GetHandleUniformScale(roomMapping.FrontHandle)).Within(0.0001f),
+                    $"{room.RoomName} seeded Front scale must match the migration source handle.");
+                Assert.That(
+                    definition.BackY,
+                    Is.EqualTo(backHandlePosition.y).Within(0.0001f),
+                    $"{room.RoomName} seeded Back Y must match the migration source handle.");
+                Assert.That(
+                    definition.BackScale,
+                    Is.EqualTo(roomMapping.GetHandleUniformScale(roomMapping.BackHandle)).Within(0.0001f),
+                    $"{room.RoomName} seeded Back scale must match the migration source handle.");
+
+                Assert.That(
+                    catalog.TryEvaluateScaleAtRoomY(
+                        room.RoomName,
+                        definition.FrontY,
+                        roomMapping.CurrentStageScale,
+                        out float frontScale),
+                    Is.True,
+                    room.RoomName);
+                Assert.That(
+                    frontScale,
+                    Is.EqualTo(definition.FrontScale * roomMapping.CurrentStageScale).Within(0.0001f),
+                    room.RoomName);
             }
         }
         finally
@@ -185,8 +405,9 @@ public class CharacterScaleArchitectureTests
     }
 
     [Test]
-    public void GameplayActorsKeepUnitRootsAndDedicatedAnimationDisplays()
+    public void GameplayActorsKeepUnitRootsDedicatedDisplaysAndTheCanonicalCatalog()
     {
+        CharacterScaleCatalog catalog = LoadRealCatalog();
         Scene previousScene = SceneManager.GetActiveScene();
         Scene scene = OpenGameplayScene(out bool openedHere);
 
@@ -200,10 +421,15 @@ public class CharacterScaleArchitectureTests
             Assert.That(displays, Has.Length.EqualTo(9));
             Assert.That(
                 displays.Select(display => display.name),
-                Is.EquivalentTo(new[] { "Player", "Guest 1", "Guest 2", "Guest 3", "Guest 4", "Guest 5", "Guest 6", "Guest 7", "Guest 8" }));
+                Is.EquivalentTo(new[]
+                {
+                    "Player", "Guest 1", "Guest 2", "Guest 3", "Guest 4",
+                    "Guest 5", "Guest 6", "Guest 7", "Guest 8"
+                }));
 
             foreach (CharacterAnimationDisplay display in displays)
             {
+                Assert.That(display.Catalog, Is.SameAs(catalog), $"{display.name} catalog");
                 Assert.That(display.transform.localScale, Is.EqualTo(Vector3.one), $"{display.name} actor root");
                 Assert.That(display.GetComponent<SpriteRenderer>(), Is.Null, $"{display.name} root renderer");
                 Assert.That(display.GetComponent<Animator>(), Is.Null, $"{display.name} root Animator");
@@ -235,8 +461,9 @@ public class CharacterScaleArchitectureTests
     }
 
     [Test]
-    public void ScreenSpaceRoomMappingMatchesDirectRoomYEvaluation()
+    public void ScreenSpaceRoomMappingMatchesDirectCatalogYEvaluation()
     {
+        CharacterScaleCatalog catalog = LoadRealCatalog();
         Scene previousScene = SceneManager.GetActiveScene();
         Scene scene = OpenGameplayScene(out bool openedHere);
         RenderTexture renderTexture = null;
@@ -245,9 +472,14 @@ public class CharacterScaleArchitectureTests
 
         try
         {
-            CharacterScaleRoom definition = scene.GetRootGameObjects()
+            CharacterScaleRoom roomMapping = scene.GetRootGameObjects()
                 .SelectMany(root => root.GetComponentsInChildren<CharacterScaleRoom>(true))
-                .First(room => room.IsConfigured(out _));
+                .First(room =>
+                    room.Room != null &&
+                    catalog.TryGetRoom(room.RoomName, out CharacterScaleRoomDefinition definition) &&
+                    definition.IsConfigured(out _));
+            Assert.That(catalog.TryGetRoom(roomMapping.RoomName, out CharacterScaleRoomDefinition saved), Is.True);
+
             worldCamera = Camera.main;
             Assert.That(worldCamera, Is.Not.Null, "Character scale world-to-room mapping requires Main Camera.");
             previousTarget = worldCamera.targetTexture;
@@ -256,19 +488,33 @@ public class CharacterScaleArchitectureTests
             worldCamera.targetTexture = renderTexture;
             Canvas.ForceUpdateCanvases();
 
-            float roomY = Mathf.Lerp(
-                definition.GetRoomLocalPosition(definition.Front).y,
-                definition.GetRoomLocalPosition(definition.Back).y,
-                0.37f);
-            Vector3 roomSurfaceWorldPoint = definition.Room.transform.TransformPoint(new Vector3(0f, roomY, 0f));
-            Canvas canvas = definition.Room.GetComponentInParent<Canvas>();
+            float roomY = Mathf.Lerp(saved.FrontY, saved.BackY, 0.37f);
+            Vector3 roomSurfaceWorldPoint = roomMapping.Room.transform.TransformPoint(new Vector3(0f, roomY, 0f));
+            Canvas canvas = roomMapping.Room.GetComponentInParent<Canvas>();
             Camera canvasCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
             Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(canvasCamera, roomSurfaceWorldPoint);
             float depth = Mathf.Abs(worldCamera.transform.position.z);
-            Vector3 detachedActorWorldPoint = worldCamera.ScreenToWorldPoint(new Vector3(screenPoint.x, screenPoint.y, depth));
+            Vector3 detachedActorWorldPoint = worldCamera.ScreenToWorldPoint(
+                new Vector3(screenPoint.x, screenPoint.y, depth));
 
-            Assert.That(definition.TryEvaluateScaleAtRoomY(roomY, out float directScale), Is.True);
-            Assert.That(definition.TryEvaluateScale(detachedActorWorldPoint, out float mappedScale), Is.True);
+            Assert.That(
+                roomMapping.TryGetCharacterRoomY(detachedActorWorldPoint, out float mappedRoomY),
+                Is.True);
+            Assert.That(mappedRoomY, Is.EqualTo(roomY).Within(0.001f));
+            Assert.That(
+                catalog.TryEvaluateScaleAtRoomY(
+                    roomMapping.RoomName,
+                    roomY,
+                    roomMapping.CurrentStageScale,
+                    out float directScale),
+                Is.True);
+            Assert.That(
+                catalog.TryEvaluateScaleAtRoomY(
+                    roomMapping.RoomName,
+                    mappedRoomY,
+                    roomMapping.CurrentStageScale,
+                    out float mappedScale),
+                Is.True);
             Assert.That(mappedScale, Is.EqualTo(directScale).Within(0.0001f));
         }
         finally
@@ -288,8 +534,9 @@ public class CharacterScaleArchitectureTests
     }
 
     [Test]
-    public void PlayerPrefabSeparatesAnimationDisplayFromMovementRoot()
+    public void PlayerPrefabSeparatesAnimationDisplayAndReferencesCanonicalCatalogAsset()
     {
+        CharacterScaleCatalog catalog = LoadRealCatalog();
         GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath);
         Assert.That(prefab, Is.Not.Null);
         Assert.That(prefab.transform.localScale, Is.EqualTo(Vector3.one));
@@ -298,10 +545,30 @@ public class CharacterScaleArchitectureTests
 
         CharacterAnimationDisplay display = prefab.GetComponent<CharacterAnimationDisplay>();
         Assert.That(display, Is.Not.Null);
+        Assert.That(display.Catalog, Is.SameAs(catalog));
+        Assert.That(AssetDatabase.GetAssetPath(display.Catalog), Is.EqualTo(CharacterScaleTool.DefaultCatalogAssetPath));
         Assert.That(display.HasValidDisplayRoot(), Is.True);
         Assert.That(display.AnimationDisplay.name, Is.EqualTo("AnimationDisplay"));
         Assert.That(display.AnimationDisplay.GetComponent<SpriteRenderer>(), Is.Not.Null);
         Assert.That(display.AnimationDisplay.GetComponent<Animator>(), Is.Not.Null);
+    }
+
+    private static void AssertInvalidDefinition(CharacterScaleRoomDefinition definition, string expectedReason)
+    {
+        Assert.That(definition.IsConfigured(out string reason), Is.False);
+        Assert.That(reason, Does.Contain(expectedReason).IgnoreCase);
+    }
+
+    private static CharacterScaleCatalog LoadRealCatalog()
+    {
+        CharacterScaleCatalog catalog = AssetDatabase.LoadAssetAtPath<CharacterScaleCatalog>(
+            CharacterScaleTool.DefaultCatalogAssetPath);
+        Assert.That(
+            catalog,
+            Is.Not.Null,
+            $"Missing canonical catalog asset at {CharacterScaleTool.DefaultCatalogAssetPath}.");
+        Assert.That(CharacterScaleCatalog.LoadDefault(), Is.SameAs(catalog));
+        return catalog;
     }
 
     private static GameObject CreateActor(
@@ -351,32 +618,57 @@ public class CharacterScaleArchitectureTests
         public static ScaleRig Create()
         {
             ScaleRig rig = new ScaleRig();
-            rig.Root = new GameObject("CharacterScaleTestRoot");
-            GameObject catalogObject = new GameObject("Rooms", typeof(CharacterScaleCatalog));
-            catalogObject.transform.SetParent(rig.Root.transform, false);
-            rig.Catalog = catalogObject.GetComponent<CharacterScaleCatalog>();
+            rig.Catalog = ScriptableObject.CreateInstance<CharacterScaleCatalog>();
+            rig.Catalog.name = "CharacterScaleArchitectureTestCatalog";
+            rig.Catalog.SetRooms(new[]
+            {
+                new CharacterScaleRoomDefinition(TestRoomName, -400f, 2f, -100f, 1f)
+            });
 
-            GameObject roomObject = new GameObject("Room_Test_Room", typeof(RectTransform), typeof(RoomContentGroup));
-            roomObject.transform.SetParent(catalogObject.transform, false);
+            rig.Root = new GameObject("CharacterScaleTestRoot");
+            GameObject roomObject = new GameObject(
+                "Room_Test_Room",
+                typeof(RectTransform),
+                typeof(RoomContentGroup),
+                typeof(CharacterScaleRoom));
+            roomObject.transform.SetParent(rig.Root.transform, false);
             rig.Room = roomObject.GetComponent<RoomContentGroup>();
+            rig.ScaleRoom = roomObject.GetComponent<CharacterScaleRoom>();
 
             GameObject markerRoot = new GameObject("Character Scale");
             markerRoot.transform.SetParent(roomObject.transform, false);
+            markerRoot.tag = "EditorOnly";
             GameObject frontObject = new GameObject("Front");
             frontObject.transform.SetParent(markerRoot.transform, false);
             GameObject backObject = new GameObject("Back");
             backObject.transform.SetParent(markerRoot.transform, false);
             rig.Front = frontObject.transform;
             rig.Back = backObject.transform;
-            rig.Front.localPosition = new Vector3(0f, -400f, 0f);
-            rig.Back.localPosition = new Vector3(0f, -100f, 0f);
-            rig.Front.localScale = new Vector3(2f, 2f, 1f);
-            rig.Back.localScale = Vector3.one;
-
-            rig.ScaleRoom = roomObject.AddComponent<CharacterScaleRoom>();
-            rig.ScaleRoom.Configure(rig.Room, rig.Front, rig.Back, 1f);
-            rig.Catalog.SetRooms(new[] { rig.ScaleRoom });
+            rig.SetHandleCalibration(-400f, 2f, -100f, 1f);
+            rig.ScaleRoom.ConfigureHandles(rig.Room, rig.Front, rig.Back);
             return rig;
+        }
+
+        public Vector3 GetWorldPoint(float roomY, float roomX = 0f)
+        {
+            return Room.transform.TransformPoint(new Vector3(roomX, roomY, 0f));
+        }
+
+        public bool TryGetScaleAtRoomY(float roomY, out float scale)
+        {
+            return Catalog.TryEvaluateScaleAtRoomY(
+                TestRoomName,
+                roomY,
+                ScaleRoom.CurrentStageScale,
+                out scale);
+        }
+
+        public void SetHandleCalibration(float frontY, float frontScale, float backY, float backScale)
+        {
+            Front.localPosition = new Vector3(Front.localPosition.x, frontY, 0f);
+            Front.localScale = new Vector3(frontScale, frontScale, 1f);
+            Back.localPosition = new Vector3(Back.localPosition.x, backY, 0f);
+            Back.localScale = new Vector3(backScale, backScale, 1f);
         }
 
         public void Dispose()
@@ -384,6 +676,11 @@ public class CharacterScaleArchitectureTests
             if (Root != null)
             {
                 UnityEngine.Object.DestroyImmediate(Root);
+            }
+
+            if (Catalog != null)
+            {
+                UnityEngine.Object.DestroyImmediate(Catalog);
             }
         }
     }
