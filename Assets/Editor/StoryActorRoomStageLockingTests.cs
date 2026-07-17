@@ -199,7 +199,7 @@ public class StoryActorRoomStageLockingTests
     }
 
     [Test]
-    public void RoomStageBindingKeepsVisibleFeetOnTheAnchorWithoutChangingScale()
+    public void RoomStageBindingKeepsActorRootOnTheAnchorWithoutChangingScale()
     {
         TestRig rig = CreateRig();
         Texture2D bodyTexture = new Texture2D(20, 40);
@@ -216,13 +216,13 @@ public class StoryActorRoomStageLockingTests
             Vector3 authoredScale = rig.ActorState.transform.localScale;
             rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
             PlaceActorAt(rig, rig.Anchor);
-            AssertVisibleFeetLockedToAnchor(rig, bodyRenderer, "initial foot binding");
+            AssertActorLockedToAnchor(rig, "initial root binding");
             Assert.That(rig.ActorState.transform.localScale, Is.EqualTo(authoredScale));
 
             rig.CameraManager.defaultRoomZoom = rig.CameraManager.maxRoomZoom;
             rig.CameraManager.SetRoomLookForPreview(0.6f, -0.25f, 0.8f);
             Assert.That(ApplyBinding(rig), Is.True);
-            AssertVisibleFeetLockedToAnchor(rig, bodyRenderer, "pan and zoom refresh");
+            AssertActorLockedToAnchor(rig, "pan and zoom root refresh");
             Assert.That(rig.ActorState.transform.localScale, Is.EqualTo(authoredScale));
         }
         finally
@@ -234,7 +234,7 @@ public class StoryActorRoomStageLockingTests
     }
 
     [Test]
-    public void StaticBoundGuestUsesFinalAnimationDisplayScaleBeforeFeetAreAligned()
+    public void StaticBoundGuestUsesFinalAnimationDisplayScaleWithoutMovingActorRoot()
     {
         TestRig rig = CreateRig();
         Texture2D bodyTexture = new Texture2D(20, 40);
@@ -266,15 +266,59 @@ public class StoryActorRoomStageLockingTests
             Assert.That(
                 display.AnimationDisplay.localScale,
                 Is.EqualTo(new Vector3(expectedDisplayScale, expectedDisplayScale, 1f)),
-                "Static placement must apply the target room's display scale before it samples visible feet.");
-            AssertVisibleFeetLockedToAnchor(rig, bodyRenderer, "scaled static foot binding");
+                "Static placement must apply the target room's display scale without moving the actor root.");
+            AssertActorLockedToAnchor(rig, "scaled static root binding");
             Assert.That(rig.ActorState.transform.localScale, Is.EqualTo(authoredRootScale),
-                "Feet alignment must not take ownership of the actor root scale.");
+                "Static room-anchor binding must not take ownership of the actor root scale.");
         }
         finally
         {
             Object.DestroyImmediate(bodySprite);
             Object.DestroyImmediate(bodyTexture);
+            rig.Destroy();
+        }
+    }
+
+    [Test]
+    public void StaticRoomAnchorBindingIgnoresAnimationFrameBounds()
+    {
+        TestRig rig = CreateRig();
+        Texture2D shortTexture = new Texture2D(20, 40);
+        Texture2D tallTexture = new Texture2D(20, 80);
+        Sprite shortFrame = Sprite.Create(
+            shortTexture,
+            new Rect(0f, 0f, shortTexture.width, shortTexture.height),
+            new Vector2(0.5f, 0.5f),
+            20f);
+        Sprite tallFrame = Sprite.Create(
+            tallTexture,
+            new Rect(0f, 0f, tallTexture.width, tallTexture.height),
+            new Vector2(0.5f, 0.5f),
+            20f);
+        SpriteRenderer bodyRenderer = rig.ActorState.GetComponent<SpriteRenderer>();
+
+        try
+        {
+            rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
+            bodyRenderer.sprite = shortFrame;
+            PlaceActorAt(rig, rig.Anchor);
+            AssertActorLockedToAnchor(rig, "short animation frame");
+            Vector3 shortFrameRootPosition = rig.ActorState.transform.position;
+
+            bodyRenderer.sprite = tallFrame;
+            Assert.That(ApplyBinding(rig), Is.True);
+            AssertActorLockedToAnchor(rig, "tall animation frame");
+            Assert.That(
+                rig.ActorState.transform.position,
+                Is.EqualTo(shortFrameRootPosition),
+                "Changing animation-frame bounds must never move a statically anchored actor root.");
+        }
+        finally
+        {
+            Object.DestroyImmediate(shortFrame);
+            Object.DestroyImmediate(tallFrame);
+            Object.DestroyImmediate(shortTexture);
+            Object.DestroyImmediate(tallTexture);
             rig.Destroy();
         }
     }
@@ -610,23 +654,6 @@ public class StoryActorRoomStageLockingTests
             Vector2 actorScreen = rig.Camera.WorldToScreenPoint(rig.ActorState.transform.position);
             Vector2 anchorScreen = RectTransformUtility.WorldToScreenPoint(rig.Canvas.worldCamera, rig.Anchor.position);
             Assert.That(Vector2.Distance(actorScreen, anchorScreen), Is.LessThanOrEqualTo(ScreenLockTolerance), context);
-        }
-        finally
-        {
-            rig.Camera.targetTexture = null;
-        }
-    }
-
-    private static void AssertVisibleFeetLockedToAnchor(TestRig rig, SpriteRenderer renderer, string context)
-    {
-        AttachCameraTarget(rig);
-
-        try
-        {
-            Vector3 feetWorld = new Vector3(renderer.bounds.center.x, renderer.bounds.min.y, renderer.bounds.center.z);
-            Vector2 feetScreen = rig.Camera.WorldToScreenPoint(feetWorld);
-            Vector2 anchorScreen = RectTransformUtility.WorldToScreenPoint(rig.Canvas.worldCamera, rig.Anchor.position);
-            Assert.That(Vector2.Distance(feetScreen, anchorScreen), Is.LessThanOrEqualTo(ScreenLockTolerance), context);
         }
         finally
         {

@@ -3210,16 +3210,10 @@ public class Chapter1ArrivalController : MonoBehaviour
             Vector3 targetPosition = feetPosition;
 
             // Binding first gives CharacterAnimationDisplay the stable authored
-            // room-local foot point it needs to apply the final room/Y size.
-            // The subsequent bounds sample then aligns feet at that final size.
+            // room-local point it needs to apply the final room/Y size. The
+            // authored anchor is also the persistent actor-root foot reference;
+            // animation-frame renderer bounds must never offset it.
             BindGuestToRoomStagePoint(guestState, roomStageTarget);
-
-            if (TryGetGuestFeetWorldPoint(guestState.GuestObject, true, true, out Vector3 currentFeetPosition))
-            {
-                Vector3 feetOffset = currentFeetPosition - guestTransform.position;
-                targetPosition.x -= feetOffset.x;
-                targetPosition.y -= feetOffset.y;
-            }
 
             targetPosition.z = guestTransform.position.z;
             guestTransform.position = targetPosition;

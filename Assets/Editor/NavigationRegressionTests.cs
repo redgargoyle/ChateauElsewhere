@@ -1197,7 +1197,8 @@ public class NavigationRegressionTests
         Assert.That(actorRoomStateText, Does.Contain("TryApplyRoomStageLocalBindingIfNeeded"), "Bound actors should use one explicit local-to-world binding path.");
         Assert.That(actorRoomStateText, Does.Not.Contain("ScaleXY"), "Room-stage following must never resize a character body.");
         Assert.That(actorRoomStateText, Does.Contain("targetTransform.position = worldPoint"), "Every refresh should recompute an absolute position from the authored anchor.");
-        Assert.That(actorRoomStateText, Does.Contain("CharacterFootPositionUtility.TryGetWorldPoint"), "The authored anchor should remain aligned to visible feet without changing scale.");
+        Assert.That(actorRoomStateText, Does.Not.Contain("CharacterFootPositionUtility.TryGetWorldPoint"), "Animation-frame renderer bounds must not move an actor away from its authored anchor.");
+        Assert.That(actorRoomStateText, Does.Not.Contain("footCorrection"), "Room-stage binding must keep the authored anchor as the exact actor-root position.");
         Assert.That(actorRoomStateText, Does.Contain("GetComponentInParent<RoomContentGroup>(true)"), "Actors already under a RoomContentGroup must not receive duplicate world-space following.");
         Assert.That(chapter1ArrivalText, Does.Contain("BindGuestToRoomStagePoint(guestState, target)"), "Chapter 1 placement should bind world-space guests to their room-stage target.");
         Assert.That(chapter1ArrivalText, Does.Contain("guestState.ActorState.BindToRoomStagePoint(target)"), "Chapter 1 should use the ActorRoomState binding API, not guest-specific animation exceptions.");
