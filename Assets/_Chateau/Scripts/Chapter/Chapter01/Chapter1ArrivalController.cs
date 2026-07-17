@@ -29,6 +29,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         public GameObject GuestObject;
         public Chapter1CoatPickup CoatPickup;
         public NPCWaypointMover Mover;
+        public CharacterAnimationPresenter Animation;
         public Transform DrawingRoomDepartureTarget;
         public ActorRoomState ActorState;
         public GuestFootstepAudio Footsteps;
@@ -1263,6 +1264,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             ActorRoomState actorState = config.ResolveActorState();
             GameObject guestObject = config.ResolveGuestObject();
             NPCWaypointMover mover = guestObject != null ? guestObject.GetComponent<NPCWaypointMover>() : null;
+            CharacterAnimationPresenter animation = CharacterAnimationPresenter.EnsureForActor(guestObject);
             GuestFootstepAudio footsteps = ConfigureGuestFootsteps(guestObject, i + 1);
 
             if (mover == null && guestObject != null)
@@ -1289,6 +1291,7 @@ public class Chapter1ArrivalController : MonoBehaviour
                 CoatStored = false,
                 Seated = false,
                 Mover = mover,
+                Animation = animation,
                 ActorState = actorState,
                 Footsteps = footsteps,
                 Seat = ResolveSeatForGuest(i)
@@ -1535,7 +1538,11 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} moving to entrance wait spot.", this);
-        yield return MoveGuestTo(guest, waitSpot, "entrance waiting spot");
+        yield return MoveGuestTo(
+            guest,
+            waitSpot,
+            "entrance waiting spot",
+            GetEntranceApproachAnimationDirection(guest, waitSpot));
 
         if (guest.CoatTaken || guest.MovingToDrawingRoom || guest.Seated)
         {
@@ -2300,7 +2307,12 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         SetGuestState(guest, GuestArrivalState.MovingToDrawingRoom);
         Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} moving to drawing room door.", this);
-        BeginGuestMoveTo(guest, target, "drawingRoomEntryPoint", moveSpeed);
+        BeginGuestMoveTo(
+            guest,
+            target,
+            "drawingRoomEntryPoint",
+            moveSpeed,
+            CharacterWalkDirection.Left);
     }
 
     private bool HasEntranceGroupReachedDrawingRoomExit(GuestGroupRuntimeState group)
@@ -3197,6 +3209,50 @@ public class Chapter1ArrivalController : MonoBehaviour
         Transform doorTarget = GetWorldDoorArrivalTarget();
         Vector3 feetPosition = GetWorldDoorArrivalBasePosition(guestState);
         PlaceGuestFeetAtPosition(guestState, feetPosition, doorTarget, true);
+        SetGuestIdleAnimation(guestState, CharacterWalkDirection.Down);
+    }
+
+    private static CharacterWalkDirection GetEntranceApproachAnimationDirection(
+        GuestRuntimeState guestState,
+        Transform target)
+    {
+        if (guestState?.GuestObject == null || target == null)
+        {
+            return CharacterWalkDirection.Down;
+        }
+
+        Vector3 startPosition = guestState.GuestObject.transform.position;
+
+        if (TryGetGuestFeetWorldPoint(
+                guestState.GuestObject,
+                true,
+                false,
+                out Vector3 feetPosition))
+        {
+            startPosition = feetPosition;
+        }
+
+        Vector2 movement = target.position - startPosition;
+        return Mathf.Abs(movement.x) > Mathf.Abs(movement.y)
+            ? CharacterWalkDirection.Right
+            : CharacterWalkDirection.Down;
+    }
+
+    private static void SetGuestIdleAnimation(
+        GuestRuntimeState guestState,
+        CharacterWalkDirection direction)
+    {
+        if (guestState == null)
+        {
+            return;
+        }
+
+        if (guestState.Animation == null)
+        {
+            guestState.Animation = CharacterAnimationPresenter.EnsureForActor(guestState.GuestObject);
+        }
+
+        guestState.Animation?.StopWalk(direction);
     }
 
     private void PlaceGuestFeetAtPosition(
@@ -3531,7 +3587,10 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
     }
 
-    private IEnumerator MoveGuestTo(GuestRuntimeState guestState, Transform target, string fieldName)
+    private IEnumerator MoveGuestTo(GuestRuntimeState guestState,
+        Transform target,
+        string fieldName,
+        CharacterWalkDirection animationDirection)
     {
         if (guestState == null)
         {
@@ -3555,7 +3614,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         mover.enabled = true;
         mover.MoveSpeed = GetMoveSpeedForGuestObject(guestState.GuestObject);
         StartGuestFootsteps(guestState);
-        mover.MoveTo(target);
+        mover.MoveTo(target, animationDirection);
 
         while (mover != null && mover.IsMoving)
         {
@@ -3583,7 +3642,8 @@ public class Chapter1ArrivalController : MonoBehaviour
         GuestRuntimeState guestState,
         Transform target,
         string fieldName,
-        float moveSpeed)
+        float moveSpeed,
+        CharacterWalkDirection animationDirection)
     {
         if (guestState == null)
         {
@@ -3609,7 +3669,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             ? moveSpeed
             : GetMoveSpeedForGuestObject(guestState.GuestObject);
         StartGuestFootsteps(guestState);
-        mover.MoveTo(target);
+        mover.MoveTo(target, animationDirection);
     }
 
     private void DisableGuestMovement(GuestRuntimeState guestState)
@@ -4668,6 +4728,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         DisableAmbientWalkers(guestObject);
         ConfigureGuestPhysicsForScriptedMovement(guestObject);
         CharacterAnimationDisplay.EnsureForActor(guestObject);
+        CharacterAnimationPresenter.EnsureForActor(guestObject);
         ConfigureGuestAnimatorForIndex(guestObject, index);
 
         ActorRoomState actorState = guestObject.GetComponent<ActorRoomState>();
@@ -4965,7 +5026,13 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
-        Animator guestAnimator = guestObject.GetComponentInChildren<Animator>(true);
+        CharacterAnimationPresenter presenter = CharacterAnimationPresenter.EnsureForActor(guestObject);
+        Animator guestAnimator = presenter != null ? presenter.Animator : null;
+
+        if (guestAnimator == null)
+        {
+            guestAnimator = guestObject.GetComponentInChildren<Animator>(true);
+        }
 
         if (guestAnimator == null)
         {
@@ -4983,7 +5050,9 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
-        SpriteRenderer guestRenderer = FindCharacterSpriteRenderer(guestObject);
+        SpriteRenderer guestRenderer = presenter != null && presenter.BodyRenderer != null
+            ? presenter.BodyRenderer
+            : FindCharacterSpriteRenderer(guestObject);
 
         if (guestRenderer != null)
         {
@@ -5003,6 +5072,25 @@ public class Chapter1ArrivalController : MonoBehaviour
         if (rootRenderer != null)
         {
             return rootRenderer;
+        }
+
+        CharacterAnimationPresenter presenter = CharacterAnimationPresenter.FindForActor(guestObject);
+
+        if (presenter != null && presenter.BodyRenderer != null)
+        {
+            return presenter.BodyRenderer;
+        }
+
+        CharacterAnimationDisplay display = guestObject.GetComponent<CharacterAnimationDisplay>();
+
+        if (display != null && display.AnimationDisplay != null)
+        {
+            SpriteRenderer displayRenderer = display.AnimationDisplay.GetComponent<SpriteRenderer>();
+
+            if (displayRenderer != null)
+            {
+                return displayRenderer;
+            }
         }
 
         SpriteRenderer[] renderers = guestObject.GetComponentsInChildren<SpriteRenderer>(true);

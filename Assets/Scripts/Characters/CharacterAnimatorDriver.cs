@@ -129,12 +129,22 @@ public static class CharacterAnimatorDriver
 			CharacterWalkDirection direction,
 			float walkingSpeed)
 		{
+			ApplyMovement(animator, isWalking, direction, walkingSpeed, false);
+		}
+
+		public void ApplyMovement(
+			Animator animator,
+			bool isWalking,
+			CharacterWalkDirection direction,
+			float walkingSpeed,
+			bool isSeated)
+		{
 			if (animator == null)
 				return;
 
 			SetFloat(animator, SpeedHash, isWalking ? walkingSpeed : 0f, hasSpeed);
 			SetBool(animator, IsJumpingHash, false, hasJumping);
-			SetBool(animator, IsCrouchingHash, false, hasCrouching);
+			SetBool(animator, IsCrouchingHash, isSeated && !isWalking, hasCrouching);
 			SetBool(animator, IsWalkingUpHash, isWalking && direction == CharacterWalkDirection.Up, hasWalkingUp);
 			SetBool(animator, IsWalkingDownHash, isWalking && direction == CharacterWalkDirection.Down, hasWalkingDown);
 			SetBool(animator, IsWalkingLeftHash, isWalking && direction == CharacterWalkDirection.Left, hasWalkingLeft);

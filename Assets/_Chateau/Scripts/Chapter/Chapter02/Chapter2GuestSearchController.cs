@@ -1378,10 +1378,11 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
             if (mover != null)
             {
+                CharacterWalkDirection animationDirection = GetGuestExitAnimationDirection(actorState, exitTarget);
                 LogGuestExitPlan(guest, actorState, sourceRoom, exitTarget);
                 mover.enabled = true;
                 mover.MoveSpeed = GetGuestExitMoveSpeed(actorState);
-                mover.MoveTo(exitTarget);
+                mover.MoveTo(exitTarget, animationDirection);
                 yield return null;
 
                 float elapsed = 0f;
@@ -1462,6 +1463,23 @@ public class Chapter2GuestSearchController : MonoBehaviour
         return mover;
     }
 
+    private static CharacterWalkDirection GetGuestExitAnimationDirection(
+        ActorRoomState actorState,
+        Transform exitTarget)
+    {
+        GetGuestExitDiagnosticPoints(
+            actorState,
+            exitTarget,
+            out Vector2 startPoint,
+            out Vector2 targetPoint,
+            out _);
+
+        return CharacterAnimatorDriver.DetermineDirection(
+            targetPoint - startPoint,
+            CharacterWalkDirection.Down,
+            0.55f);
+    }
+
     private void LogGuestExitPlan(GuestSearchEntry guest, ActorRoomState actorState, string sourceRoom, Transform exitTarget)
     {
         if (guest == null || actorState == null || exitTarget == null)
@@ -1491,11 +1509,21 @@ public class Chapter2GuestSearchController : MonoBehaviour
         targetPoint = Vector2.zero;
         motionOwner = "transform";
 
-        Transform actorTransform = actorState != null ? actorState.transform : null;
+        GameObject actorObject = actorState != null ? actorState.gameObject : null;
 
-        if (actorTransform != null)
+        if (actorObject != null &&
+            CharacterFootPositionUtility.TryGetWorldPoint(
+                actorObject,
+                true,
+                false,
+                out Vector3 feetWorldPoint))
         {
-            startPoint = new Vector2(actorTransform.position.x, actorTransform.position.y);
+            startPoint = feetWorldPoint;
+            motionOwner = "visible-feet";
+        }
+        else if (actorState != null)
+        {
+            startPoint = actorState.transform.position;
         }
 
         targetPoint = new Vector2(exitTarget.position.x, exitTarget.position.y);
@@ -2270,6 +2298,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
         GameObject actorObject = guest.actorState.gameObject;
         Transform actorTransform = actorObject.transform;
+        CharacterAnimationPresenter.EnsureForActor(actorObject);
 
         if (actorTransform.GetComponentInParent<RoomContentGroup>(true) == null)
         {

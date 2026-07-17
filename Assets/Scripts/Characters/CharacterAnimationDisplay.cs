@@ -203,6 +203,7 @@ public sealed class CharacterAnimationDisplay : MonoBehaviour
 
         if (display != null)
         {
+            CharacterAnimationPresenter.EnsureForActor(actorRoot);
             return display;
         }
 
@@ -228,6 +229,7 @@ public sealed class CharacterAnimationDisplay : MonoBehaviour
 
         display = actorRoot.AddComponent<CharacterAnimationDisplay>();
         display.Configure(displayRoot, scaleCatalog != null ? scaleCatalog : CharacterScaleCatalog.LoadDefault());
+        CharacterAnimationPresenter.EnsureForActor(actorRoot);
         return display;
     }
 
