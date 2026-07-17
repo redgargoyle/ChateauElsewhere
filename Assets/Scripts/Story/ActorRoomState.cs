@@ -136,6 +136,12 @@ public class ActorRoomState : MonoBehaviour
     {
         RefreshComponentCache();
 
+        if (TryGetAnimationPresenter(out CharacterAnimationPresenter presenter))
+        {
+            presenter.ResetAnimatorToAuthoredState();
+            return;
+        }
+
         for (int i = 0; i < animators.Length; i++)
         {
             Animator animator = animators[i];
@@ -407,8 +413,21 @@ public class ActorRoomState : MonoBehaviour
         animators = root.GetComponentsInChildren<Animator>(true);
     }
 
+    private bool TryGetAnimationPresenter(out CharacterAnimationPresenter presenter)
+    {
+        GameObject root = actorObject != null ? actorObject : gameObject;
+        presenter = root != null ? root.GetComponent<CharacterAnimationPresenter>() : null;
+        return presenter != null;
+    }
+
     private void ApplySeatedAnimatorState()
     {
+        if (TryGetAnimationPresenter(out CharacterAnimationPresenter presenter))
+        {
+            presenter.SetSeated(isSeated);
+            return;
+        }
+
         for (int i = 0; i < animators.Length; i++)
         {
             Animator animator = animators[i];

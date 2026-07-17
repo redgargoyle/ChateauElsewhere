@@ -13,6 +13,7 @@ public class NPCWaypointMover : MonoBehaviour
     [SerializeField, Range(0.1f, 1f)] private float horizontalDirectionThreshold = 0.55f;
     [SerializeField] private RoomPersonWalker2D ambientWalker;
     [SerializeField] private ActorRoomState actorRoomState;
+    [SerializeField] private CharacterAnimationPresenter animationPresenter;
     [SerializeField] private Animator animator;
     [SerializeField] private GuestFootstepAudio footstepAudio;
 
@@ -27,6 +28,8 @@ public class NPCWaypointMover : MonoBehaviour
     private bool restoreAmbientWalkerAfterSpeechPause;
     private CharacterAnimatorDriver.ParameterCache animatorParameters;
     private CharacterWalkDirection walkDirection = CharacterWalkDirection.Down;
+    private bool hasAnimationDirectionOverride;
+    private CharacterWalkDirection animationDirectionOverride = CharacterWalkDirection.Down;
     private readonly List<Vector2> floorRouteLogicalPoints = new List<Vector2>();
     private PointClickPlayerMovement floorRoutePlanner;
     private Vector2 currentFloorRouteLogicalPosition;
@@ -67,6 +70,21 @@ public class NPCWaypointMover : MonoBehaviour
 
     public Coroutine MoveTo(Transform target)
     {
+        return MoveTo(target, false, CharacterWalkDirection.Down);
+    }
+
+    public Coroutine MoveTo(Transform target, CharacterWalkDirection animationDirection)
+    {
+        return MoveTo(target, true, animationDirection);
+    }
+
+    private Coroutine MoveTo(
+        Transform target,
+        bool overrideAnimationDirection,
+        CharacterWalkDirection animationDirection)
+    {
+        SetAnimationDirectionOverride(overrideAnimationDirection, animationDirection);
+
         if (target == null)
         {
             Debug.LogWarning($"NPCWaypointMover on '{name}' missing required waypoint target.", this);
@@ -114,11 +132,23 @@ public class NPCWaypointMover : MonoBehaviour
         }
 
         ResolveReferences();
-        moveRoutine = StartCoroutine(MoveToRoutine(target));
+        moveRoutine = StartCoroutine(MoveToRoutineInternal(target));
         return moveRoutine;
     }
 
     public IEnumerator MoveToRoutine(Transform target)
+    {
+        SetAnimationDirectionOverride(false, CharacterWalkDirection.Down);
+        return MoveToRoutineInternal(target);
+    }
+
+    public IEnumerator MoveToRoutine(Transform target, CharacterWalkDirection animationDirection)
+    {
+        SetAnimationDirectionOverride(true, animationDirection);
+        return MoveToRoutineInternal(target);
+    }
+
+    private IEnumerator MoveToRoutineInternal(Transform target)
     {
         if (target == null)
         {
@@ -622,6 +652,14 @@ public class NPCWaypointMover : MonoBehaviour
         floorRouteIndex = 0;
     }
 
+    private void SetAnimationDirectionOverride(
+        bool hasOverride,
+        CharacterWalkDirection direction)
+    {
+        hasAnimationDirectionOverride = hasOverride;
+        animationDirectionOverride = direction;
+    }
+
     private void ResolveReferences()
     {
         if (ambientWalker == null)
@@ -637,6 +675,11 @@ public class NPCWaypointMover : MonoBehaviour
         if (animator == null)
         {
             animator = GetComponentInChildren<Animator>(true);
+        }
+
+        if (animationPresenter == null)
+        {
+            animationPresenter = GetComponent<CharacterAnimationPresenter>();
         }
 
         if (footstepAudio == null)
@@ -683,12 +726,41 @@ public class NPCWaypointMover : MonoBehaviour
 
     private void UpdateAnimator(Vector2 movement, bool isWalking)
     {
+        if (animationPresenter != null)
+        {
+            if (hasAnimationDirectionOverride)
+            {
+                if (isWalking)
+                {
+                    animationPresenter.BeginWalk(animationDirectionOverride, moveSpeed);
+                }
+                else
+                {
+                    animationPresenter.StopWalk(animationDirectionOverride);
+                }
+            }
+            else
+            {
+                animationPresenter.ApplyMovement(
+                    movement,
+                    isWalking,
+                    moveSpeed,
+                    horizontalDirectionThreshold);
+            }
+
+            return;
+        }
+
         if (animator == null)
         {
             return;
         }
 
-        if (movement.sqrMagnitude > 0.0001f)
+        if (hasAnimationDirectionOverride)
+        {
+            walkDirection = animationDirectionOverride;
+        }
+        else if (movement.sqrMagnitude > 0.0001f)
         {
             walkDirection = CharacterAnimatorDriver.DetermineDirection(
                 movement,

@@ -474,8 +474,8 @@ public class Chapter2RegressionTests
 
         Assert.That(chapter1Text, Does.Contain("GuestFootstepCatalog"), "Chapter 1 should use the shared footstep catalog.");
         Assert.That(chapter1Text, Does.Contain("ConfigureGuestFootsteps(guestObject, i + 1)"), "Chapter 1 runtime state should bind each guest to their own footstep loop.");
-        Assert.That(chapter1MoveBody, Does.Match(@"StartGuestFootsteps\(guestState\)[\s\S]*mover\.MoveTo\(target\)[\s\S]*StopGuestFootsteps\(guestState\)"), "Coroutine guest movement should play footsteps only while the waypoint mover is active.");
-        Assert.That(chapter1BeginMoveBody, Does.Match(@"StartGuestFootsteps\(guestState\)[\s\S]*mover\.MoveTo\(target\)"), "Asynchronous guest movement should start footsteps before moving.");
+        Assert.That(chapter1MoveBody, Does.Match(@"StartGuestFootsteps\(guestState\)[\s\S]*mover\.MoveTo\(target,\s*animationDirection\)[\s\S]*StopGuestFootsteps\(guestState\)"), "Coroutine guest movement should play footsteps only while the direction-locked waypoint mover is active.");
+        Assert.That(chapter1BeginMoveBody, Does.Match(@"StartGuestFootsteps\(guestState\)[\s\S]*mover\.MoveTo\(target,\s*animationDirection\)"), "Asynchronous guest movement should start footsteps before the direction-locked move.");
         Assert.That(chapter1DisableBody, Does.Match(@"StopGuestFootsteps\(guestState\)[\s\S]*guestState\.Mover\.StopMoving\(\)"), "Cancelling guest movement should stop footstep audio before disabling the mover.");
 
         Assert.That(panicText, Does.Contain("ConfigureParticipantFootsteps(participant)"), "Chapter 2 panic participants should inherit their assigned footstep loop.");
@@ -1552,8 +1552,8 @@ public class Chapter2RegressionTests
         Assert.That(exitBody, Does.Contain("LogGuestExitPlan"), "Preference exits should log guest/source room/door/start/target/distance once per exit.");
         Assert.That(exitBody, Does.Contain("GetOrCreateGuestExitMover(actorState)"), "Dinner-preference exits should reuse the same NPCWaypointMover helper as the working Chapter 1 coat exit.");
         Assert.That(exitBody, Does.Contain("mover.MoveSpeed = GetGuestExitMoveSpeed(actorState)"), "The shared mover should use the existing guest-exit speed scale.");
-        Assert.That(exitBody, Does.Contain("mover.MoveTo(exitTarget)"), "Dinner-preference exits must call the same underlying movement helper as the working coat exit instead of a third movement implementation.");
-        Assert.That(exitBody, Does.Match(@"(?s)mover\.MoveTo\(exitTarget\).*while\s*\([^)]*mover\.IsMoving"), "The guest should remain visible while the shared mover walks toward the door.");
+        Assert.That(exitBody, Does.Contain("mover.MoveTo(exitTarget, animationDirection)"), "Dinner-preference exits must call the same direction-locked movement helper as the working coat exit instead of a third movement implementation.");
+        Assert.That(exitBody, Does.Match(@"(?s)mover\.MoveTo\(exitTarget,\s*animationDirection\).*while\s*\([^)]*mover\.IsMoving"), "The guest should remain visible while the shared mover walks toward the door.");
         Assert.That(guestSearchText, Does.Not.Contain("guestExitDistance"), "Dinner-preference exits must not use the old tiny hardcoded offset path.");
         Assert.That(guestSearchText, Does.Not.Contain("guestExitSeconds"), "Dinner-preference exits must not time a fake slide instead of walking to a door.");
         Assert.That(guestSearchText, Does.Not.Contain("RunFallbackGuestExitSlide"), "The broken fake slide fallback should not remain callable.");
@@ -1587,7 +1587,7 @@ public class Chapter2RegressionTests
         Assert.That(guestSearchText, Does.Contain("guestExitMoveSpeed = 520f"), "The default hidden-guest exit speed should match the existing Chapter 2 door-exit pixel speed.");
         Assert.That(guestSearchText, Does.Contain("GuestExitWorldMoveSpeed = 2.2f"), "World-space fallback movement should mirror the Chapter 1 guest mover scale.");
 
-        int moveIndex = exitBody.IndexOf("mover.MoveTo(exitTarget)", System.StringComparison.Ordinal);
+        int moveIndex = exitBody.IndexOf("mover.MoveTo(exitTarget, animationDirection)", System.StringComparison.Ordinal);
         int stageIndex = exitBody.IndexOf("StageGuestForDiningRoomReveal(guest)", System.StringComparison.Ordinal);
         Assert.That(moveIndex, Is.GreaterThanOrEqualTo(0));
         Assert.That(stageIndex, Is.GreaterThan(moveIndex), "Guests must not be staged hidden for Dining Room until after the door walk starts.");

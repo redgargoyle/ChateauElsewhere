@@ -1205,6 +1205,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
     private sealed class PanicParticipant
     {
         private ActorRoomState actorState;
+        private CharacterAnimationPresenter animationPresenter;
         private Chapter2PanicCharacterAnimation animation;
         private SpriteRenderer spriteRenderer;
         private Image image;
@@ -1275,13 +1276,21 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         {
             GameObject root = nextActorState != null ? nextActorState.gameObject : null;
             Transform rootTransform = root != null ? root.transform : null;
+            CharacterAnimationPresenter presenter = root != null && root.GetComponent<CharacterAnimationDisplay>() != null
+                ? CharacterAnimationPresenter.EnsureForActor(root)
+                : CharacterAnimationPresenter.FindForActor(root);
             PanicParticipant participant = new PanicParticipant
             {
                 actorState = nextActorState,
+                animationPresenter = presenter,
                 animation = nextAnimation,
-                spriteRenderer = FindPrimarySpriteRenderer(root),
+                spriteRenderer = presenter != null && presenter.BodyRenderer != null
+                    ? presenter.BodyRenderer
+                    : FindPrimarySpriteRenderer(root),
                 image = FindPrimaryImage(root),
-                animators = root != null ? root.GetComponentsInChildren<Animator>(true) : Array.Empty<Animator>(),
+                animators = presenter != null && presenter.Animator != null
+                    ? new[] { presenter.Animator }
+                    : root != null ? root.GetComponentsInChildren<Animator>(true) : Array.Empty<Animator>(),
                 motionDrivers = FindMotionDrivers(root),
                 rigidbody2D = root != null ? root.GetComponent<Rigidbody2D>() : null,
                 targetTransform = rootTransform,
@@ -1498,6 +1507,11 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             {
                 if (animators[i] != null)
                 {
+                    if (animationPresenter != null && animators[i] == animationPresenter.Animator)
+                    {
+                        continue;
+                    }
+
                     animators[i].enabled = false;
                 }
             }
@@ -1719,6 +1733,17 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         public bool UpdateAnimatorWalk(PanicAction runAction, float animationSpeed)
         {
             CharacterWalkDirection direction = GetWalkDirectionForRunAction(runAction);
+
+            if (animationPresenter != null)
+            {
+                animationPresenter.SetAnimatorEnabled(true);
+                animationPresenter.SetAnimatorSpeed(animationSpeed);
+                bool presenterApplied = animationPresenter.BeginWalk(direction, 1f);
+                SetCurrentRunAction(runAction);
+                usingAnimatorWalk = presenterApplied;
+                return presenterApplied;
+            }
+
             bool applied = false;
 
             for (int i = 0; i < animators.Length; i++)
@@ -1748,6 +1773,15 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         public void StopAnimatorWalk(PanicAction facingAction)
         {
             CharacterWalkDirection direction = GetWalkDirectionForRunAction(facingAction);
+
+            if (animationPresenter != null)
+            {
+                animationPresenter.StopWalk(direction);
+                animationPresenter.SetAnimatorSpeed(animatorSpeedStates.Length > 0 ? animatorSpeedStates[0] : 1f);
+                usingAnimatorWalk = false;
+                StopFootsteps();
+                return;
+            }
 
             for (int i = 0; i < animators.Length; i++)
             {
@@ -2081,6 +2115,11 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
                 return;
             }
 
+            if (animationPresenter != null)
+            {
+                return;
+            }
+
             if (spriteRenderer != null)
             {
                 spriteRenderer.sprite = sprite;
@@ -2235,7 +2274,7 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             StopPanicScream();
             StopFootsteps();
 
-            if (spriteRenderer != null)
+            if (animationPresenter == null && spriteRenderer != null)
             {
                 spriteRenderer.sprite = originalRendererSprite;
             }
@@ -2244,6 +2283,8 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
             {
                 image.sprite = originalImageSprite;
             }
+
+            animationPresenter?.ResetAnimatorToAuthoredState();
 
             if (rectTransform != null)
             {
