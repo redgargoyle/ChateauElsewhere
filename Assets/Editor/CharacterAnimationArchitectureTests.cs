@@ -90,6 +90,55 @@ public sealed class CharacterAnimationArchitectureTests
     }
 
     [Test]
+    public void Chapter1CoatsShareTheirOwnersAnimationDisplayScale()
+    {
+        GameObject actor = new GameObject("Coat Zoom Owner");
+        GameObject visual = new GameObject("AnimationDisplay");
+        GameObject coat = new GameObject("coatcutout_zoom_test");
+
+        try
+        {
+            visual.transform.SetParent(actor.transform, false);
+            coat.transform.SetParent(actor.transform, false);
+
+            CharacterAnimationDisplay display = actor.AddComponent<CharacterAnimationDisplay>();
+            display.Configure(visual.transform);
+
+            Vector3 authoredPosition = new Vector3(0.43f, 1.08f, 0f);
+            Quaternion authoredRotation = Quaternion.Euler(0f, 0f, 7f);
+            Vector3 authoredScale = new Vector3(0.07f, 0.0988f, 1f);
+            coat.transform.localPosition = authoredPosition;
+            coat.transform.localRotation = authoredRotation;
+            coat.transform.localScale = authoredScale;
+
+            MethodInfo attachMethod = typeof(Chapter1ArrivalController).GetMethod(
+                "AttachCoatToCharacterDisplay",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            Assert.That(attachMethod, Is.Not.Null, "Chapter 1 needs one coat attachment path that targets the owner's AnimationDisplay.");
+            attachMethod.Invoke(null, new object[] { coat, actor.transform });
+
+            Assert.That(coat.transform.parent, Is.SameAs(visual.transform), "A worn or carried coat must inherit the same visual scale as its owner.");
+            Assert.That(coat.transform.localPosition, Is.EqualTo(authoredPosition), "Reparenting must preserve the coat's authored local position.");
+            Assert.That(Quaternion.Angle(coat.transform.localRotation, authoredRotation), Is.LessThan(0.001f), "Reparenting must preserve the coat's authored local rotation.");
+            Assert.That(coat.transform.localScale, Is.EqualTo(authoredScale), "Reparenting must preserve the coat's authored local scale.");
+
+            visual.transform.localScale = new Vector3(2f, 2f, 1f);
+
+            Assert.That(coat.transform.lossyScale.x, Is.EqualTo(authoredScale.x * 2f).Within(0.0001f));
+            Assert.That(coat.transform.lossyScale.y, Is.EqualTo(authoredScale.y * 2f).Within(0.0001f));
+
+            string chapter1Text = File.ReadAllText(Chapter1ArrivalControllerPath);
+            Assert.That(chapter1Text, Does.Not.Contain("coatObject.transform.SetParent(butlerTransform, false)"), "Butler-carried coats must not bypass AnimationDisplay.");
+            Assert.That(chapter1Text, Does.Not.Contain("coatObject.transform.SetParent(guest.GuestObject.transform, false)"), "Guest-worn coats must not bypass AnimationDisplay.");
+        }
+        finally
+        {
+            Object.DestroyImmediate(actor);
+        }
+    }
+
+    [Test]
     public void Chapter1SuppliesStableDirectionsForBothGuestMovementPhases()
     {
         string chapter1Text = File.ReadAllText(Chapter1ArrivalControllerPath);
