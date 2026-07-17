@@ -78,6 +78,7 @@ public class StoryActorRoomStageLockingTests
             Vector3 startPosition = rig.ActorState.transform.position;
 
             NPCWaypointMover mover = rig.ActorState.gameObject.AddComponent<NPCWaypointMover>();
+            mover.ConstrainToPlayerFloorBoundary = false;
             mover.MoveSpeed = 1f;
             IEnumerator move = mover.MoveToRoutine(exit);
 
@@ -138,6 +139,7 @@ public class StoryActorRoomStageLockingTests
             AssertDisplayUsesVisibleFeetScale(rig, catalog, display, "door spawn before speech pause");
 
             NPCWaypointMover mover = rig.ActorState.gameObject.AddComponent<NPCWaypointMover>();
+            mover.ConstrainToPlayerFloorBoundary = false;
             mover.MoveSpeed = 1f;
             mover.AcquireSpeechPause();
             IEnumerator move = mover.MoveToRoutine(exit);
@@ -194,6 +196,60 @@ public class StoryActorRoomStageLockingTests
         }
         finally
         {
+            rig.Destroy();
+        }
+    }
+
+    [Test]
+    public void PlannerResolvedWorldFeetBecomeTheStableRoomStageBinding()
+    {
+        TestRig rig = CreateRig();
+        Texture2D bodyTexture = new Texture2D(20, 40);
+        Sprite bodySprite = Sprite.Create(
+            bodyTexture,
+            new Rect(0f, 0f, bodyTexture.width, bodyTexture.height),
+            new Vector2(0.5f, 0f),
+            20f);
+        SpriteRenderer bodyRenderer = rig.ActorState.GetComponent<SpriteRenderer>();
+        bodyRenderer.sprite = bodySprite;
+        RectTransform resolvedFloorPoint = new GameObject("ResolvedFloorPoint", typeof(RectTransform)).GetComponent<RectTransform>();
+        resolvedFloorPoint.SetParent(rig.Stage, false);
+        resolvedFloorPoint.anchoredPosition = rig.Anchor.anchoredPosition + new Vector2(-170f, 65f);
+
+        try
+        {
+            rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
+            EnsureRigCameraIsMain(rig);
+            AttachCameraTarget(rig);
+
+            try
+            {
+                Vector3 localFloorPoint = rig.Stage.InverseTransformPoint(resolvedFloorPoint.position);
+                Assert.That(
+                    rig.CameraManager.TryGetActiveRoomStageWorldPoint(localFloorPoint, 10f, out Vector3 resolvedWorldPoint),
+                    Is.True);
+                rig.ActorState.transform.position = resolvedWorldPoint;
+                Assert.That(
+                    rig.ActorState.BindCurrentWorldFootPointToRoomStage(rig.Anchor),
+                    Is.True,
+                    "The resolved floor endpoint should become the actor's stable room-stage binding.");
+            }
+            finally
+            {
+                rig.Camera.targetTexture = null;
+            }
+
+            AssertVisibleFeetLockedToAnchor(rig, bodyRenderer, resolvedFloorPoint, "resolved endpoint binding");
+
+            rig.CameraManager.defaultRoomZoom = rig.CameraManager.maxRoomZoom;
+            rig.CameraManager.SetRoomLookForPreview(0.7f, -0.35f, 0.8f);
+            Assert.That(ApplyBinding(rig), Is.True);
+            AssertVisibleFeetLockedToAnchor(rig, bodyRenderer, resolvedFloorPoint, "resolved endpoint pan and zoom");
+        }
+        finally
+        {
+            Object.DestroyImmediate(bodySprite);
+            Object.DestroyImmediate(bodyTexture);
             rig.Destroy();
         }
     }
@@ -334,6 +390,7 @@ public class StoryActorRoomStageLockingTests
         try
         {
             NPCWaypointMover mover = rig.ActorState.gameObject.AddComponent<NPCWaypointMover>();
+            mover.ConstrainToPlayerFloorBoundary = false;
             mover.MoveSpeed = 1000000f;
             IEnumerator move = mover.MoveToRoutine(destination);
 
@@ -379,6 +436,7 @@ public class StoryActorRoomStageLockingTests
         try
         {
             NPCWaypointMover mover = rig.ActorState.gameObject.AddComponent<NPCWaypointMover>();
+            mover.ConstrainToPlayerFloorBoundary = false;
             mover.MoveSpeed = 1000000f;
             mover.AlignVisibleFeetToWaypoints = true;
             IEnumerator move = mover.MoveToRoutine(destination);
@@ -657,6 +715,27 @@ public class StoryActorRoomStageLockingTests
             Vector2 actorScreen = rig.Camera.WorldToScreenPoint(rig.ActorState.transform.position);
             Vector2 anchorScreen = RectTransformUtility.WorldToScreenPoint(rig.Canvas.worldCamera, rig.Anchor.position);
             Assert.That(Vector2.Distance(actorScreen, anchorScreen), Is.LessThanOrEqualTo(ScreenLockTolerance), context);
+        }
+        finally
+        {
+            rig.Camera.targetTexture = null;
+        }
+    }
+
+    private static void AssertVisibleFeetLockedToAnchor(
+        TestRig rig,
+        SpriteRenderer renderer,
+        RectTransform anchor,
+        string context)
+    {
+        AttachCameraTarget(rig);
+
+        try
+        {
+            Vector3 feetWorld = new Vector3(renderer.bounds.center.x, renderer.bounds.min.y, renderer.bounds.center.z);
+            Vector2 feetScreen = rig.Camera.WorldToScreenPoint(feetWorld);
+            Vector2 anchorScreen = RectTransformUtility.WorldToScreenPoint(rig.Canvas.worldCamera, anchor.position);
+            Assert.That(Vector2.Distance(feetScreen, anchorScreen), Is.LessThanOrEqualTo(ScreenLockTolerance), context);
         }
         finally
         {

@@ -184,9 +184,9 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         ResolvePanicScreamCatalog();
         ResolveGuestFootstepCatalog();
 
-        if (routePlanner == null || !IsUsableRoutePlanner(routePlanner))
+        if (routePlanner == null || !PointClickPlayerMovement.IsUsableRoutePlanner(routePlanner))
         {
-            routePlanner = FindRoutePlanner(routePlannerObjectName);
+            routePlanner = PointClickPlayerMovement.FindActiveRoutePlanner(routePlannerObjectName);
         }
     }
 
@@ -1190,81 +1190,6 @@ public sealed class Chapter2GuestPanicController : MonoBehaviour
         }
 
         return null;
-    }
-
-    private static PointClickPlayerMovement FindRoutePlanner(string playerObjectName)
-    {
-        string cleanPlayerObjectName = string.IsNullOrWhiteSpace(playerObjectName) ? "Player" : playerObjectName.Trim();
-        GameObject playerObject = GameObject.Find(cleanPlayerObjectName);
-
-        if (TryGetUsableRoutePlanner(playerObject, out PointClickPlayerMovement namedPlanner))
-        {
-            return namedPlanner;
-        }
-
-        PointClickPlayerMovement[] candidates = FindObjectsByType<PointClickPlayerMovement>(FindObjectsInactive.Exclude);
-
-        for (int i = 0; i < candidates.Length; i++)
-        {
-            PointClickPlayerMovement candidate = candidates[i];
-
-            if (candidate != null &&
-                string.Equals(candidate.gameObject.name, cleanPlayerObjectName, StringComparison.OrdinalIgnoreCase) &&
-                IsUsableRoutePlanner(candidate))
-            {
-                return candidate;
-            }
-        }
-
-        for (int i = 0; i < candidates.Length; i++)
-        {
-            PointClickPlayerMovement candidate = candidates[i];
-
-            if (IsUsableRoutePlanner(candidate))
-            {
-                return candidate;
-            }
-        }
-
-        return null;
-    }
-
-    private static bool TryGetUsableRoutePlanner(GameObject candidateObject, out PointClickPlayerMovement planner)
-    {
-        planner = candidateObject != null ? candidateObject.GetComponent<PointClickPlayerMovement>() : null;
-        return IsUsableRoutePlanner(planner);
-    }
-
-    private static bool IsUsableRoutePlanner(PointClickPlayerMovement candidate)
-    {
-        return candidate != null &&
-            candidate.enabled &&
-            candidate.gameObject.activeInHierarchy &&
-            !IsLikelyChapterGuest(candidate.gameObject);
-    }
-
-    private static bool IsLikelyChapterGuest(GameObject candidate)
-    {
-        if (candidate == null)
-        {
-            return false;
-        }
-
-        ActorRoomState actorState = candidate.GetComponentInParent<ActorRoomState>();
-
-        if (actorState != null &&
-            (LooksLikeGuestId(actorState.ActorId) || LooksLikeGuestId(actorState.gameObject.name)))
-        {
-            return true;
-        }
-
-        return LooksLikeGuestId(candidate.name);
-    }
-
-    private static bool LooksLikeGuestId(string value)
-    {
-        return !string.IsNullOrWhiteSpace(value) &&
-            value.TrimStart().StartsWith("Guest", StringComparison.OrdinalIgnoreCase);
     }
 
     private enum PanicAction

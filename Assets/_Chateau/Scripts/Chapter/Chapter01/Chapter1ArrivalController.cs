@@ -2326,7 +2326,8 @@ public class Chapter1ArrivalController : MonoBehaviour
 
             if (guest.Mover == null ||
                 guest.DrawingRoomDepartureTarget == null ||
-                !guest.Mover.HasReachedTarget(guest.DrawingRoomDepartureTarget))
+                (!guest.Mover.HasReachedTarget(guest.DrawingRoomDepartureTarget) &&
+                    !guest.Mover.LastMoveFailed))
             {
                 return false;
             }
@@ -2350,7 +2351,8 @@ public class Chapter1ArrivalController : MonoBehaviour
                 guest.MovingToDrawingRoom &&
                 (ShouldFinishDrawingRoomMoveOffscreen(guest) ||
                     (guest.Mover != null &&
-                        guest.Mover.HasReachedTarget(guest.DrawingRoomDepartureTarget))))
+                        (guest.Mover.HasReachedTarget(guest.DrawingRoomDepartureTarget) ||
+                            guest.Mover.LastMoveFailed))))
             {
                 StopGuestFootsteps(guest);
             }
@@ -3309,6 +3311,18 @@ public class Chapter1ArrivalController : MonoBehaviour
         display?.TryApplyCurrentRoomScale();
     }
 
+    private void BindGuestCurrentFloorPointToRoomStage(GuestRuntimeState guestState, Transform roomReference)
+    {
+        if (guestState == null ||
+            guestState.ActorState == null ||
+            !IsWorldSpaceGuestObject(guestState.GuestObject))
+        {
+            return;
+        }
+
+        guestState.ActorState.BindCurrentWorldFootPointToRoomStage(roomReference);
+    }
+
     private void ClearGuestRoomStagePointBinding(GuestRuntimeState guestState)
     {
         if (guestState == null || guestState.ActorState == null)
@@ -3549,7 +3563,20 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         StopGuestFootsteps(guestState);
-        BindGuestToRoomStagePoint(guestState, target, true);
+
+        if (mover.LastMoveFailed)
+        {
+            yield break;
+        }
+
+        if (mover.ConstrainToPlayerFloorBoundary)
+        {
+            BindGuestCurrentFloorPointToRoomStage(guestState, target);
+        }
+        else
+        {
+            BindGuestToRoomStagePoint(guestState, target, true);
+        }
     }
 
     private void BeginGuestMoveTo(
