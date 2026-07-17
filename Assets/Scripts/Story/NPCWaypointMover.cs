@@ -96,8 +96,8 @@ public class NPCWaypointMover : MonoBehaviour
             ambientWalker.enabled = false;
         }
 
-        ReleaseRoomStageBindingForTransformMotion();
         isMoving = true;
+        bool releasedRoomStageBinding = false;
 
         while (target != null)
         {
@@ -114,6 +114,15 @@ public class NPCWaypointMover : MonoBehaviour
                 continue;
             }
 
+            if (!releasedRoomStageBinding)
+            {
+                // A queued walk can remain speech-paused at its authored room
+                // anchor for several frames. Keep that binding until this mover
+                // actually takes ownership of the transform for its first step.
+                ReleaseRoomStageBindingForTransformMotion();
+                releasedRoomStageBinding = true;
+            }
+
             Vector3 previousPosition = transform.position;
             Vector3 nextPosition = Vector3.MoveTowards(
                 transform.position,
@@ -126,7 +135,14 @@ public class NPCWaypointMover : MonoBehaviour
 
         if (target != null)
         {
-            transform.position = GetTargetPosition(target);
+            Vector3 targetPosition = GetTargetPosition(target);
+
+            if (!releasedRoomStageBinding && transform.position != targetPosition)
+            {
+                ReleaseRoomStageBindingForTransformMotion();
+            }
+
+            transform.position = targetPosition;
         }
 
         UpdateAnimator(Vector2.zero, false);

@@ -116,6 +116,62 @@ public class StoryActorRoomStageLockingTests
         }
     }
 
+    [UnityTest]
+    public IEnumerator SpeechPausedWaypointKeepsRoomStageBindingUntilMovementResumes()
+    {
+        TestRig rig = CreateRig();
+        RectTransform exit = new GameObject("ExitAfterSpeech", typeof(RectTransform)).GetComponent<RectTransform>();
+        exit.SetParent(rig.Stage, false);
+        exit.anchoredPosition = rig.Anchor.anchoredPosition + new Vector2(120f, 0f);
+
+        try
+        {
+            rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
+            GameObject visual = new GameObject("AnimationDisplay");
+            visual.transform.SetParent(rig.ActorState.transform, false);
+            CharacterScaleCatalog catalog = CreateScaleCatalog(rig, 2f, 1f);
+            CharacterAnimationDisplay display = rig.ActorState.gameObject.AddComponent<CharacterAnimationDisplay>();
+            display.Configure(visual.transform, catalog);
+
+            PlaceActorAt(rig, rig.Anchor);
+            AssertActorLockedToAnchor(rig, "door spawn before speech pause");
+            AssertDisplayUsesAnchorScale(rig, catalog, display, "door spawn before speech pause");
+
+            NPCWaypointMover mover = rig.ActorState.gameObject.AddComponent<NPCWaypointMover>();
+            mover.MoveSpeed = 1f;
+            mover.AcquireSpeechPause();
+            IEnumerator move = mover.MoveToRoutine(exit);
+
+            Assert.That(move.MoveNext(), Is.True, "The queued walk should wait while the guest speaks.");
+            Assert.That(
+                ApplyBinding(rig),
+                Is.True,
+                "Queuing a paused walk must not detach a stationary guest from the door anchor.");
+            AssertDisplayUsesAnchorScale(rig, catalog, display, "queued walk while speech-paused");
+
+            rig.CameraManager.defaultRoomZoom = rig.CameraManager.maxRoomZoom;
+            rig.CameraManager.SetRoomLookForPreview(0.65f, -0.35f, 0.8f);
+            Assert.That(ApplyBinding(rig), Is.True);
+            AssertActorLockedToAnchor(rig, "door spawn while panning and zooming during speech");
+            AssertDisplayUsesAnchorScale(rig, catalog, display, "door scale while panning and zooming during speech");
+
+            mover.ReleaseSpeechPause();
+            Assert.That(move.MoveNext(), Is.True, "Movement should resume after the speech pause ends.");
+            Assert.That(
+                ApplyBinding(rig),
+                Is.False,
+                "The shared mover should release the anchor on the first real movement frame.");
+
+            mover.StopMoving();
+            yield return null;
+        }
+        finally
+        {
+            Object.DestroyImmediate(exit.gameObject);
+            rig.Destroy();
+        }
+    }
+
     [Test]
     public void WorldActorCanKeepAuthoredScaleWhileLockedToRoomStage()
     {
@@ -394,6 +450,11 @@ public class StoryActorRoomStageLockingTests
 
     private static CharacterScaleCatalog CreateConstantScaleCatalog(TestRig rig, float scale)
     {
+        return CreateScaleCatalog(rig, scale, scale);
+    }
+
+    private static CharacterScaleCatalog CreateScaleCatalog(TestRig rig, float frontScale, float backScale)
+    {
         GameObject catalogObject = new GameObject("Character Scale Catalog", typeof(CharacterScaleCatalog));
         catalogObject.transform.SetParent(rig.Root.transform, false);
         CharacterScaleCatalog catalog = catalogObject.GetComponent<CharacterScaleCatalog>();
@@ -404,12 +465,12 @@ public class StoryActorRoomStageLockingTests
         GameObject front = new GameObject("Front");
         front.transform.SetParent(markerRoot.transform, false);
         front.transform.localPosition = new Vector3(0f, -100f, 0f);
-        front.transform.localScale = new Vector3(scale, scale, 1f);
+        front.transform.localScale = new Vector3(frontScale, frontScale, 1f);
 
         GameObject back = new GameObject("Back");
         back.transform.SetParent(markerRoot.transform, false);
         back.transform.localPosition = new Vector3(0f, 100f, 0f);
-        back.transform.localScale = new Vector3(scale, scale, 1f);
+        back.transform.localScale = new Vector3(backScale, backScale, 1f);
 
         CharacterScaleRoom roomScale = rig.RoomContent.gameObject.AddComponent<CharacterScaleRoom>();
         roomScale.Configure(
@@ -419,6 +480,23 @@ public class StoryActorRoomStageLockingTests
             Mathf.Abs(rig.RoomContent.transform.localScale.x));
         catalog.SetRooms(new[] { roomScale });
         return catalog;
+    }
+
+    private static void AssertDisplayUsesAnchorScale(
+        TestRig rig,
+        CharacterScaleCatalog catalog,
+        CharacterAnimationDisplay display,
+        string context)
+    {
+        float anchorRoomY = rig.Stage.InverseTransformPoint(rig.Anchor.position).y;
+        Assert.That(
+            catalog.TryEvaluateScaleAtRoomY(rig.RoomContent.RoomName, anchorRoomY, out float expectedScale),
+            Is.True,
+            context);
+        Assert.That(display.TryApplyCurrentRoomScale(), Is.True, context);
+        Assert.That(display.AnimationDisplay.localScale.x, Is.EqualTo(expectedScale).Within(0.0001f), context);
+        Assert.That(display.AnimationDisplay.localScale.y, Is.EqualTo(expectedScale).Within(0.0001f), context);
+        Assert.That(display.AnimationDisplay.localScale.z, Is.EqualTo(1f).Within(0.0001f), context);
     }
 
     private static void SetPrivateField<T>(ActorRoomState actorState, string fieldName, T value)
