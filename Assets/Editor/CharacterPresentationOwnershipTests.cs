@@ -137,6 +137,10 @@ public class CharacterPresentationOwnershipTests
             {
                 ["rectTransform.localScale = Vector3.one;"] = 1
             },
+            ["Assets/Scripts/UI/DemoCompleteUI.cs"] = new Dictionary<string, int>(StringComparer.Ordinal)
+            {
+                ["rect.localScale = Vector3.one;"] = 5
+            },
             ["Assets/Scripts/UI/RuntimeSettingsMenu.cs"] = new Dictionary<string, int>(StringComparer.Ordinal)
             {
                 ["rectTransform.localScale = Vector3.one;"] = 1,
