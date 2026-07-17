@@ -1,3 +1,4 @@
+using System.Collections;
 using System.IO;
 using System.Collections.Generic;
 using System.Globalization;
@@ -967,6 +968,146 @@ public class NavigationRegressionTests
         {
             DestroyImmediateIfNeeded(player);
             DestroyImmediateIfNeeded(floor);
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator GuestWaypointMovementUsesButlerFloorRouteAroundBlocker()
+    {
+        GameObject floorObject = null;
+        GameObject playerObject = null;
+        GameObject blockerObject = null;
+        GameObject guestObject = null;
+        GameObject targetObject = null;
+
+        try
+        {
+            PointClickPlayerMovement movement = CreateConfiguredPointClickMovement(
+                new[]
+                {
+                    new Vector2(0f, 0f),
+                    new Vector2(4f, 0f),
+                    new Vector2(4f, 4f),
+                    new Vector2(0f, 4f)
+                },
+                new Vector2(0.5f, 2f),
+                out floorObject,
+                out playerObject);
+            PolygonCollider2D floor = floorObject.GetComponent<PolygonCollider2D>();
+            PolygonCollider2D blocker = CreatePolygonCollider(
+                "PlayerBlocker_GuestRouteTest",
+                new[]
+                {
+                    new Vector2(1.5f, 0.75f),
+                    new Vector2(2.5f, 0.75f),
+                    new Vector2(2.5f, 3.25f),
+                    new Vector2(1.5f, 3.25f)
+                },
+                out blockerObject);
+            AddWalkableBlocker(movement, blocker);
+
+            guestObject = new GameObject("Guest_FloorRouteTest");
+            guestObject.transform.position = new Vector3(0.5f, 2f, 0f);
+            NPCWaypointMover mover = guestObject.AddComponent<NPCWaypointMover>();
+            mover.MoveSpeed = 1000000f;
+
+            targetObject = new GameObject("GuestExit_FloorRouteTest");
+            targetObject.transform.position = new Vector3(3.5f, 2f, 0f);
+            IEnumerator move = mover.MoveToRoutine(targetObject.transform);
+            bool leftBlockedStraightLine = false;
+            int guard = 0;
+
+            while (move.MoveNext() && guard++ < 240)
+            {
+                Physics2D.SyncTransforms();
+                Vector2 guestFloorPoint = guestObject.transform.position;
+
+                Assert.That(
+                    floor.OverlapPoint(guestFloorPoint),
+                    Is.True,
+                    $"Guest floor point {guestFloorPoint} must remain inside the Butler's PlayerBoundary.");
+                Assert.That(
+                    blocker.OverlapPoint(guestFloorPoint),
+                    Is.False,
+                    $"Guest floor point {guestFloorPoint} must route around the Butler's PlayerBlocker.");
+
+                leftBlockedStraightLine |= Mathf.Abs(guestFloorPoint.y - 2f) > 0.35f;
+                yield return null;
+            }
+
+            Assert.That(guard, Is.LessThan(240), "The shared floor route should complete without stalling.");
+            Assert.That(leftBlockedStraightLine, Is.True, "The guest must leave the blocked direct line and follow the floor route around it.");
+            Assert.That(
+                Vector2.Distance(guestObject.transform.position, targetObject.transform.position),
+                Is.LessThan(0.05f),
+                "The floor-bound guest should still reach the authored exit waypoint.");
+            Assert.That(mover.HasReachedTarget(targetObject.transform), Is.True);
+        }
+        finally
+        {
+            DestroyImmediateIfNeeded(targetObject);
+            DestroyImmediateIfNeeded(guestObject);
+            DestroyImmediateIfNeeded(blockerObject);
+            DestroyImmediateIfNeeded(playerObject);
+            DestroyImmediateIfNeeded(floorObject);
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator GuestWaypointMovementKeepsPlannerResolvedEndpointInsteadOfSnappingOffFloor()
+    {
+        GameObject floorObject = null;
+        GameObject playerObject = null;
+        GameObject guestObject = null;
+        GameObject targetObject = null;
+
+        try
+        {
+            CreateConfiguredPointClickMovement(
+                new[]
+                {
+                    new Vector2(0f, 0f),
+                    new Vector2(4f, 0f),
+                    new Vector2(4f, 4f),
+                    new Vector2(0f, 4f)
+                },
+                new Vector2(2f, 2f),
+                out floorObject,
+                out playerObject);
+            PolygonCollider2D floor = floorObject.GetComponent<PolygonCollider2D>();
+
+            guestObject = new GameObject("Guest_ResolvedFloorEndpointTest");
+            guestObject.transform.position = new Vector3(2f, 2f, 0f);
+            NPCWaypointMover mover = guestObject.AddComponent<NPCWaypointMover>();
+            mover.MoveSpeed = 1000000f;
+
+            targetObject = new GameObject("OffFloorGuestExit_ResolvedFloorEndpointTest");
+            targetObject.transform.position = new Vector3(2f, 8f, 0f);
+            IEnumerator move = mover.MoveToRoutine(targetObject.transform);
+            int guard = 0;
+
+            while (move.MoveNext() && guard++ < 240)
+            {
+                yield return null;
+            }
+
+            Physics2D.SyncTransforms();
+            Vector2 guestFloorPoint = guestObject.transform.position;
+            Assert.That(guard, Is.LessThan(240), "The clamped floor route should complete without stalling.");
+            Assert.That(mover.HasReachedTarget(targetObject.transform), Is.True);
+            Assert.That(floor.OverlapPoint(guestFloorPoint), Is.True);
+            Assert.That(guestFloorPoint.y, Is.InRange(3.8f, 4.01f));
+            Assert.That(
+                Vector2.Distance(guestFloorPoint, targetObject.transform.position),
+                Is.GreaterThan(3f),
+                "Completion must keep the planner-resolved floor endpoint instead of snapping to the raw off-floor target.");
+        }
+        finally
+        {
+            DestroyImmediateIfNeeded(targetObject);
+            DestroyImmediateIfNeeded(guestObject);
+            DestroyImmediateIfNeeded(playerObject);
+            DestroyImmediateIfNeeded(floorObject);
         }
     }
 

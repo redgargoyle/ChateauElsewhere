@@ -186,10 +186,7 @@ public class ActorRoomState : MonoBehaviour
             return;
         }
 
-        RoomContentGroup roomContentGroup = roomTarget.GetComponentInParent<RoomContentGroup>(true);
-        RectTransform roomStage = roomContentGroup != null ? roomContentGroup.transform as RectTransform : null;
-
-        if (roomStage == null)
+        if (!TryGetRoomStage(roomTarget, out RoomContentGroup roomContentGroup, out RectTransform roomStage))
         {
             ClearRoomStagePointBinding();
             return;
@@ -206,6 +203,74 @@ public class ActorRoomState : MonoBehaviour
         // align feet (including hidden Chapter 2 staging) measure the final
         // visual bounds instead of the previous room's display scale.
         TryApplyBoundAnimationDisplayScale(targetTransform.gameObject);
+    }
+
+    public bool BindCurrentWorldFootPointToRoomStage(Transform roomReference)
+    {
+        ResolveReferences();
+
+        GameObject targetObject = actorObject != null ? actorObject : gameObject;
+        Transform targetTransform = targetObject != null ? targetObject.transform : transform;
+
+        if (targetTransform == null ||
+            targetTransform is RectTransform ||
+            !TryGetRoomStage(roomReference, out RoomContentGroup roomContentGroup, out RectTransform roomStage))
+        {
+            return false;
+        }
+
+        Camera mainCamera = Camera.main;
+
+        if (mainCamera == null)
+        {
+            return false;
+        }
+
+        Vector3 floorWorldPoint = targetTransform.position;
+
+        if (CharacterFootPositionUtility.TryGetWorldPoint(
+                targetObject,
+                true,
+                false,
+                out Vector3 visibleFeetWorldPoint))
+        {
+            floorWorldPoint = visibleFeetWorldPoint;
+        }
+
+        Canvas canvas = roomStage.GetComponentInParent<Canvas>();
+        Camera canvasCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? canvas.worldCamera
+            : null;
+        Vector2 floorScreenPoint = mainCamera.WorldToScreenPoint(floorWorldPoint);
+
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                roomStage,
+                floorScreenPoint,
+                canvasCamera,
+                out Vector2 localFloorPoint))
+        {
+            return false;
+        }
+
+        roomStageLocalPoint = localFloorPoint;
+        boundWorldZ = targetTransform.position.z;
+        boundRoomId = roomContentGroup.RoomName;
+        hasRoomStageLocalBinding = true;
+        TryApplyBoundAnimationDisplayScale(targetObject);
+        TryApplyRoomStageLocalBindingIfNeeded();
+        return true;
+    }
+
+    private static bool TryGetRoomStage(
+        Transform roomReference,
+        out RoomContentGroup roomContentGroup,
+        out RectTransform roomStage)
+    {
+        roomContentGroup = roomReference != null
+            ? roomReference.GetComponentInParent<RoomContentGroup>(true)
+            : null;
+        roomStage = roomContentGroup != null ? roomContentGroup.transform as RectTransform : null;
+        return roomStage != null;
     }
 
     public void ClearRoomStagePointBinding()

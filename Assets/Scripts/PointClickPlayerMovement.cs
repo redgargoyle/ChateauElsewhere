@@ -112,6 +112,55 @@ public class PointClickPlayerMovement : MonoBehaviour
 	public bool InputEnabled => inputEnabled;
 	public bool AppliesPlayerSorting => applyPlayerSorting;
 
+	public static PointClickPlayerMovement FindActiveRoutePlanner(string playerObjectName = "Player")
+	{
+		string cleanName = string.IsNullOrWhiteSpace(playerObjectName) ? "Player" : playerObjectName.Trim();
+		GameObject namedObject = GameObject.Find(cleanName);
+		PointClickPlayerMovement namedPlanner = namedObject != null
+			? namedObject.GetComponent<PointClickPlayerMovement>()
+			: null;
+
+		if (IsUsableRoutePlanner(namedPlanner))
+			return namedPlanner;
+
+		PointClickPlayerMovement[] candidates = FindObjectsByType<PointClickPlayerMovement>(FindObjectsInactive.Exclude);
+
+		for (int i = 0; i < candidates.Length; i++)
+		{
+			PointClickPlayerMovement candidate = candidates[i];
+			if (IsUsableRoutePlanner(candidate) &&
+				string.Equals(candidate.gameObject.name, cleanName, StringComparison.OrdinalIgnoreCase))
+			{
+				return candidate;
+			}
+		}
+
+		for (int i = 0; i < candidates.Length; i++)
+		{
+			if (IsUsableRoutePlanner(candidates[i]))
+				return candidates[i];
+		}
+
+		return null;
+	}
+
+	public static bool IsUsableRoutePlanner(PointClickPlayerMovement candidate)
+	{
+		if (candidate == null || !candidate.enabled || !candidate.gameObject.activeInHierarchy)
+			return false;
+
+		ActorRoomState actorState = candidate.GetComponentInParent<ActorRoomState>();
+		return !LooksLikeGuest(actorState != null ? actorState.ActorId : string.Empty) &&
+			!LooksLikeGuest(actorState != null ? actorState.gameObject.name : string.Empty) &&
+			!LooksLikeGuest(candidate.gameObject.name);
+	}
+
+	private static bool LooksLikeGuest(string value)
+	{
+		return !string.IsNullOrWhiteSpace(value) &&
+			value.TrimStart().StartsWith("Guest", StringComparison.OrdinalIgnoreCase);
+	}
+
 	public void SetInputEnabled(bool enabled)
 	{
 		inputEnabled = enabled;
@@ -735,6 +784,34 @@ public class PointClickPlayerMovement : MonoBehaviour
 
 		worldPath.Clear();
 
+		if (!TryBuildReachableLogicalPath(
+			startWorldPoint,
+			targetWorldPoint,
+			clampToWalkableArea,
+			movementQueryPath))
+		{
+			return false;
+		}
+
+		for (int i = 0; i < movementQueryPath.Count; i++)
+		{
+			worldPath.Add(LogicalToWalkableWorldPoint(movementQueryPath[i]));
+		}
+
+		return worldPath.Count > 0;
+	}
+
+	public bool TryBuildReachableLogicalPath(
+		Vector2 startWorldPoint,
+		Vector2 targetWorldPoint,
+		bool clampToWalkableArea,
+		List<Vector2> logicalPath)
+	{
+		if (logicalPath == null)
+			return false;
+
+		logicalPath.Clear();
+
 		if (!isReady)
 			return false;
 
@@ -759,18 +836,13 @@ public class PointClickPlayerMovement : MonoBehaviour
 			}
 		}
 
-		if (!TryBuildMovementPath(startLogicalPoint, destinationLogicalPoint, movementQueryPath) ||
-			movementQueryPath.Count == 0)
+		if (!TryBuildMovementPath(startLogicalPoint, destinationLogicalPoint, logicalPath) ||
+			logicalPath.Count == 0)
 		{
 			return false;
 		}
 
-		for (int i = 0; i < movementQueryPath.Count; i++)
-		{
-			worldPath.Add(LogicalToWalkableWorldPoint(movementQueryPath[i]));
-		}
-
-		return worldPath.Count > 0;
+		return true;
 	}
 
 	private bool TryEvaluateMovementTarget(Vector2 targetPosition, bool clampToWalkableArea, out MovementTargetQuery movementQuery)

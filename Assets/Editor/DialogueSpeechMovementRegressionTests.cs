@@ -239,6 +239,8 @@ public sealed class DialogueSpeechMovementRegressionTests
             Chapter1ArrivalController controller = controllerObject.AddComponent<Chapter1ArrivalController>();
             NPCWaypointMover guestThreeMover = guestThreeObject.AddComponent<NPCWaypointMover>();
             NPCWaypointMover guestFourMover = guestFourObject.AddComponent<NPCWaypointMover>();
+            guestThreeMover.ConstrainToPlayerFloorBoundary = false;
+            guestFourMover.ConstrainToPlayerFloorBoundary = false;
             guestThreeMover.MoveSpeed = 1f;
             guestFourMover.MoveSpeed = 1f;
             guestThreeTarget.transform.position = new Vector3(10f, 0f, 0f);
@@ -483,6 +485,7 @@ public sealed class DialogueSpeechMovementRegressionTests
             ActorRoomState actorState = guestObject.AddComponent<ActorRoomState>();
             actorState.SetActorId("Guest99");
             NPCWaypointMover mover = guestObject.AddComponent<NPCWaypointMover>();
+            mover.ConstrainToPlayerFloorBoundary = false;
             mover.MoveSpeed = 1f;
             targetObject.transform.position = new Vector3(10f, 0f, 0f);
 

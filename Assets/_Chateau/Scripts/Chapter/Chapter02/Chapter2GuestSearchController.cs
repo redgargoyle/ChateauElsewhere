@@ -1404,6 +1404,12 @@ public class Chapter2GuestSearchController : MonoBehaviour
                         $"{GuestExitDiagnosticPrefix} guest={GetGuestIdForOrderList(guest)} door={exitTarget.name} timed out; staging for Dining Room",
                         this);
                 }
+                else if (mover != null && mover.LastMoveFailed)
+                {
+                    Debug.LogWarning(
+                        $"{GuestExitDiagnosticPrefix} guest={GetGuestIdForOrderList(guest)} door={exitTarget.name} had no floor-bound route; staging for Dining Room",
+                        this);
+                }
                 else
                 {
                     Debug.Log(
@@ -1450,6 +1456,8 @@ public class Chapter2GuestSearchController : MonoBehaviour
         {
             mover = actorState.gameObject.AddComponent<NPCWaypointMover>();
         }
+
+        mover.AlignVisibleFeetToWaypoints = true;
 
         return mover;
     }
