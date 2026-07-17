@@ -201,7 +201,13 @@ public static class Guest2ButlerAnimationAssetBuilder
 
 		Animator animator = guest2.GetComponentInChildren<Animator>(true);
 		if (animator == null)
-			animator = guest2.AddComponent<Animator>();
+		{
+			CharacterAnimationDisplay display = CharacterAnimationDisplay.EnsureForActor(guest2);
+			if (display == null || display.AnimationDisplay == null)
+				throw new InvalidOperationException("Guest 2 needs a dedicated AnimationDisplay child.");
+
+			animator = display.AnimationDisplay.gameObject.AddComponent<Animator>();
+		}
 
 		animator.runtimeAnimatorController = controller;
 		EditorUtility.SetDirty(animator);

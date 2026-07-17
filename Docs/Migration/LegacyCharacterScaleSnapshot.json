@@ -1,0 +1,236 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Reference-only Phase 1 snapshot. Runtime code must not load this file.",
+  "source": {
+    "repository": "redgargoyle/ChateauElsewhere",
+    "branch": "chatgpt-character-size-overhaul",
+    "commit": "2a92396176c2baa6310e42f9ee906ee846d94e03",
+    "unityVersion": "6000.4.10f1",
+    "scene": "Assets/Scenes/Gameplay.unity",
+    "playerPrefab": "Assets/Prefabs/Player.prefab"
+  },
+  "roomIds": [
+    "Drawing Room",
+    "Grand Entrance Hall",
+    "Grand Entrance Hall Rear view",
+    "Conservatory",
+    "Library",
+    "Music Room",
+    "Ballroom",
+    "Billiard Room",
+    "Dining Room",
+    "Butlers Pantry",
+    "Kitchen",
+    "Service Corridor",
+    "Chapel",
+    "Side Stair Mudroom",
+    "Upper Gallery",
+    "Master Bedroom Suite",
+    "Upper Sitting Hall",
+    "Nursery",
+    "Blue Bedroom"
+  ],
+  "butler": {
+    "scaleRootPath": "Player",
+    "prefabAuthoredScale": { "x": 1.0, "y": 1.0, "z": 1.0 },
+    "sceneSerializedScale": { "x": 2.150601, "y": 2.150601, "z": 1.0 },
+    "calibrationBaseScale": { "x": 1.0, "y": 1.0, "z": 1.0 },
+    "editorSelectedRoomId": "Upper Gallery",
+    "fallback": {
+      "nearFootY": -4.25,
+      "farFootY": -2.25,
+      "nearFinalSize": 1.0,
+      "farFinalSize": 0.58
+    },
+    "rooms": [
+      { "roomId": "Drawing Room", "frontFootY": -384.02182, "frontFinalSize": 2.057692, "backFootY": -119.561905, "backFinalSize": 1.3752748 },
+      { "roomId": "Grand Entrance Hall", "frontFootY": -381.67844, "frontFinalSize": 2.1461537, "backFootY": -98.47123, "backFinalSize": 0.661823 },
+      { "roomId": "Grand Entrance Hall Rear view", "frontFootY": -482.1259, "frontFinalSize": 2.2174373, "backFootY": -184.96538, "backFinalSize": 0.85019803 },
+      { "roomId": "Conservatory", "frontFootY": -467.1245, "frontFinalSize": 2.260003, "backFootY": -80.01454, "backFinalSize": 0.8745046 },
+      { "roomId": "Library", "frontFootY": -472.17596, "frontFinalSize": 2.3511229, "backFootY": -163.73544, "backFinalSize": 1.1844121 },
+      { "roomId": "Music Room", "frontFootY": -474.99722, "frontFinalSize": 2.5, "backFootY": -137.45297, "backFinalSize": 1.1866922 },
+      { "roomId": "Ballroom", "frontFootY": -556.58936, "frontFinalSize": 2.5, "backFootY": -68.67108, "backFinalSize": 0.5518164 },
+      { "roomId": "Billiard Room", "frontFootY": -533.9481, "frontFinalSize": 2.454557, "backFootY": -122.932236, "backFinalSize": 1.1938814 },
+      { "roomId": "Dining Room", "frontFootY": -451.8298, "frontFinalSize": 2.3865647, "backFootY": -30.95443, "backFinalSize": 1.1485544 },
+      { "roomId": "Butlers Pantry", "frontFootY": -457.76678, "frontFinalSize": 2.5, "backFootY": -251.90562, "backFinalSize": 2.0208333 },
+      { "roomId": "Kitchen", "frontFootY": -504.42188, "frontFinalSize": 2.8999996, "backFootY": -160.59215, "backFinalSize": 1.4510988 },
+      { "roomId": "Service Corridor", "frontFootY": -487.8619, "frontFinalSize": 2.5, "backFootY": -157.21262, "backFinalSize": 1.424028 },
+      { "roomId": "Chapel", "frontFootY": -542.91187, "frontFinalSize": 2.3, "backFootY": -230.23573, "backFinalSize": 0.99158704 },
+      { "roomId": "Side Stair Mudroom", "frontFootY": -471.69177, "frontFinalSize": 2.5, "backFootY": -153.06122, "backFinalSize": 0.88457614 },
+      { "roomId": "Upper Gallery", "frontFootY": -469.4363, "frontFinalSize": 2.5, "backFootY": -41.078682, "backFinalSize": 0.842065 },
+      { "roomId": "Master Bedroom Suite", "frontFootY": -456.25656, "frontFinalSize": 2.5, "backFootY": -122.098785, "backFinalSize": 0.99745065 },
+      { "roomId": "Upper Sitting Hall", "frontFootY": -468.75174, "frontFinalSize": 2.5, "backFootY": -58.043415, "backFinalSize": 0.9094965 },
+      { "roomId": "Nursery", "frontFootY": -466.49628, "frontFinalSize": 2.5, "backFootY": -99.451546, "backFinalSize": 1.2261313 },
+      { "roomId": "Blue Bedroom", "frontFootY": -487.8619, "frontFinalSize": 2.5, "backFootY": -151.66829, "backFinalSize": 1.1528362 }
+    ]
+  },
+  "guestRooms": [
+    { "roomId": "Drawing Room", "enabled": true, "multiplier": 1.178, "useButlerCurve": true, "referenceStageScale": 0.01610911 },
+    { "roomId": "Grand Entrance Hall", "enabled": true, "multiplier": 1.0, "useButlerCurve": true, "referenceStageScale": 0.015450942 },
+    { "roomId": "Grand Entrance Hall Rear view", "enabled": true, "multiplier": 1.0, "useButlerCurve": true, "referenceStageScale": 0.013016449 },
+    { "roomId": "Conservatory", "enabled": true, "multiplier": 1.5, "useButlerCurve": true, "referenceStageScale": 0.015450942 },
+    { "roomId": "Library", "enabled": true, "multiplier": 1.619, "useButlerCurve": true, "referenceStageScale": 0.015450942 },
+    { "roomId": "Music Room", "enabled": true, "multiplier": 1.5, "useButlerCurve": true, "referenceStageScale": 0.015450942 },
+    { "roomId": "Ballroom", "enabled": true, "multiplier": 1.0, "useButlerCurve": true, "referenceStageScale": 0.013016449 },
+    { "roomId": "Billiard Room", "enabled": true, "multiplier": 1.514, "useButlerCurve": true, "referenceStageScale": 0.01610911 },
+    { "roomId": "Dining Room", "enabled": true, "multiplier": 1.0, "useButlerCurve": true, "referenceStageScale": 0.013016449 },
+    { "roomId": "Butlers Pantry", "enabled": true, "multiplier": 1.0, "useButlerCurve": true, "referenceStageScale": 0.013016449 },
+    { "roomId": "Kitchen", "enabled": true, "multiplier": 1.508, "useButlerCurve": true, "referenceStageScale": 0.014840788 },
+    { "roomId": "Service Corridor", "enabled": true, "multiplier": 1.0, "useButlerCurve": true, "referenceStageScale": 0.013016449 },
+    { "roomId": "Chapel", "enabled": true, "multiplier": 1.62, "useButlerCurve": true, "referenceStageScale": 0.015028158 },
+    { "roomId": "Side Stair Mudroom", "enabled": true, "multiplier": 1.0, "useButlerCurve": true, "referenceStageScale": 0.013016449 },
+    { "roomId": "Upper Gallery", "enabled": true, "multiplier": 1.508, "useButlerCurve": true, "referenceStageScale": 0.014840788 },
+    { "roomId": "Master Bedroom Suite", "enabled": true, "multiplier": 1.0, "useButlerCurve": true, "referenceStageScale": 0.013016449 },
+    { "roomId": "Upper Sitting Hall", "enabled": true, "multiplier": 1.0, "useButlerCurve": true, "referenceStageScale": 0.013016449 },
+    { "roomId": "Nursery", "enabled": true, "multiplier": 1.0, "useButlerCurve": true, "referenceStageScale": 0.013016449 },
+    { "roomId": "Blue Bedroom", "enabled": true, "multiplier": 1.51, "useButlerCurve": true, "referenceStageScale": 0.013943861 }
+  ],
+  "perspectiveProfiles": [
+    {
+      "asset": "Assets/ScriptableObjects/Rooms/DrawingRoomPerspectiveProfile.asset",
+      "roomId": "Drawing Room",
+      "nativeSize": { "x": 1366.0, "y": 768.0 },
+      "nearFootY": -360.0,
+      "farFootY": 140.0,
+      "scaleCurve": {
+        "keys": [
+          { "time": 0.0, "value": 1.2, "inSlope": 0.0, "outSlope": 0.0, "weightedMode": 0, "inWeight": 0.0, "outWeight": 0.0 },
+          { "time": 1.0, "value": 0.6, "inSlope": 0.0, "outSlope": 0.0, "weightedMode": 0, "inWeight": 0.0, "outWeight": 0.0 }
+        ],
+        "preInfinity": 2,
+        "postInfinity": 2,
+        "rotationOrder": 4
+      },
+      "tint": { "near": { "r": 1.0, "g": 0.96, "b": 0.88, "a": 1.0 }, "far": { "r": 0.72, "g": 0.76, "b": 0.78, "a": 0.82 } },
+      "shadow": { "nearScale": 1.0, "farScale": 0.62, "nearOpacity": 0.38, "farOpacity": 0.14 },
+      "sorting": { "nearCurveValue": 1.0, "farCurveValue": 0.0, "baseOrder": 1000, "orderRange": 8000, "layer": "People" }
+    },
+    {
+      "asset": "Assets/ScriptableObjects/Rooms/DiningRoomPerspectiveProfile.asset",
+      "roomId": "Dining Room",
+      "nativeSize": { "x": 1672.0, "y": 941.0 },
+      "nearFootY": -200.0,
+      "farFootY": -2.0,
+      "scaleCurve": {
+        "keys": [
+          { "time": 0.0, "value": 1.3, "inSlope": 0.0, "outSlope": 0.0, "weightedMode": 0, "inWeight": 0.0, "outWeight": 0.0 },
+          { "time": 1.0, "value": 0.7, "inSlope": 0.0, "outSlope": 0.0, "weightedMode": 0, "inWeight": 0.0, "outWeight": 0.0 }
+        ],
+        "preInfinity": 2,
+        "postInfinity": 2,
+        "rotationOrder": 4
+      },
+      "tint": { "near": { "r": 1.0, "g": 0.96, "b": 0.88, "a": 1.0 }, "far": { "r": 0.72, "g": 0.76, "b": 0.78, "a": 0.82 } },
+      "shadow": { "nearScale": 1.0, "farScale": 0.62, "nearOpacity": 0.38, "farOpacity": 0.14 },
+      "sorting": { "nearCurveValue": 1.0, "farCurveValue": 0.0, "baseOrder": 1000, "orderRange": 8000, "layer": "People" }
+    }
+  ],
+  "characters": [
+    { "characterId": "Guest1", "scaleRootPath": "Guest1", "bodyRootPath": null, "capturedBaseScale": { "x": 1.0, "y": 1.0, "z": 1.0 }, "sceneSerializedScale": { "x": 1.42, "y": 1.42, "z": 1.0 }, "manualFineTune": 1.0, "currentRoomId": "Dining Room", "roomIdOverride": "Grand Entrance Hall" },
+    { "characterId": "Guest2", "scaleRootPath": "Guest2", "bodyRootPath": null, "capturedBaseScale": { "x": 1.0, "y": 1.0, "z": 1.0 }, "sceneSerializedScale": { "x": 1.42, "y": 1.42, "z": 1.0 }, "manualFineTune": 1.0, "currentRoomId": "Dining Room", "roomIdOverride": "Grand Entrance Hall" },
+    { "characterId": "Guest3", "scaleRootPath": "Guest3", "bodyRootPath": null, "capturedBaseScale": { "x": 1.12, "y": 1.12, "z": 1.12 }, "sceneSerializedScale": { "x": 1.42, "y": 1.42, "z": 1.12 }, "manualFineTune": 1.0, "currentRoomId": "Dining Room", "roomIdOverride": "Grand Entrance Hall" },
+    { "characterId": "Guest4", "scaleRootPath": "Guest4", "bodyRootPath": null, "capturedBaseScale": { "x": 1.0, "y": 1.0, "z": 1.12 }, "sceneSerializedScale": { "x": 1.42, "y": 1.42, "z": 1.12 }, "manualFineTune": 1.0, "currentRoomId": "Dining Room", "roomIdOverride": "Grand Entrance Hall" },
+    { "characterId": "Guest5", "scaleRootPath": "Guest5", "bodyRootPath": null, "capturedBaseScale": { "x": 1.0, "y": 1.0, "z": 1.3 }, "sceneSerializedScale": { "x": 1.42, "y": 1.42, "z": 1.3 }, "manualFineTune": 1.0, "currentRoomId": "Dining Room", "roomIdOverride": "Drawing Room" },
+    { "characterId": "Guest6", "scaleRootPath": "Guest6", "bodyRootPath": null, "capturedBaseScale": { "x": 1.1, "y": 1.1, "z": 1.3 }, "sceneSerializedScale": { "x": 1.42, "y": 1.42, "z": 1.3 }, "manualFineTune": 1.0, "currentRoomId": "Dining Room", "roomIdOverride": "Drawing Room" },
+    { "characterId": "Guest7", "scaleRootPath": "Guest7", "bodyRootPath": null, "capturedBaseScale": { "x": 1.0, "y": 1.0, "z": 1.3 }, "sceneSerializedScale": { "x": 1.42, "y": 1.42, "z": 1.3 }, "manualFineTune": 1.0, "currentRoomId": "Dining Room", "roomIdOverride": "Drawing Room" },
+    { "characterId": "Guest8", "scaleRootPath": "Guest8", "bodyRootPath": null, "capturedBaseScale": { "x": 1.0, "y": 1.0, "z": 1.3 }, "sceneSerializedScale": { "x": 1.42, "y": 1.42, "z": 1.3 }, "manualFineTune": 1.0, "currentRoomId": "Dining Room", "roomIdOverride": "Drawing Room" }
+  ],
+  "ambientWalkers": [
+    { "path": "Canvas_Background/Rooms/Room_Grand_Entrance_Hall/People/Walker_GEH_GreenGentleman", "nearFootY": -330.0, "farFootY": -90.0, "nearScale": 1.08, "farScale": 0.58, "authoredScale": { "x": 0.58, "y": 0.58, "z": 0.58 }, "sceneSerializedScale": { "x": 0.3838573, "y": 0.3838573, "z": 0.58 } },
+    { "path": "Canvas_Background/Rooms/Room_Grand_Entrance_Hall/People/Walker_GEH_GreenLady", "nearFootY": -330.0, "farFootY": -90.0, "nearScale": 0.98, "farScale": 0.52, "authoredScale": { "x": 0.52, "y": 0.52, "z": 0.52 }, "sceneSerializedScale": { "x": 0.34414792, "y": 0.34414792, "z": 0.52 } }
+  ],
+  "drawingRoom": {
+    "seatedAnimatorBool": "IsCrouching",
+    "guests": [
+      { "guestId": "Guest1", "anchor": "DrawingRoomGuestPoint_01", "anchorLocalPosition": { "x": -290.4, "y": -126.1, "z": -7691.114 }, "pose": "Seated", "occluder": "purple_sofa" },
+      { "guestId": "Guest2", "anchor": "DrawingRoomGuestPoint_02", "anchorLocalPosition": { "x": -335.8, "y": -144.1, "z": -7691.114 }, "pose": "Seated", "occluder": "purple_sofa" },
+      { "guestId": "Guest3", "anchor": "DrawingRoomGuestPoint_03", "anchorLocalPosition": { "x": -173.3, "y": -85.8, "z": -7691.114 }, "pose": "Standing", "occluder": null },
+      { "guestId": "Guest4", "anchor": "DrawingRoomGuestPoint_04", "anchorLocalPosition": { "x": -393.0, "y": -154.8, "z": -7691.114 }, "pose": "Seated", "occluder": "purple_sofa" },
+      { "guestId": "Guest5", "anchor": "DrawingRoomGuestPoint_05", "anchorLocalPosition": { "x": -83.0, "y": -69.0, "z": -7691.114 }, "pose": "Standing", "occluder": null },
+      { "guestId": "Guest6", "anchor": "DrawingRoomGuestPoint_06", "anchorLocalPosition": { "x": 53.3, "y": -97.8, "z": -7691.114 }, "pose": "Seated", "occluder": "drawing_room_red_chair_guest6" },
+      { "guestId": "Guest7", "anchor": "DrawingRoomGuestPoint_07", "anchorLocalPosition": { "x": -257.0, "y": -72.0, "z": -7691.114 }, "pose": "Standing", "occluder": null },
+      { "guestId": "Guest8", "anchor": "DrawingRoomGuestPoint_08", "anchorLocalPosition": { "x": 217.9, "y": -132.0, "z": -7691.114 }, "pose": "Seated", "occluder": "greenchairarmrest_0" }
+    ]
+  },
+  "diningRoom": {
+    "roomId": "Dining Room",
+    "stateSignal": "ActorRoomState.IsSeated",
+    "animatorBool": "IsCrouching",
+    "eatingState": "No separate eating signal; seated maps to each guest override controller's *_Sitting animation.",
+    "tableRenderer": "DiningTableCutoutOverlay",
+    "tableSortAnchorLocalPosition": { "x": -0.306, "y": -2.056, "z": 0.0 },
+    "sortingRule": "guestOrder = tableOrder - 1 and guestOrder must be greater than chairOrder",
+    "guests": [
+      { "guestId": "Guest1", "seat": "Ch2_DiningSeat_01", "seatAnchoredPosition": { "x": -173.9, "y": -29.4 }, "chair": "DiningChair_Left04Back_Overlay", "sittingAnimation": "Lady_Sitting" },
+      { "guestId": "Guest2", "seat": "Ch2_DiningSeat_02", "seatAnchoredPosition": { "x": -212.1, "y": -57.6 }, "chair": "DiningChair_Left03MidBack_Overlay", "sittingAnimation": "ButlerGuest_Sitting" },
+      { "guestId": "Guest3", "seat": "Ch2_DiningSeat_03", "seatAnchoredPosition": { "x": 223.8, "y": -114.2 }, "chair": "DiningChair_Right01Back_Overlay", "sittingAnimation": "MisterFlorianKnell_Sitting" },
+      { "guestId": "Guest4", "seat": "Ch2_DiningSeat_04", "seatAnchoredPosition": { "x": -258.5, "y": -78.1 }, "chair": "DiningChair_Left02MidFront_Overlay", "sittingAnimation": "CountessElowenDusk_Sitting" },
+      { "guestId": "Guest5", "seat": "Ch2_DiningSeat_05", "seatAnchoredPosition": { "x": -308.0, "y": -139.9 }, "chair": "DiningChair_Left01Front_Overlay", "sittingAnimation": "BaronHectorGlass_Sitting" },
+      { "guestId": "Guest6", "seat": "Ch2_DiningSeat_06", "seatAnchoredPosition": { "x": 184.9, "y": -41.0 }, "chair": "DiningChair_Right02MidBack_Overlay", "sittingAnimation": "LadySabineMarrow_Sitting" },
+      { "guestId": "Guest7", "seat": "Ch2_DiningSeat_07", "seatAnchoredPosition": { "x": 282.9, "y": -167.4 }, "chair": "DiningChair_Right04Front_Overlay", "sittingAnimation": "LordAmbroseVeil_Sitting" },
+      { "guestId": "Guest8", "seat": "Ch2_DiningSeat_08", "seatAnchoredPosition": { "x": 259.5, "y": -133.8 }, "chair": "DiningChair_Right03MidFront_Overlay", "sittingAnimation": "MadameCoralieThread_Sitting" }
+    ]
+  },
+  "legacySerialization": {
+    "componentReferenceCounts": {
+      "GuestRoomScaleCalibration": 1,
+      "GuestRoomScaleApplier": 1,
+      "GuestScaleParticipant": 8,
+      "GuestRoomStageScaleUtility": 0,
+      "RoomProjectedEntity": 13,
+      "RoomPerspectiveProfileAssets": 2,
+      "CharacterVisualProfile": 0,
+      "RoomPersonWalker2D": 2,
+      "PointClickPlayerMovement": 2
+    },
+    "roomProjectedEntities": [
+      { "asset": "Assets/Scenes/Gameplay.unity", "path": "Canvas_Background/Rooms/Room_Drawing_Room/purple_armchair_back", "roomLocalFootPoint": { "x": 243.62, "y": -315.58 }, "authoredVisualRootScale": { "x": 98.85839, "y": 100.35108, "z": 73.00117 }, "behavior": "inert" },
+      { "asset": "Assets/Scenes/Gameplay.unity", "path": "Canvas_Background/Rooms/Room_Drawing_Room/drawingroomgreenchair[_0", "roomLocalFootPoint": { "x": -408.72, "y": -261.91 }, "authoredVisualRootScale": { "x": 107.13925, "y": 93.930824, "z": 67.6079 }, "behavior": "inert" },
+      { "asset": "Assets/Scenes/Gameplay.unity", "path": "Canvas_Background/Rooms/Room_Drawing_Room/drawingroomgreenchair_0", "roomLocalFootPoint": { "x": -479.54, "y": -281.56 }, "authoredVisualRootScale": { "x": 105.6437, "y": 96.946236, "z": 73.94832 }, "behavior": "inert" },
+      { "asset": "Assets/Scenes/Gameplay.unity", "path": "Canvas_Background/Rooms/Room_Drawing_Room/tea_service_table", "roomLocalFootPoint": { "x": -80.26, "y": -211.67 }, "authoredVisualRootScale": { "x": 99.52793, "y": 99.40213, "z": 73.00117 }, "behavior": "inert" },
+      { "asset": "Assets/Scenes/Gameplay.unity", "path": "Canvas_Background/Rooms/Room_Drawing_Room/drawing_room_red_chair_guest6", "roomLocalFootPoint": { "x": 59.0, "y": -208.5 }, "authoredVisualRootScale": { "x": 17.91582, "y": 19.015858, "z": 73.00117 }, "behavior": "inert" },
+      { "asset": "Assets/Prefabs/Room_Drawing_Room.prefab", "paths": ["tea_service_table", "drawing_room_red_chair_guest6", "drawingroomgreenchair_0", "purple_armchair_back"], "behavior": "sorting only" },
+      { "asset": "Assets/Prefabs/Room_Drawing_Room_Perspective.prefab", "paths": ["tea_service_table", "drawing_room_red_chair_guest6", "drawingroomgreenchair_0", "purple_armchair_back"], "behavior": "sorting only" }
+    ]
+  },
+  "panicSpriteCompensation": {
+    "libraryAsset": "Assets/Resources/Chapter2/PanicAnimationLibrary.asset",
+    "characterCount": 8,
+    "spriteReferencesPerCharacter": 28,
+    "scriptedScaleMultiplier": 1.0,
+    "minimumScaleMultiplier": 0.1,
+    "legacyFormula": "original sprite local height / replacement sprite local height; width ratio fallback; multiplied by scriptedScaleMultiplier",
+    "legacySourceFields": [
+      "originalLocalScale",
+      "originalSpriteLocalSize",
+      "currentPanicSpriteScaleMultiplier"
+    ],
+    "originalSprites": [
+      { "guestId": "Guest1", "sprite": "lady_sitting_01", "pixels": { "x": 365, "y": 599 }, "pixelsPerUnit": 206.55172, "localSize": { "x": 1.767111888, "y": 2.900000058 } },
+      { "guestId": "Guest2", "sprite": "butlerspritesit_0", "pixels": { "x": 284, "y": 576 }, "pixelsPerUnit": 197.93102, "localSize": { "x": 1.434843311, "y": 2.910104743 } },
+      { "guestId": "Guest3", "sprite": "walk01", "pixels": { "x": 166, "y": 297 }, "pixelsPerUnit": 100.0, "localSize": { "x": 1.66, "y": 2.97 } },
+      { "guestId": "Guest4", "sprite": "guest4sit2", "pixels": { "x": 180, "y": 297 }, "pixelsPerUnit": 100.0, "localSize": { "x": 1.8, "y": 2.97 } },
+      { "guestId": "Guest5", "sprite": "walk01", "pixels": { "x": 166, "y": 297 }, "pixelsPerUnit": 100.0, "localSize": { "x": 1.66, "y": 2.97 } },
+      { "guestId": "Guest6", "sprite": "guest06sitidle1", "pixels": { "x": 166, "y": 297 }, "pixelsPerUnit": 100.0, "localSize": { "x": 1.66, "y": 2.97 } },
+      { "guestId": "Guest7", "sprite": "standing_idle", "pixels": { "x": 89, "y": 252 }, "pixelsPerUnit": 87.7193, "localSize": { "x": 1.01459998, "y": 2.872799943 } },
+      { "guestId": "Guest8", "sprite": "sitting_left_idle_03", "pixels": { "x": 400, "y": 587 }, "pixelsPerUnit": 207.44681, "localSize": { "x": 1.928205114, "y": 2.829641005 } }
+    ],
+    "handsUpFrames": [
+      { "guestId": "Guest1", "replacementLocalHeight": 6.59, "legacyRatio": 0.440060707 },
+      { "guestId": "Guest2", "replacementLocalHeight": 6.48, "legacyRatio": 0.449090238 },
+      { "guestId": "Guest3", "replacementLocalHeight": 6.23, "legacyRatio": 0.476725522 },
+      { "guestId": "Guest4", "replacementLocalHeight": 6.47, "legacyRatio": 0.459041731 },
+      { "guestId": "Guest5", "replacementLocalHeight": 6.46, "legacyRatio": 0.459752322 },
+      { "guestId": "Guest6", "replacementLocalHeight": 6.46, "legacyRatio": 0.459752322 },
+      { "guestId": "Guest7", "replacementLocalHeight": 6.41, "legacyRatio": 0.448174718 },
+      { "guestId": "Guest8", "replacementLocalHeight": 6.47, "legacyRatio": 0.437347914 }
+    ],
+    "knownImportAnomalies": [
+      "ButlerGuest pop uses pixelsPerUnit 73.44827 while most panic frames use 100.",
+      "ButlerGuest run-left/up and alternating run-down frames are 0.19 x 0.39 local units, producing a legacy ratio of 7.461807032.",
+      "ButlerGuest run-right frames are approximately 1.97 to 1.98 local units high, producing ratios around 1.47.",
+      "Lord Ambrose run assets use multi-sprite mode with center pivots; other run sprite-sheet rect pivots are not consistently bottom-centered."
+    ],
+    "replacementRequirement": "Panic sprites must use consistent import pixels-per-unit, canvas dimensions, and bottom-centered pivots so no character transform scaling is required."
+  }
+}

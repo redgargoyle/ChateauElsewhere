@@ -19,7 +19,6 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
     [SerializeField] private Transform yReference;
 
     private SpriteRenderer[] spriteRenderers;
-    private RoomProjectedEntity roomProjection;
     private YSortSolidObstacle2D solidObstacle;
     private PointClickPlayerMovement player;
     private PointClickPlayerMovement actorSortingSource;
@@ -65,11 +64,6 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
     public void ApplySorting()
     {
         ResolveOptionalReferences();
-
-        if (actorSortingSource == null && roomProjection != null && roomProjection.OwnsProjectedSorting)
-        {
-            return;
-        }
 
         if (spriteRenderers == null || spriteRenderers.Length == 0)
         {
@@ -188,11 +182,6 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
 
     private void ResolveOptionalReferences()
     {
-        if (roomProjection == null)
-        {
-            roomProjection = GetComponentInParent<RoomProjectedEntity>();
-        }
-
         if (solidObstacle == null)
         {
             solidObstacle = GetComponent<YSortSolidObstacle2D>();

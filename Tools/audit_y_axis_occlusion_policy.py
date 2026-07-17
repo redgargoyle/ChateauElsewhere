@@ -21,7 +21,6 @@ ASSETS = ROOT / "Assets"
 
 WORLD_Y_SORT_GUID = "75f090bb68ab450d9703d9581c5c543a"
 OBJECT_BLOCKER_GUID = "b95469e02af64fee8b29689edb9b583a"
-ROOM_PROJECTED_ENTITY_GUID = "361e3658088b41ab98d330ae6457640b"
 
 APPROVED_EXCEPTION_NAMES = {
     "DrawingRoomSeatedGuestOcclusionException",
@@ -334,34 +333,6 @@ def audit_dining_sprite_ownership(parsed: ParsedYaml, findings: list[Finding]) -
             )
 
 
-def audit_room_projected_entities(parsed: ParsedYaml, findings: list[Finding]) -> None:
-    for block in parsed.blocks.values():
-        if block.unity_type != 114 or f"guid: {ROOM_PROJECTED_ENTITY_GUID}" not in block.text:
-            continue
-
-        _, name, active = owner_name(parsed, block)
-
-        if not active:
-            continue
-
-        sorting_offset = field_int(block.text, "sortingOffset")
-
-        if sorting_offset in (None, 0):
-            continue
-
-        if is_allowed_exception(name):
-            continue
-
-        add_finding(
-            findings,
-            "DESIGN_REQUIRED",
-            parsed.path,
-            block.line,
-            name,
-            f"RoomProjectedEntity sortingOffset is {sorting_offset}; approve by explicit exception name or migrate to pure y sorting",
-        )
-
-
 def audit_generic_guest_prop_offsets(parsed: ParsedYaml, findings: list[Finding]) -> None:
     offset_field_pattern = re.compile(r"^  ([A-Za-z0-9_]*[Ss]orting[A-Za-z0-9_]*Offset): (-?\d+)$", re.MULTILINE)
 
@@ -378,9 +349,6 @@ def audit_generic_guest_prop_offsets(parsed: ParsedYaml, findings: list[Finding]
             field_name = match.group(1)
 
             if field_name in {"sortingOrderOffset", "behindPlayerSortingOffset", "sourceSortingOrderOffset"}:
-                continue
-
-            if field_name == "sortingOffset" and f"guid: {ROOM_PROJECTED_ENTITY_GUID}" in block.text:
                 continue
 
             value = int(match.group(2))
@@ -407,7 +375,6 @@ def audit_file(path: Path) -> list[Finding]:
     audit_world_y_sort(parsed, findings)
     audit_object_blockers(parsed, findings)
     audit_dining_sprite_ownership(parsed, findings)
-    audit_room_projected_entities(parsed, findings)
     audit_generic_guest_prop_offsets(parsed, findings)
     return findings
 

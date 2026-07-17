@@ -5,7 +5,6 @@ using UnityEngine.InputSystem;
 #endif
 
 [RequireComponent(typeof(CharacterController2D))]
-[RequireComponent(typeof(Animator))]
 public class PlayerMovement : MonoBehaviour
 {
 	private static readonly int SpeedHash = Animator.StringToHash("Speed");
@@ -137,7 +136,10 @@ public class PlayerMovement : MonoBehaviour
 			TryGetComponent(out controller);
 
 		if (animator == null)
-			TryGetComponent(out animator);
+		{
+			if (!TryGetComponent(out animator))
+				animator = GetComponentInChildren<Animator>(true);
+		}
 	}
 
 	private void CacheAnimatorParameters()

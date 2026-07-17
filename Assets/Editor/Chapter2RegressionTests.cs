@@ -891,7 +891,7 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("scriptedGuestRunDistancePixels = 500f"));
         Assert.That(panicText, Does.Contain("scriptedGuestMoveSpeedPixels = 560f"));
         Assert.That(panicText, Does.Contain("scriptedGuestWalkAnimationSpeed = 2f"));
-        Assert.That(panicText, Does.Contain("scriptedGuestPanicSpriteScaleMultiplier = 1f"));
+        Assert.That(panicText, Does.Not.Contain("scriptedGuestPanicSpriteScaleMultiplier"), "Panic sprites must use their imported size without a character-body scale multiplier.");
         Assert.That(panicText, Does.Contain("RunScriptedGuestPanicRoutine"));
         Assert.That(panicText, Does.Contain("RunScriptedGuestDirectionalRun"));
         Assert.That(panicText, Does.Contain("ChooseRandomScriptedGuestRunAction"), "Scripted guests should choose their next panic direction independently.");
@@ -907,7 +907,7 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("UpdateAnimatorWalk(lockedRunAction, scriptedGuestWalkAnimationSpeed)"), "Scripted run beats should keep the Animator walking in the scripted direction.");
         Assert.That(panicText, Does.Contain("panicFrames[UnityEngine.Random.Range(0, panicFrames.Length)]"), "Each transition should choose one random panic still instead of playing a coordinated sequence.");
         Assert.That(panicText, Does.Contain("StopAnimatorWalk(participant.CurrentRunAction)"), "Scripted panic holds should stop the Animator before showing one panic still.");
-        Assert.That(panicText, Does.Contain("SetSprite(panicSprite, scriptedGuestPanicSpriteScaleMultiplier)"), "Scripted panic stills should stay sized against each guest's authored body scale.");
+        Assert.That(panicText, Does.Contain("SetSprite(panicSprite)"), "Scripted panic stills should swap sprites without resizing the character transform.");
         Assert.That(panicText, Does.Contain("HoldScriptedGuestPanicFrame"));
         Assert.That(panicText, Does.Not.Contain("SetInputEnabled(false)"), "Guest panic must not lock the global point-click input/cursor state.");
         Assert.That(panicText, Does.Contain("ReleaseScriptedGuestParticipantsForSharedMotion"));
@@ -928,14 +928,16 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("StepParticipantsTowardAssignedTargets"));
         Assert.That(panicText, Does.Contain("MovePanicOffsetTowardCurrentTarget"));
         Assert.That(panicText, Does.Contain("Vector2.MoveTowards"));
-        Assert.That(panicText, Does.Contain("private void LateUpdate()"));
-        Assert.That(panicText, Does.Contain("ReapplyParticipantVisualOffsets"));
+        Assert.That(panicText, Does.Contain("actorState.ClearRoomStagePointBinding()"), "Panic motion must release the hide-anchor binding before taking ownership of the guest transform.");
+        Assert.That(panicText, Does.Not.Contain("private void LateUpdate()"), "Panic should not maintain a competing late-frame presentation writer.");
+        Assert.That(panicText, Does.Not.Contain("ReapplyParticipantVisualOffsets"));
         Assert.That(panicText, Does.Contain("Rigidbody2D"));
         Assert.That(panicText, Does.Contain("MoveRigidbodyTo"));
         Assert.That(panicText, Does.Contain("Physics2D.SyncTransforms"));
-        Assert.That(panicText, Does.Contain("CaptureOriginalSpriteLocalSize"));
-        Assert.That(panicText, Does.Contain("GetSpriteScaleMultiplier"));
-        Assert.That(panicText, Does.Contain("ApplySpriteScale(currentPanicSprite)"));
+        Assert.That(panicText, Does.Not.Contain("CaptureOriginalSpriteLocalSize"));
+        Assert.That(panicText, Does.Not.Contain("GetSpriteScaleMultiplier"));
+        Assert.That(panicText, Does.Not.Contain("ApplySpriteScale"));
+        Assert.That(panicText, Does.Not.Match(@"\.localScale\s*="), "Panic frame changes must never resize a guest body transform.");
         Assert.That(panicText, Does.Contain("float frameProgress"));
         Assert.That(panicText, Does.Contain("float motionFrame = frameIndex + frameProgress"));
         Assert.That(panicText, Does.Contain("ApplyAssignedRunFrame(frameIndex, motionFrame, jitter)"));
@@ -975,8 +977,9 @@ public class Chapter2RegressionTests
         Assert.That(panicText, Does.Contain("TryChooseRoutedExitTarget"), "Door exits should clamp through the same walkable-floor route logic as point-click movement.");
         Assert.That(panicText, Does.Contain("MoveLogicalPointToward"), "Door exits should step in butler logical coordinates, including vertical movement scaling.");
         Assert.That(panicText, Does.Contain("TryGetLogicalPositionFromWorldPoint"), "Door exits should ask the player movement boundary to clamp targets onto the floor collider.");
-        Assert.That(panicText, Does.Contain("TryGetRoomPixelOffsetFromWorldPoint"), "Guest route positions should be converted back into RoomProjectedEntity room-local points.");
-        Assert.That(panicText, Does.Contain("TryGetActiveRoomStageLocalPoint"), "Persistent projected guests should convert routed world points back through the active room stage.");
+        Assert.That(panicText, Does.Contain("TryGetRoomPixelOffsetFromWorldPoint"), "Guest route positions should remain convertible to their authored room-local movement offsets.");
+        Assert.That(panicText, Does.Not.Contain("TryGetActiveRoomStageLocalPoint"), "Panic movement must not use a second projection-space relocation path.");
+        Assert.That(panicText, Does.Not.Contain("RoomProjectedEntity"));
         Assert.That(panicText, Does.Contain("GetExitFootWorldPosition"), "Guests should run toward the door floor, not the center of the door trigger.");
         Assert.That(panicText, Does.Contain("GetExitWaitTimeoutSeconds"), "Guest search handoff should wait long enough for Guest 1's scripted panic sequence to finish.");
         Assert.That(panicText, Does.Contain("StopPanic()"), "The exit beat should restore normal sprites/animators before guest search stages actors at hide anchors.");
@@ -986,8 +989,6 @@ public class Chapter2RegressionTests
         Assert.That(movementText, Does.Contain("TryGetWorldPointFromLogicalPosition"), "Guest panic needs public access to the same logical-to-world conversion used by the butler.");
         Assert.That(movementText, Does.Contain("MoveLogicalPointToward"), "Guest panic should step using the butler's vertical movement scaling.");
 
-        string cameraManagerText = File.ReadAllText(CameraManagerPath);
-        Assert.That(cameraManagerText, Does.Contain("TryGetActiveRoomStageLocalPoint"), "Projected guest panic needs the inverse of CameraManager's active room-stage world conversion.");
     }
 
     [TestCase("Lady", "Assets/Animation/Lady/Lady.overrideController")]
@@ -1114,11 +1115,15 @@ public class Chapter2RegressionTests
                 Assert.That(assetText, Does.Contain(action.AssetField + ":"), $"Runtime asset should contain {action.AssetField} arrays.");
             }
 
-            string handsUpFramesFolder = Path.Combine(GuestArtRoot, PanicRosterGuestFolders[characterIndex], "panic", "panic_hands_up", "frames");
+            string guestFolder = PanicRosterGuestFolders[characterIndex];
+            string guestSourceFolder = guestFolder == "guest4" || guestFolder == "guest8"
+                ? guestFolder + "_no_white_artifacts"
+                : guestFolder;
+            string handsUpFramesFolder = Path.Combine(GuestArtRoot, guestSourceFolder, "panic", "panic_hands_up", "frames");
             Assert.That(Directory.Exists(handsUpFramesFolder), Is.True, $"{PanicRosterGuestFolders[characterIndex]} should have generated panic_hands_up frames.");
             Assert.That(Directory.GetFiles(handsUpFramesFolder, "*.png").Length, Is.EqualTo(4), $"{PanicRosterGuestFolders[characterIndex]} should have exactly four generated hands-up frames.");
 
-            string firstGuestFrameMeta = Path.Combine(handsUpFramesFolder, $"01_{PanicRosterGuestFolders[characterIndex]}_panic_hands_up.png.meta");
+            string firstGuestFrameMeta = Path.Combine(handsUpFramesFolder, $"01_{guestFolder}_panic_hands_up.png.meta");
             Assert.That(File.Exists(firstGuestFrameMeta), Is.True, $"{PanicRosterGuestFolders[characterIndex]} should have imported generated hands-up sprite metadata.");
             Assert.That(assetText, Does.Contain(ReadGuid(firstGuestFrameMeta)), $"Runtime asset should reference the generated {PanicRosterGuestFolders[characterIndex]} panic_hands_up sprites.");
 
@@ -1131,10 +1136,9 @@ public class Chapter2RegressionTests
             Assert.That(clipText, Does.Not.Contain("classID: 114"), $"{clipPath} should not animate an extra UI Image curve over the SpriteRenderer frames.");
             Assert.That(clipText, Does.Contain(ReadGuid(firstGuestFrameMeta)), $"{clipPath} should reference generated guest-local frame sprites.");
 
-            string guestFolder = PanicRosterGuestFolders[characterIndex];
             string clipFolder = PanicRosterClipFolders[characterIndex];
-            string generatedPopFramesFolder = Path.Combine(GuestArtRoot, guestFolder, "panic", OptionalPanicPopAction, "frames");
-            string legacyPopFramesFolder = Path.Combine(GuestArtRoot, guestFolder, guestFolder + "panic");
+            string generatedPopFramesFolder = Path.Combine(GuestArtRoot, guestSourceFolder, "panic", OptionalPanicPopAction, "frames");
+            string legacyPopFramesFolder = Path.Combine(GuestArtRoot, guestSourceFolder, guestFolder + "panic");
             string popFramesFolder = Directory.Exists(generatedPopFramesFolder)
                 ? generatedPopFramesFolder
                 : legacyPopFramesFolder;
@@ -1181,7 +1185,7 @@ public class Chapter2RegressionTests
 
             for (int actionIndex = 0; actionIndex < RemovedPanicActions.Length; actionIndex++)
             {
-                string removedFolder = Path.Combine(GuestArtRoot, PanicRosterGuestFolders[characterIndex], "panic", RemovedPanicActions[actionIndex]);
+                string removedFolder = Path.Combine(GuestArtRoot, guestSourceFolder, "panic", RemovedPanicActions[actionIndex]);
                 Assert.That(Directory.Exists(removedFolder), Is.False, $"{removedFolder} should not be kept after replacing the bad generated panic actions.");
             }
         }
@@ -1248,7 +1252,7 @@ public class Chapter2RegressionTests
             Assert.That(animator.enabled, Is.False, "Panic should disable authored animators while sprite clips play.");
             Assert.That(waypointMover.enabled, Is.False, "Panic should disable guest movement drivers that can overwrite panic offsets.");
             Assert.That(actor.transform.position, Is.Not.EqualTo(originalPosition), "Panic should translate the guest left/right while the run animation sequence is active.");
-            Assert.That(actor.transform.localScale, Is.Not.EqualTo(originalLocalScale), "Panic should normalize replacement sprite scale against the original guest sprite.");
+            Assert.That(actor.transform.localScale, Is.EqualTo(originalLocalScale), "Panic sprite swaps must leave the guest's authored body scale untouched.");
             Assert.That(body.bodyType, Is.EqualTo(RigidbodyType2D.Kinematic), "Panic should take Rigidbody2D authority away from normal physics.");
             Assert.That(body.gravityScale, Is.Zero, "Panic should prevent Rigidbody2D gravity from fighting panic movement.");
             Assert.That(body.position, Is.Not.EqualTo(originalBodyPosition), "Panic should move Rigidbody2D-backed guest actors, not just their sprite.");
@@ -1543,8 +1547,6 @@ public class Chapter2RegressionTests
         string notifyExitBody = ExtractMethodBody(guestSearchText, "private void NotifyGuestExitToDiningComplete");
         string requestAllFoundBody = ExtractMethodBody(guestSearchText, "private void RequestAllGuestsFoundTransitionWhenReady");
         string controllerAllFoundBody = ExtractMethodBody(controllerText, "public void HandleAllGuestsFound");
-        string tryProjectedTargetBody = ExtractMethodBody(waypointText, "private bool TryGetProjectedTarget");
-        string tryPlaceProjectedBody = ExtractMethodBody(waypointText, "private bool TryPlaceProjectedAtTarget");
 
         Assert.That(exitBody, Does.Contain("FindExitDoorTowardDiningRoom(guest)"), "Preference conversations should choose a real room door as the guest exit target.");
         Assert.That(exitBody, Does.Contain("LogGuestExitPlan"), "Preference exits should log guest/source room/door/start/target/distance once per exit.");
@@ -1559,24 +1561,22 @@ public class Chapter2RegressionTests
         Assert.That(guestSearchText, Does.Not.Contain("startPosition + new Vector3"), "Dinner-preference exits must not synthesize a fake local exit target.");
         Assert.That(guestSearchText, Does.Not.Contain("GuestDoorExitPlan"), "Dinner-preference exits should not keep a separate movement planner.");
         Assert.That(guestSearchText, Does.Not.Contain("GuestDoorExitMotionMode"), "Dinner-preference exits should not define a third movement mode system.");
-        Assert.That(guestSearchText, Does.Not.Contain("RunProjectedGuestExitWalk"), "Projected movement must come from NPCWaypointMover, matching existing movement systems.");
+        Assert.That(guestSearchText, Does.Not.Contain("RunProjectedGuestExitWalk"), "Guest exits should use the shared transform mover, not a second presentation-space path.");
         Assert.That(guestSearchText, Does.Not.Contain("RunTransformGuestExitWalk"), "Transform movement must come from NPCWaypointMover, matching existing movement systems.");
         Assert.That(guestSearchText, Does.Not.Contain("GuestExitAnimator"), "Dinner-preference exits should not own a separate animation driver.");
         Assert.That(guestSearchText, Does.Contain("mover=NPCWaypointMover.MoveTo"), "Diagnostics should prove the shared movement helper is being used.");
         Assert.That(guestSearchText, Does.Contain("GetGuestExitDiagnosticPoints"), "Diagnostics should record the visible foot point used by the shared mover.");
         Assert.That(guestSearchText, Does.Contain("FormatVector(startPoint)"), "Diagnostics should include the selected start foot point.");
         Assert.That(guestSearchText, Does.Contain("FormatVector(targetPoint)"), "Diagnostics should include the selected door foot point.");
-        Assert.That(waypointText, Does.Contain("public static bool CanUseProjectionAsMotionOwner"), "The shared mover should own the projection guard so all callers share the same behavior.");
-        Assert.That(tryProjectedTargetBody, Does.Contain("CanUseProjectionAsMotionOwner(roomProjection)"), "The shared mover must not move a detached projection and leave the visible guest walking in place.");
-        Assert.That(tryPlaceProjectedBody, Does.Contain("CanUseProjectionAsMotionOwner(roomProjection)"), "Instant placement should use the same projection ownership guard as movement.");
-        Assert.That(waypointText, Does.Contain("MoveProjectedToRoutine"), "The shared mover still supports the same projection foot-point movement used by working room-projected actors.");
-        Assert.That(waypointText, Does.Contain("roomProjection.SetRoomLocalFootPoint(nextPosition)"), "Projected actors should have their visible room-local foot point advanced every frame by the shared mover.");
+        Assert.That(waypointText, Does.Not.Contain("Projection"), "The shared mover should own one transform-based movement path.");
+        Assert.That(waypointText, Does.Contain("Vector3.MoveTowards"), "The shared mover should advance directly toward the live authored waypoint.");
+        Assert.That(waypointText, Does.Contain("GetTargetPosition(target)"), "Transform waypoints should remain live while room anchors move.");
         Assert.That(waypointText, Does.Contain("transform.position = nextPosition"), "Detached/world-space actors should have their visible transform advanced every frame by the shared mover.");
         Assert.That(waypointText, Does.Contain("actorRoomState.ClearRoomStagePointBinding()"), "The shared mover should release passive room-stage binding whenever it owns the actor transform.");
         Assert.That(prepareExitBody, Does.Not.Contain("ClearRoomStagePointBinding"), "Chapter 2 should not duplicate a transform-movement prerequisite owned by NPCWaypointMover.");
         Assert.That(exitBody, Does.Contain("StageGuestForDiningRoomReveal(guest)"));
-        Assert.That(exitSpeedBody, Does.Contain("NPCWaypointMover.CanUseProjectionAsMotionOwner"), "Projected guest exits should use the shared mover's projection-ownership test before selecting pixel speed.");
-        Assert.That(exitSpeedBody, Does.Contain("MinimumProjectedGuestExitMoveSpeed"), "Projection-owned exits should be clamped to the established pixel-speed scale.");
+        Assert.That(exitSpeedBody, Does.Contain("actorState.transform is RectTransform"), "Room-stage UI actors should retain the established pixel-speed scale.");
+        Assert.That(exitSpeedBody, Does.Not.Contain("Projection"), "Exit speed selection should not depend on a deleted presentation component.");
         Assert.That(guestSearchText, Does.Contain("guestExitMoveSpeed = 520f"), "The default hidden-guest exit speed should match the existing Chapter 2 door-exit pixel speed.");
         Assert.That(guestSearchText, Does.Contain("GuestExitWorldMoveSpeed = 2.2f"), "World-space fallback movement should mirror the Chapter 1 guest mover scale.");
 

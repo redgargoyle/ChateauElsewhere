@@ -16,7 +16,6 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
     [SerializeField] private SpriteRenderer assignedChairRenderer;
     [SerializeField] private SpriteRenderer diningTableRenderer;
 
-    private RoomProjectedEntity roomProjection;
     private SortingGroup sortingGroup;
     private bool createdSortingGroup;
     private bool capturedOriginalSortingGroupState;
@@ -33,13 +32,11 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
     private void Awake()
     {
         ResolveActorState();
-        ResolveProjection();
     }
 
     private void OnEnable()
     {
         ResolveActorState();
-        ResolveProjection();
         ApplyOrRestore();
     }
 
@@ -91,7 +88,6 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
             ? "Butler"
             : targetButlerExclusionObjectName.Trim();
         loggedInvalidOrder = false;
-        ResolveProjection();
         ApplyOrRestore();
     }
 
@@ -150,9 +146,6 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
             return;
         }
 
-        ResolveProjection();
-        roomProjection?.SetProjectedSortingSuppressed(true);
-
         targetGroup.enabled = true;
         targetGroup.sortingLayerName = diningTableRenderer.sortingLayerName;
         targetGroup.sortingOrder = guestOrder;
@@ -191,12 +184,7 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
             return sortingGroup;
         }
 
-        ResolveProjection();
-        Transform groupRoot = roomProjection != null && roomProjection.VisualRoot != null
-            ? roomProjection.VisualRoot
-            : actorState != null
-                ? actorState.transform
-                : transform;
+        Transform groupRoot = actorState != null ? actorState.transform : transform;
 
         sortingGroup = groupRoot.GetComponent<SortingGroup>();
 
@@ -231,9 +219,6 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
             return;
         }
 
-        ResolveProjection();
-        roomProjection?.SetProjectedSortingSuppressed(false);
-
         if (sortingGroup != null)
         {
             if (createdSortingGroup)
@@ -257,23 +242,6 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
         {
             actorState = GetComponent<ActorRoomState>() ?? GetComponentInParent<ActorRoomState>();
         }
-    }
-
-    private void ResolveProjection()
-    {
-        if (roomProjection != null)
-        {
-            return;
-        }
-
-        if (actorState != null && actorState.Projection != null)
-        {
-            roomProjection = actorState.Projection;
-            return;
-        }
-
-        roomProjection = GetComponentInChildren<RoomProjectedEntity>(true) ??
-            GetComponentInParent<RoomProjectedEntity>(true);
     }
 
     private bool IsButlerActor(ActorRoomState targetActorState)

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
@@ -20,22 +21,22 @@ public class StoryActorRoomStageLockingTests
         try
         {
             rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
-            rig.ActorState.PlaceAt(rig.Anchor);
+            PlaceActorAt(rig, rig.Anchor);
             AssertActorLockedToAnchor(rig, "initial placement");
 
             rig.CameraManager.SetRoomLookForPreview(1f, 0f, 0.8f);
-            Assert.That(ApplyBinding(rig.ActorState), Is.True);
+            Assert.That(ApplyBinding(rig), Is.True);
             AssertActorLockedToAnchor(rig, "room pan");
 
             rig.CameraManager.defaultRoomZoom = rig.CameraManager.maxRoomZoom;
             rig.CameraManager.SetRoomLookForPreview(1f, 0f, 0.8f);
-            Assert.That(ApplyBinding(rig.ActorState), Is.True);
+            Assert.That(ApplyBinding(rig), Is.True);
             AssertActorLockedToAnchor(rig, "room zoom");
 
             SetViewportSize(rig.Viewport, 960f, 540f);
             Canvas.ForceUpdateCanvases();
             rig.CameraManager.SetRoomLookForPreview(-0.4f, 0f, 0.8f);
-            Assert.That(ApplyBinding(rig.ActorState), Is.True);
+            Assert.That(ApplyBinding(rig), Is.True);
             AssertActorLockedToAnchor(rig, "viewport resize");
 
             GameObject stageActor = new GameObject("StageOwnedActor");
@@ -49,7 +50,7 @@ public class StoryActorRoomStageLockingTests
             rig.CameraManager.defaultRoomZoom = rig.CameraManager.maxRoomZoom;
             rig.CameraManager.SetRoomLookForPreview(1f, 0f, 0.8f);
 
-            Assert.That(ApplyBinding(stageActorState), Is.False);
+            Assert.That(ApplyBinding(rig, stageActorState), Is.False);
             Assert.That(stageActor.transform.localPosition, Is.EqualTo(originalLocalPosition));
         }
         finally
@@ -69,20 +70,20 @@ public class StoryActorRoomStageLockingTests
         try
         {
             rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
-            rig.ActorState.PlaceAt(rig.Anchor);
+            PlaceActorAt(rig, rig.Anchor);
             Assert.That(
-                ApplyBinding(rig.ActorState),
+                ApplyBinding(rig),
                 Is.True,
                 "The real Chapter 2 guest starts bound to its hide anchor.");
             Vector3 startPosition = rig.ActorState.transform.position;
 
             NPCWaypointMover mover = rig.ActorState.gameObject.AddComponent<NPCWaypointMover>();
-            mover.MoveSpeed = 100f;
+            mover.MoveSpeed = 1f;
             IEnumerator move = mover.MoveToRoutine(exit);
 
             Assert.That(move.MoveNext(), Is.True, "The exit waypoint should require at least one movement step.");
             Assert.That(
-                ApplyBinding(rig.ActorState),
+                ApplyBinding(rig),
                 Is.False,
                 "Scripted transform movement must release the passive stage binding before LateUpdate can pin the guest.");
 
@@ -97,7 +98,7 @@ public class StoryActorRoomStageLockingTests
                 Is.GreaterThan(0.0001f),
                 "The visible world-space guest should physically advance on the first exit step.");
             Assert.That(
-                ApplyBinding(rig.ActorState),
+                ApplyBinding(rig),
                 Is.False,
                 "The room-stage binding must remain released after the guest physically advances.");
 
@@ -115,6 +116,62 @@ public class StoryActorRoomStageLockingTests
         }
     }
 
+    [UnityTest]
+    public IEnumerator SpeechPausedWaypointKeepsRoomStageBindingUntilMovementResumes()
+    {
+        TestRig rig = CreateRig();
+        RectTransform exit = new GameObject("ExitAfterSpeech", typeof(RectTransform)).GetComponent<RectTransform>();
+        exit.SetParent(rig.Stage, false);
+        exit.anchoredPosition = rig.Anchor.anchoredPosition + new Vector2(120f, 0f);
+
+        try
+        {
+            rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
+            GameObject visual = new GameObject("AnimationDisplay");
+            visual.transform.SetParent(rig.ActorState.transform, false);
+            CharacterScaleCatalog catalog = CreateScaleCatalog(rig, 2f, 1f);
+            CharacterAnimationDisplay display = rig.ActorState.gameObject.AddComponent<CharacterAnimationDisplay>();
+            display.Configure(visual.transform, catalog);
+
+            PlaceActorAt(rig, rig.Anchor);
+            AssertActorLockedToAnchor(rig, "door spawn before speech pause");
+            AssertDisplayUsesVisibleFeetScale(rig, catalog, display, "door spawn before speech pause");
+
+            NPCWaypointMover mover = rig.ActorState.gameObject.AddComponent<NPCWaypointMover>();
+            mover.MoveSpeed = 1f;
+            mover.AcquireSpeechPause();
+            IEnumerator move = mover.MoveToRoutine(exit);
+
+            Assert.That(move.MoveNext(), Is.True, "The queued walk should wait while the guest speaks.");
+            Assert.That(
+                ApplyBinding(rig),
+                Is.True,
+                "Queuing a paused walk must not detach a stationary guest from the door anchor.");
+            AssertDisplayUsesVisibleFeetScale(rig, catalog, display, "queued walk while speech-paused");
+
+            rig.CameraManager.defaultRoomZoom = rig.CameraManager.maxRoomZoom;
+            rig.CameraManager.SetRoomLookForPreview(0.65f, -0.35f, 0.8f);
+            Assert.That(ApplyBinding(rig), Is.True);
+            AssertActorLockedToAnchor(rig, "door spawn while panning and zooming during speech");
+            AssertDisplayUsesVisibleFeetScale(rig, catalog, display, "door scale while panning and zooming during speech");
+
+            mover.ReleaseSpeechPause();
+            Assert.That(move.MoveNext(), Is.True, "Movement should resume after the speech pause ends.");
+            Assert.That(
+                ApplyBinding(rig),
+                Is.False,
+                "The shared mover should release the anchor on the first real movement frame.");
+
+            mover.StopMoving();
+            yield return null;
+        }
+        finally
+        {
+            Object.DestroyImmediate(exit.gameObject);
+            rig.Destroy();
+        }
+    }
+
     [Test]
     public void WorldActorCanKeepAuthoredScaleWhileLockedToRoomStage()
     {
@@ -123,15 +180,14 @@ public class StoryActorRoomStageLockingTests
         try
         {
             rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
-            rig.ActorState.SetScaleWithRoomStageMotion(false);
             Vector3 authoredScale = rig.ActorState.transform.localScale;
 
-            rig.ActorState.PlaceAt(rig.Anchor);
+            PlaceActorAt(rig, rig.Anchor);
             AssertActorLockedToAnchor(rig, "initial placement");
 
             rig.CameraManager.defaultRoomZoom = rig.CameraManager.maxRoomZoom;
             rig.CameraManager.SetRoomLookForPreview(1f, 0f, 0.8f);
-            Assert.That(ApplyBinding(rig.ActorState), Is.True);
+            Assert.That(ApplyBinding(rig), Is.True);
 
             AssertActorLockedToAnchor(rig, "room zoom");
             Assert.That(rig.ActorState.transform.localScale, Is.EqualTo(authoredScale));
@@ -143,42 +199,7 @@ public class StoryActorRoomStageLockingTests
     }
 
     [Test]
-    public void WorldActorUsesAuthoredScaleAsRoomZoomBaseline()
-    {
-        TestRig rig = CreateRig();
-
-        try
-        {
-            rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
-            Vector3 authoredScale = rig.ActorState.transform.localScale;
-
-            rig.ActorState.PlaceAt(rig.Anchor);
-            AssertActorLockedToAnchor(rig, "initial placement");
-
-            float boundStageScale = rig.Stage.lossyScale.x;
-            rig.CameraManager.defaultRoomZoom = rig.CameraManager.maxRoomZoom;
-            rig.CameraManager.SetRoomLookForPreview(1f, 0f, 0.8f);
-            Assert.That(ApplyBinding(rig.ActorState), Is.True);
-
-            float zoomRatio = rig.Stage.lossyScale.x / Mathf.Max(0.0001f, boundStageScale);
-            Vector3 expectedScale = new Vector3(
-                authoredScale.x * zoomRatio,
-                authoredScale.y * zoomRatio,
-                authoredScale.z);
-
-            AssertActorLockedToAnchor(rig, "room zoom");
-            Assert.That(rig.ActorState.transform.localScale.x, Is.EqualTo(expectedScale.x).Within(0.0001f));
-            Assert.That(rig.ActorState.transform.localScale.y, Is.EqualTo(expectedScale.y).Within(0.0001f));
-            Assert.That(rig.ActorState.transform.localScale.z, Is.EqualTo(expectedScale.z).Within(0.0001f));
-        }
-        finally
-        {
-            rig.Destroy();
-        }
-    }
-
-    [Test]
-    public void RoomStageBindingAndGuestScalingKeepVisibleFeetOnTheAnchor()
+    public void RoomStageBindingKeepsActorRootOnTheAnchorWithoutChangingScale()
     {
         TestRig rig = CreateRig();
         Texture2D bodyTexture = new Texture2D(20, 40);
@@ -192,23 +213,17 @@ public class StoryActorRoomStageLockingTests
 
         try
         {
-            GuestScaleParticipant participant = rig.ActorState.gameObject.AddComponent<GuestScaleParticipant>();
-            participant.SetCharacterId("guest_1");
-            participant.SetCurrentRoomId(rig.RoomContent.RoomName);
-            participant.ResolveScaleRoot();
-            participant.CaptureBaseScale(true);
+            Vector3 authoredScale = rig.ActorState.transform.localScale;
             rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
-            rig.ActorState.PlaceAt(rig.Anchor);
-            AssertVisibleFeetLockedToAnchor(rig, bodyRenderer, "initial foot binding");
-
-            participant.ApplyFinalScale(1.6f);
-            AssertVisibleFeetLockedToAnchor(rig, bodyRenderer, "guest scale refresh");
+            PlaceActorAt(rig, rig.Anchor);
+            AssertActorLockedToAnchor(rig, "initial root binding");
+            Assert.That(rig.ActorState.transform.localScale, Is.EqualTo(authoredScale));
 
             rig.CameraManager.defaultRoomZoom = rig.CameraManager.maxRoomZoom;
             rig.CameraManager.SetRoomLookForPreview(0.6f, -0.25f, 0.8f);
-            Assert.That(ApplyBinding(rig.ActorState), Is.True);
-            participant.ApplyFinalScale(1.9f);
-            AssertVisibleFeetLockedToAnchor(rig, bodyRenderer, "pan, zoom, and scale refresh");
+            Assert.That(ApplyBinding(rig), Is.True);
+            AssertActorLockedToAnchor(rig, "pan and zoom root refresh");
+            Assert.That(rig.ActorState.transform.localScale, Is.EqualTo(authoredScale));
         }
         finally
         {
@@ -219,26 +234,91 @@ public class StoryActorRoomStageLockingTests
     }
 
     [Test]
-    public void GuestScaleDepthUsesTheActorsBoundRoomStageFootPoint()
+    public void StaticBoundGuestUsesFinalAnimationDisplayScaleWithoutMovingActorRoot()
     {
         TestRig rig = CreateRig();
+        Texture2D bodyTexture = new Texture2D(20, 40);
+        Sprite bodySprite = Sprite.Create(
+            bodyTexture,
+            new Rect(0f, 0f, bodyTexture.width, bodyTexture.height),
+            new Vector2(0.5f, 0.5f),
+            20f);
+        SpriteRenderer rootRenderer = rig.ActorState.GetComponent<SpriteRenderer>();
+
+        GameObject visual = new GameObject("AnimationDisplay", typeof(SpriteRenderer));
+        visual.transform.SetParent(rig.ActorState.transform, false);
+        SpriteRenderer bodyRenderer = visual.GetComponent<SpriteRenderer>();
+        bodyRenderer.sprite = bodySprite;
+
+        CharacterScaleCatalog catalog = CreateConstantScaleCatalog(rig, 2f);
+        CharacterAnimationDisplay display = rig.ActorState.gameObject.AddComponent<CharacterAnimationDisplay>();
+        display.Configure(visual.transform, catalog);
 
         try
         {
-            GuestScaleParticipant participant = rig.ActorState.gameObject.AddComponent<GuestScaleParticipant>();
-            participant.SetCharacterId("guest_1");
-            participant.SetCurrentRoomId(rig.RoomContent.RoomName);
-            participant.ResolveScaleRoot();
+            Vector3 authoredRootScale = rig.ActorState.transform.localScale;
             rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
-            rig.ActorState.PlaceAt(rig.Anchor);
+            rootRenderer.enabled = false;
 
+            PlaceActorAt(rig, rig.Anchor);
+
+            float expectedDisplayScale = 2f * rig.RoomCoordinates.CurrentStageScale;
             Assert.That(
-                participant.ResolveRoomLocalY(rig.RoomContent.RoomName),
-                Is.EqualTo(rig.Anchor.localPosition.y).Within(0.001f),
-                "Guest scaling should sample the same room-local foot point that keeps the actor attached to its physical anchor.");
+                display.AnimationDisplay.localScale,
+                Is.EqualTo(new Vector3(expectedDisplayScale, expectedDisplayScale, 1f)),
+                "Static placement must apply the target room's display scale without moving the actor root.");
+            AssertActorLockedToAnchor(rig, "scaled static root binding");
+            Assert.That(rig.ActorState.transform.localScale, Is.EqualTo(authoredRootScale),
+                "Static room-anchor binding must not take ownership of the actor root scale.");
         }
         finally
         {
+            Object.DestroyImmediate(bodySprite);
+            Object.DestroyImmediate(bodyTexture);
+            rig.Destroy();
+        }
+    }
+
+    [Test]
+    public void StaticRoomAnchorBindingIgnoresAnimationFrameBounds()
+    {
+        TestRig rig = CreateRig();
+        Texture2D shortTexture = new Texture2D(20, 40);
+        Texture2D tallTexture = new Texture2D(20, 80);
+        Sprite shortFrame = Sprite.Create(
+            shortTexture,
+            new Rect(0f, 0f, shortTexture.width, shortTexture.height),
+            new Vector2(0.5f, 0.5f),
+            20f);
+        Sprite tallFrame = Sprite.Create(
+            tallTexture,
+            new Rect(0f, 0f, tallTexture.width, tallTexture.height),
+            new Vector2(0.5f, 0.5f),
+            20f);
+        SpriteRenderer bodyRenderer = rig.ActorState.GetComponent<SpriteRenderer>();
+
+        try
+        {
+            rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
+            bodyRenderer.sprite = shortFrame;
+            PlaceActorAt(rig, rig.Anchor);
+            AssertActorLockedToAnchor(rig, "short animation frame");
+            Vector3 shortFrameRootPosition = rig.ActorState.transform.position;
+
+            bodyRenderer.sprite = tallFrame;
+            Assert.That(ApplyBinding(rig), Is.True);
+            AssertActorLockedToAnchor(rig, "tall animation frame");
+            Assert.That(
+                rig.ActorState.transform.position,
+                Is.EqualTo(shortFrameRootPosition),
+                "Changing animation-frame bounds must never move a statically anchored actor root.");
+        }
+        finally
+        {
+            Object.DestroyImmediate(shortFrame);
+            Object.DestroyImmediate(tallFrame);
+            Object.DestroyImmediate(shortTexture);
+            Object.DestroyImmediate(tallTexture);
             rig.Destroy();
         }
     }
@@ -329,53 +409,22 @@ public class StoryActorRoomStageLockingTests
         }
     }
 
-    [Test]
-    public void WorldActorBindingUsesRoomPerspectiveProfileScale()
-    {
-        TestRig rig = CreateRig();
-        RoomPerspectiveProfile profile = ScriptableObject.CreateInstance<RoomPerspectiveProfile>();
-        profile.Configure(
-            rig.RoomContent.RoomName,
-            new Vector2(400f, 200f),
-            -100f,
-            100f,
-            AnimationCurve.Linear(0f, 1.25f, 1f, 0.75f),
-            null,
-            1000,
-            8000,
-            AnimationCurve.Linear(0f, 1f, 1f, 0f));
-        rig.RoomContent.SetPerspectiveProfile(profile);
-
-        try
-        {
-            rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
-            Vector3 authoredScale = rig.ActorState.transform.localScale;
-
-            rig.ActorState.PlaceAt(rig.Anchor);
-            Assert.That(ApplyBinding(rig.ActorState), Is.True);
-
-            float expectedPerspectiveScale = profile.GetScale(rig.Anchor.anchoredPosition);
-            AssertActorLockedToAnchor(rig, "profile-scaled placement");
-            Assert.That(rig.ActorState.transform.localScale.x, Is.EqualTo(authoredScale.x * expectedPerspectiveScale).Within(0.0001f));
-            Assert.That(rig.ActorState.transform.localScale.y, Is.EqualTo(authoredScale.y * expectedPerspectiveScale).Within(0.0001f));
-            Assert.That(rig.ActorState.transform.localScale.z, Is.EqualTo(authoredScale.z).Within(0.0001f));
-        }
-        finally
-        {
-            Object.DestroyImmediate(profile);
-            rig.Destroy();
-        }
-    }
-
     private static TestRig CreateRig()
     {
         GameObject root = new GameObject("StoryActorRoomStageLockingTestRoot");
         Texture2D texture = new Texture2D(400, 200) { name = "RuntimeRoomTexture" };
-        GameObject[] previousMainCameras = GameObject.FindGameObjectsWithTag("MainCamera");
+        Camera[] existingCameras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        List<GameObject> previousMainCameras = new List<GameObject>();
 
-        for (int i = 0; i < previousMainCameras.Length; i++)
+        for (int i = 0; i < existingCameras.Length; i++)
         {
-            previousMainCameras[i].tag = "Untagged";
+            Camera existingCamera = existingCameras[i];
+
+            if (existingCamera != null && existingCamera.CompareTag("MainCamera"))
+            {
+                previousMainCameras.Add(existingCamera.gameObject);
+                existingCamera.tag = "Untagged";
+            }
         }
 
         Camera camera = new GameObject("Main Camera").AddComponent<Camera>();
@@ -383,14 +432,20 @@ public class StoryActorRoomStageLockingTests
         camera.orthographic = true;
         camera.transform.SetParent(root.transform, false);
         camera.transform.position = new Vector3(0f, 0f, -10f);
+        camera.rect = new Rect(0f, 0f, 1f, 1f);
+        RenderTexture cameraTarget = new RenderTexture(800, 450, 0) { name = "StoryActorRoomStageTestViewport" };
+        cameraTarget.Create();
 
         Canvas canvas = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas)).GetComponent<Canvas>();
         canvas.transform.SetParent(root.transform, false);
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.renderMode = RenderMode.ScreenSpaceCamera;
+        canvas.worldCamera = camera;
+        canvas.planeDistance = 1f;
 
         RectTransform viewport = new GameObject("Viewport", typeof(RectTransform)).GetComponent<RectTransform>();
         viewport.SetParent(canvas.transform, false);
         SetViewportSize(viewport, 800f, 450f);
+        Canvas.ForceUpdateCanvases();
 
         RectTransform stage = new GameObject("Room_Test_Room", typeof(RectTransform), typeof(RoomContentGroup)).GetComponent<RectTransform>();
         stage.SetParent(viewport, false);
@@ -418,11 +473,13 @@ public class StoryActorRoomStageLockingTests
         actor.transform.position = Vector3.zero;
         actor.transform.localScale = new Vector3(1.2f, 0.8f, 1f);
 
-        return new TestRig
+        TestRig rig = new TestRig
         {
             Root = root,
             Texture = texture,
             Camera = camera,
+            CameraTarget = cameraTarget,
+            Canvas = canvas,
             CameraManager = cameraManager,
             Viewport = viewport,
             Stage = stage,
@@ -431,6 +488,86 @@ public class StoryActorRoomStageLockingTests
             ActorState = actor.GetComponent<ActorRoomState>(),
             PreviousMainCameras = previousMainCameras
         };
+
+        SetPrivateField(rig.ActorState, "cameraManager", cameraManager);
+        SetPrivateField(rig.ActorState, "restrictVisibilityToCurrentRoom", false);
+        EnsureRigCameraIsMain(rig);
+        return rig;
+    }
+
+    private static CharacterScaleCatalog CreateConstantScaleCatalog(TestRig rig, float scale)
+    {
+        return CreateScaleCatalog(rig, scale, scale);
+    }
+
+    private static CharacterScaleCatalog CreateScaleCatalog(TestRig rig, float frontScale, float backScale)
+    {
+        CharacterScaleCatalog catalog = ScriptableObject.CreateInstance<CharacterScaleCatalog>();
+        catalog.name = "Character Scale Catalog";
+        rig.ScaleCatalog = catalog;
+
+        GameObject markerRoot = new GameObject("Character Scale");
+        markerRoot.transform.SetParent(rig.RoomContent.transform, false);
+
+        GameObject front = new GameObject("Front");
+        front.transform.SetParent(markerRoot.transform, false);
+        front.transform.localPosition = new Vector3(0f, -100f, 0f);
+        front.transform.localScale = new Vector3(frontScale, frontScale, 1f);
+
+        GameObject back = new GameObject("Back");
+        back.transform.SetParent(markerRoot.transform, false);
+        back.transform.localPosition = new Vector3(0f, 100f, 0f);
+        back.transform.localScale = new Vector3(backScale, backScale, 1f);
+
+        CharacterScaleRoom roomCoordinates = rig.RoomContent.gameObject.AddComponent<CharacterScaleRoom>();
+        roomCoordinates.ConfigureHandles(
+            rig.RoomContent,
+            front.transform,
+            back.transform);
+        rig.RoomCoordinates = roomCoordinates;
+
+        catalog.SetRooms(new[]
+        {
+            new CharacterScaleRoomDefinition(
+                rig.RoomContent.RoomName,
+                -100f,
+                frontScale,
+                100f,
+                backScale)
+        });
+        return catalog;
+    }
+
+    private static void AssertDisplayUsesVisibleFeetScale(
+        TestRig rig,
+        CharacterScaleCatalog catalog,
+        CharacterAnimationDisplay display,
+        string context)
+    {
+        Assert.That(
+            rig.RoomCoordinates.TryGetCharacterRoomY(rig.ActorState.transform.position, out float visibleFeetRoomY),
+            Is.True,
+            context);
+        Assert.That(rig.RoomCoordinates, Is.Not.Null, context);
+        Assert.That(
+            catalog.TryEvaluateScaleAtRoomY(
+                rig.RoomContent.RoomName,
+                visibleFeetRoomY,
+                rig.RoomCoordinates.CurrentStageScale,
+                out float expectedScale),
+            Is.True,
+            context);
+        Assert.That(display.TryApplyCurrentRoomScale(), Is.True, context);
+        Assert.That(display.AnimationDisplay.localScale.x, Is.EqualTo(expectedScale).Within(0.0001f), context);
+        Assert.That(display.AnimationDisplay.localScale.y, Is.EqualTo(expectedScale).Within(0.0001f), context);
+        Assert.That(display.AnimationDisplay.localScale.z, Is.EqualTo(1f).Within(0.0001f), context);
+    }
+
+    private static void SetPrivateField<T>(ActorRoomState actorState, string fieldName, T value)
+    {
+        FieldInfo field = typeof(ActorRoomState).GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(field, Is.Not.Null, $"ActorRoomState test fixture field '{fieldName}' must remain available.");
+        field.SetValue(actorState, value);
     }
 
     private static void SetViewportSize(RectTransform viewport, float width, float height)
@@ -442,25 +579,89 @@ public class StoryActorRoomStageLockingTests
         viewport.sizeDelta = new Vector2(width, height);
     }
 
-    private static bool ApplyBinding(ActorRoomState actorState)
+    private static bool ApplyBinding(TestRig rig, ActorRoomState actorState = null)
     {
         Assert.That(ApplyBindingMethod, Is.Not.Null, "ActorRoomState binding method should remain available to this regression test.");
-        return (bool)ApplyBindingMethod.Invoke(actorState, null);
+        EnsureRigCameraIsMain(rig);
+        AttachCameraTarget(rig);
+
+        try
+        {
+            return (bool)ApplyBindingMethod.Invoke(actorState != null ? actorState : rig.ActorState, null);
+        }
+        finally
+        {
+            rig.Camera.targetTexture = null;
+        }
+    }
+
+    private static void PlaceActorAt(TestRig rig, Transform target)
+    {
+        EnsureRigCameraIsMain(rig);
+        AttachCameraTarget(rig);
+
+        try
+        {
+            rig.ActorState.PlaceAt(target);
+        }
+        finally
+        {
+            rig.Camera.targetTexture = null;
+        }
+    }
+
+    private static void EnsureRigCameraIsMain(TestRig rig)
+    {
+        Camera[] cameras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        for (int i = 0; i < cameras.Length; i++)
+        {
+            Camera camera = cameras[i];
+
+            if (camera != null && camera != rig.Camera && camera.CompareTag("MainCamera"))
+            {
+                if (!rig.PreviousMainCameras.Contains(camera.gameObject))
+                {
+                    rig.PreviousMainCameras.Add(camera.gameObject);
+                }
+
+                camera.tag = "Untagged";
+            }
+        }
+
+        rig.Camera.tag = "MainCamera";
+        rig.Camera.rect = new Rect(0f, 0f, 1f, 1f);
+        Assert.That(Camera.main, Is.SameAs(rig.Camera), "The room-stage test must own Camera.main regardless of earlier fixtures.");
+    }
+
+    private static void AttachCameraTarget(TestRig rig)
+    {
+        if (!rig.CameraTarget.IsCreated())
+        {
+            rig.CameraTarget.Create();
+        }
+
+        rig.Camera.targetTexture = rig.CameraTarget;
+        rig.Camera.rect = new Rect(0f, 0f, 1f, 1f);
+        Assert.That(rig.CameraTarget.IsCreated(), Is.True, "The room-stage test render target must be created.");
+        Assert.That(rig.Camera.pixelWidth, Is.GreaterThan(1), "The room-stage test camera needs a deterministic render width.");
+        Assert.That(rig.Camera.pixelHeight, Is.GreaterThan(1), "The room-stage test camera needs a deterministic render height.");
     }
 
     private static void AssertActorLockedToAnchor(TestRig rig, string context)
     {
-        Vector2 actorScreen = rig.Camera.WorldToScreenPoint(rig.ActorState.transform.position);
-        Vector2 anchorScreen = RectTransformUtility.WorldToScreenPoint(null, rig.Anchor.position);
-        Assert.That(Vector2.Distance(actorScreen, anchorScreen), Is.LessThanOrEqualTo(ScreenLockTolerance), context);
-    }
+        AttachCameraTarget(rig);
 
-    private static void AssertVisibleFeetLockedToAnchor(TestRig rig, SpriteRenderer renderer, string context)
-    {
-        Vector3 feetWorld = new Vector3(renderer.bounds.center.x, renderer.bounds.min.y, renderer.bounds.center.z);
-        Vector2 feetScreen = rig.Camera.WorldToScreenPoint(feetWorld);
-        Vector2 anchorScreen = RectTransformUtility.WorldToScreenPoint(null, rig.Anchor.position);
-        Assert.That(Vector2.Distance(feetScreen, anchorScreen), Is.LessThanOrEqualTo(ScreenLockTolerance), context);
+        try
+        {
+            Vector2 actorScreen = rig.Camera.WorldToScreenPoint(rig.ActorState.transform.position);
+            Vector2 anchorScreen = RectTransformUtility.WorldToScreenPoint(rig.Canvas.worldCamera, rig.Anchor.position);
+            Assert.That(Vector2.Distance(actorScreen, anchorScreen), Is.LessThanOrEqualTo(ScreenLockTolerance), context);
+        }
+        finally
+        {
+            rig.Camera.targetTexture = null;
+        }
     }
 
     private sealed class TestRig
@@ -468,18 +669,25 @@ public class StoryActorRoomStageLockingTests
         public GameObject Root;
         public Texture2D Texture;
         public Camera Camera;
+        public RenderTexture CameraTarget;
+        public Canvas Canvas;
         public CameraManager CameraManager;
         public RectTransform Viewport, Stage, Anchor;
         public RoomContentGroup RoomContent;
         public ActorRoomState ActorState;
-        public GameObject[] PreviousMainCameras;
+        public CharacterScaleRoom RoomCoordinates;
+        public CharacterScaleCatalog ScaleCatalog;
+        public List<GameObject> PreviousMainCameras;
 
         public void Destroy()
         {
+            Camera.targetTexture = null;
             Object.DestroyImmediate(Root);
             Object.DestroyImmediate(Texture);
+            Object.DestroyImmediate(CameraTarget);
+            Object.DestroyImmediate(ScaleCatalog);
 
-            for (int i = 0; i < PreviousMainCameras.Length; i++)
+            for (int i = 0; i < PreviousMainCameras.Count; i++)
             {
                 if (PreviousMainCameras[i] != null)
                 {

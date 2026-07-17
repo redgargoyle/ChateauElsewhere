@@ -14,7 +14,6 @@ public class Chapter2GuestSearchController : MonoBehaviour
     private const string ClickTargetName = "Ch2_ClickTarget";
     private const float ClickTargetWidthPadding = 1.15f;
     private const float ClickTargetHeightPadding = 1.15f;
-    private const float MinimumProjectedGuestExitMoveSpeed = 180f;
     private const float GuestExitWorldMoveSpeed = 2.2f;
     private static readonly Vector2 MinimumClickTargetSize = new Vector2(1f, 2f);
     private static readonly Vector2 FallbackClickTargetOffset = new Vector2(0f, 1f);
@@ -1484,18 +1483,6 @@ public class Chapter2GuestSearchController : MonoBehaviour
         targetPoint = Vector2.zero;
         motionOwner = "transform";
 
-        RoomProjectedEntity projection = actorState != null ? actorState.Projection : null;
-
-        if (projection != null &&
-            NPCWaypointMover.CanUseProjectionAsMotionOwner(projection) &&
-            projection.TryGetRoomLocalFootPointForTarget(exitTarget, out Vector2 projectedTarget))
-        {
-            startPoint = projection.RoomLocalFootPoint;
-            targetPoint = projectedTarget;
-            motionOwner = "projection";
-            return;
-        }
-
         Transform actorTransform = actorState != null ? actorState.transform : null;
 
         if (actorTransform != null)
@@ -1508,13 +1495,6 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
     private float GetGuestExitMoveSpeed(ActorRoomState actorState)
     {
-        if (actorState != null &&
-            actorState.Projection != null &&
-            NPCWaypointMover.CanUseProjectionAsMotionOwner(actorState.Projection))
-        {
-            return Mathf.Max(MinimumProjectedGuestExitMoveSpeed, guestExitMoveSpeed);
-        }
-
         return actorState != null && actorState.transform is RectTransform
             ? Mathf.Max(0.01f, guestExitMoveSpeed)
             : GuestExitWorldMoveSpeed;
@@ -1624,7 +1604,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
         DoorTriggerNavigation bestDoor = null;
         float bestScore = float.MaxValue;
-        RoomProjectedEntity projection = actorState != null ? actorState.Projection : null;
+        Transform actorTransform = actorState != null ? actorState.transform : null;
 
         for (int i = 0; i < doors.Length; i++)
         {
@@ -1635,13 +1615,9 @@ public class Chapter2GuestSearchController : MonoBehaviour
                 continue;
             }
 
-            float score = i;
-
-            if (projection != null &&
-                projection.TryGetRoomLocalFootPointForTarget(door.transform, out Vector2 doorFootPoint))
-            {
-                score = Vector2.SqrMagnitude(doorFootPoint - projection.RoomLocalFootPoint);
-            }
+            float score = actorTransform != null
+                ? Vector2.SqrMagnitude((Vector2)door.transform.position - (Vector2)actorTransform.position)
+                : i;
 
             if (score < bestScore)
             {

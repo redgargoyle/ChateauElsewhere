@@ -853,6 +853,13 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
         lastFallbackUpdateFrame = Time.frameCount;
 
+        Camera mainCamera = Camera.main;
+        if (mainCamera == null || mainCamera.pixelWidth <= 1 || mainCamera.pixelHeight <= 1)
+        {
+            ClearActiveDoorHover(fallbackHoveredTrigger);
+            return;
+        }
+
         if (RuntimeSettingsMenu.BlocksGameInput)
         {
             ClearActiveDoorHover(fallbackHoveredTrigger);

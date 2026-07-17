@@ -1,0 +1,110 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48d1283f4c7e0200d97cab31acfeb6a5, type: 3}
+  m_Name: CharacterScaleCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterScaleCatalog
+  rooms:
+  - roomName: Ballroom
+    frontY: -556.58936
+    frontScale: 2.5
+    backY: -68.67108
+    backScale: 0.5518164
+  - roomName: Billiard Room
+    frontY: -533.9481
+    frontScale: 2.454557
+    backY: -122.932236
+    backScale: 1.1938814
+  - roomName: Blue Bedroom
+    frontY: -487.8619
+    frontScale: 2.5
+    backY: -151.66829
+    backScale: 1.1528362
+  - roomName: Butlers Pantry
+    frontY: -457.76678
+    frontScale: 2.5
+    backY: -251.90562
+    backScale: 2.0208333
+  - roomName: Chapel
+    frontY: -542.91187
+    frontScale: 2.3
+    backY: -230.23573
+    backScale: 0.99158704
+  - roomName: Conservatory
+    frontY: -467.1245
+    frontScale: 2.260003
+    backY: -80.01454
+    backScale: 0.8745046
+  - roomName: Dining Room
+    frontY: -451.8298
+    frontScale: 2.3865647
+    backY: -30.95443
+    backScale: 1.1485544
+  - roomName: Drawing Room
+    frontY: -384.02182
+    frontScale: 2.057692
+    backY: -119.561905
+    backScale: 1.3752748
+  - roomName: Grand Entrance Hall
+    frontY: -381.67844
+    frontScale: 2.1461537
+    backY: -98.47123
+    backScale: 0.661823
+  - roomName: Grand Entrance Hall Rear view
+    frontY: -482.1259
+    frontScale: 2.2174373
+    backY: -184.96538
+    backScale: 0.85019803
+  - roomName: Kitchen
+    frontY: -504.42188
+    frontScale: 2.8999996
+    backY: -160.59215
+    backScale: 1.4510988
+  - roomName: Library
+    frontY: -472.17596
+    frontScale: 2.3511229
+    backY: -163.73544
+    backScale: 1.1844121
+  - roomName: Master Bedroom Suite
+    frontY: -456.25656
+    frontScale: 2.5
+    backY: -122.098785
+    backScale: 0.99745065
+  - roomName: Music Room
+    frontY: -474.99722
+    frontScale: 2.5
+    backY: -137.45297
+    backScale: 1.1866922
+  - roomName: Nursery
+    frontY: -466.49628
+    frontScale: 2.5
+    backY: -99.451546
+    backScale: 1.2261313
+  - roomName: Service Corridor
+    frontY: -487.8619
+    frontScale: 2.5
+    backY: -157.21262
+    backScale: 1.424028
+  - roomName: Side Stair Mudroom
+    frontY: -471.69177
+    frontScale: 2.5
+    backY: -153.06122
+    backScale: 0.88457614
+  - roomName: Upper Gallery
+    frontY: -469.4363
+    frontScale: 2.5
+    backY: -41.078682
+    backScale: 0.842065
+  - roomName: Upper Sitting Hall
+    frontY: -468.75174
+    frontScale: 2.5
+    backY: -58.043415
+    backScale: 0.9094965

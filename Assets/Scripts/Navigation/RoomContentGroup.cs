@@ -13,7 +13,6 @@ public class RoomContentGroup : MonoBehaviour
     [Header("Room")]
     [SerializeField] private string roomName;
     [SerializeField] private Texture roomBackgroundTexture;
-    [SerializeField] private RoomPerspectiveProfile perspectiveProfile;
     [Header("Child Renderer Defaults")]
     [SerializeField] private bool applyVisibleDefaultsToChildRenderers = true;
     [SerializeField] private string defaultSortingLayerName = "Background";
@@ -25,7 +24,6 @@ public class RoomContentGroup : MonoBehaviour
 
     public string RoomName => GetEffectiveRoomName();
     public Texture RoomBackgroundTexture => roomBackgroundTexture;
-    public RoomPerspectiveProfile PerspectiveProfile => perspectiveProfile;
 
     private void Reset()
     {
@@ -72,17 +70,6 @@ public class RoomContentGroup : MonoBehaviour
         return texture != null;
     }
 
-    public void SetPerspectiveProfile(RoomPerspectiveProfile profile)
-    {
-        perspectiveProfile = profile;
-    }
-
-    public bool TryGetPerspectiveProfile(out RoomPerspectiveProfile profile)
-    {
-        profile = perspectiveProfile;
-        return profile != null;
-    }
-
     public void ApplyChildRendererVisibilityDefaults()
     {
         RefreshChildSpriteRenderers();
@@ -92,7 +79,7 @@ public class RoomContentGroup : MonoBehaviour
         {
             SpriteRenderer spriteRenderer = spriteRenderers[i];
 
-            if (spriteRenderer == null)
+            if (spriteRenderer == null || IsCharacterPresentationRenderer(spriteRenderer.transform))
             {
                 continue;
             }
@@ -181,6 +168,23 @@ public class RoomContentGroup : MonoBehaviour
 
         localPosition.z = runtimeChildRendererLocalZ;
         rendererTransform.localPosition = localPosition;
+    }
+
+    private static bool IsCharacterPresentationRenderer(Transform rendererTransform)
+    {
+        if (rendererTransform == null)
+        {
+            return false;
+        }
+
+        // Room defaults belong to environment art. Character visibility,
+        // sorting, facing, and logical placement remain with their dedicated
+        // gameplay components even when an actor is parented under a room.
+        return rendererTransform.GetComponentInParent<ActorRoomState>(true) != null ||
+            rendererTransform.GetComponentInParent<PointClickPlayerMovement>(true) != null ||
+            rendererTransform.GetComponentInParent<RoomPersonWalker2D>(true) != null ||
+            rendererTransform.GetComponentInParent<NPCWaypointMover>(true) != null ||
+            rendererTransform.GetComponentInParent<CharacterController2D>(true) != null;
     }
 
     private string GetEffectiveRoomName()
