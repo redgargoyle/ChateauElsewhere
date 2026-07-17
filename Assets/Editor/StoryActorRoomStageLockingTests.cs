@@ -135,7 +135,7 @@ public class StoryActorRoomStageLockingTests
 
             PlaceActorAt(rig, rig.Anchor);
             AssertActorLockedToAnchor(rig, "door spawn before speech pause");
-            AssertDisplayUsesAnchorScale(rig, catalog, display, "door spawn before speech pause");
+            AssertDisplayUsesVisibleFeetScale(rig, catalog, display, "door spawn before speech pause");
 
             NPCWaypointMover mover = rig.ActorState.gameObject.AddComponent<NPCWaypointMover>();
             mover.MoveSpeed = 1f;
@@ -147,13 +147,13 @@ public class StoryActorRoomStageLockingTests
                 ApplyBinding(rig),
                 Is.True,
                 "Queuing a paused walk must not detach a stationary guest from the door anchor.");
-            AssertDisplayUsesAnchorScale(rig, catalog, display, "queued walk while speech-paused");
+            AssertDisplayUsesVisibleFeetScale(rig, catalog, display, "queued walk while speech-paused");
 
             rig.CameraManager.defaultRoomZoom = rig.CameraManager.maxRoomZoom;
             rig.CameraManager.SetRoomLookForPreview(0.65f, -0.35f, 0.8f);
             Assert.That(ApplyBinding(rig), Is.True);
             AssertActorLockedToAnchor(rig, "door spawn while panning and zooming during speech");
-            AssertDisplayUsesAnchorScale(rig, catalog, display, "door scale while panning and zooming during speech");
+            AssertDisplayUsesVisibleFeetScale(rig, catalog, display, "door scale while panning and zooming during speech");
 
             mover.ReleaseSpeechPause();
             Assert.That(move.MoveNext(), Is.True, "Movement should resume after the speech pause ends.");
@@ -538,18 +538,21 @@ public class StoryActorRoomStageLockingTests
         return catalog;
     }
 
-    private static void AssertDisplayUsesAnchorScale(
+    private static void AssertDisplayUsesVisibleFeetScale(
         TestRig rig,
         CharacterScaleCatalog catalog,
         CharacterAnimationDisplay display,
         string context)
     {
-        float anchorRoomY = rig.Stage.InverseTransformPoint(rig.Anchor.position).y;
+        Assert.That(
+            rig.RoomCoordinates.TryGetCharacterRoomY(rig.ActorState.transform.position, out float visibleFeetRoomY),
+            Is.True,
+            context);
         Assert.That(rig.RoomCoordinates, Is.Not.Null, context);
         Assert.That(
             catalog.TryEvaluateScaleAtRoomY(
                 rig.RoomContent.RoomName,
-                anchorRoomY,
+                visibleFeetRoomY,
                 rig.RoomCoordinates.CurrentStageScale,
                 out float expectedScale),
             Is.True,

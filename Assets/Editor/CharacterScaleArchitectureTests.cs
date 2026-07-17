@@ -232,7 +232,7 @@ public class CharacterScaleArchitectureTests
             guestState.BindToRoomStagePoint(guestFootAnchor.transform);
 
             butler.transform.position = rig.GetWorldPoint(-220f);
-            guest.transform.position = rig.GetWorldPoint(-100f);
+            guest.transform.position = rig.GetWorldPoint(-220f);
 
             Assert.That(butlerDisplay.TryApplyScaleForRoom(TestRoomName), Is.True);
             Assert.That(guestDisplay.TryApplyCurrentRoomScale(), Is.True);
@@ -248,6 +248,53 @@ public class CharacterScaleArchitectureTests
 
             UnityEngine.Object.DestroyImmediate(butler);
             UnityEngine.Object.DestroyImmediate(guest);
+            UnityEngine.Object.DestroyImmediate(guestFootAnchor);
+        }
+    }
+
+    [Test]
+    public void BoundGuestScaleUsesVisibleFeetYInsteadOfRoomAnchorY()
+    {
+        using (ScaleRig rig = ScaleRig.Create())
+        {
+            GameObject butler = CreateActor("Butler", rig.Catalog, out CharacterAnimationDisplay butlerDisplay);
+            GameObject guest = CreateActor("Guest", rig.Catalog, out CharacterAnimationDisplay guestDisplay);
+            ActorRoomState guestState = guest.AddComponent<ActorRoomState>();
+            guestState.SetCurrentRoom(TestRoomName);
+
+            Texture2D bodyTexture = new Texture2D(20, 100);
+            Sprite bodySprite = Sprite.Create(
+                bodyTexture,
+                new Rect(0f, 0f, bodyTexture.width, bodyTexture.height),
+                new Vector2(0.5f, 0.5f),
+                1f);
+            guestDisplay.AnimationDisplay.GetComponent<SpriteRenderer>().sprite = bodySprite;
+
+            GameObject rootAnchor = new GameObject("Guest Root Anchor");
+            rootAnchor.transform.SetParent(rig.Room.transform, false);
+            rootAnchor.transform.localPosition = new Vector3(0f, -100f, 0f);
+
+            try
+            {
+                guestState.BindToRoomStagePoint(rootAnchor.transform);
+                guest.transform.position = rig.GetWorldPoint(-200f);
+                butler.transform.position = rig.GetWorldPoint(-250f);
+
+                Assert.That(butlerDisplay.TryApplyScaleForRoom(TestRoomName), Is.True);
+                Assert.That(guestDisplay.TryApplyCurrentRoomScale(), Is.True);
+                Assert.That(
+                    guestDisplay.AnimationDisplay.localScale,
+                    Is.EqualTo(butlerDisplay.AnimationDisplay.localScale),
+                    "A bound guest must use the same visible-feet Y as the Butler, not the room-anchor/root Y.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(bodySprite);
+                UnityEngine.Object.DestroyImmediate(bodyTexture);
+                UnityEngine.Object.DestroyImmediate(rootAnchor);
+                UnityEngine.Object.DestroyImmediate(butler);
+                UnityEngine.Object.DestroyImmediate(guest);
+            }
         }
     }
 

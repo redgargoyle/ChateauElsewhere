@@ -8,6 +8,12 @@ public class ActorRoomState : MonoBehaviour
     private const string DiagnosticPrefix = "[Ch2ClickDiag]";
     private static readonly int IsCrouchingHash = Animator.StringToHash("IsCrouching");
 
+    private enum RoomStageBindingAnchorMode
+    {
+        ActorRoot,
+        VisibleFeet
+    }
+
     [Header("Actor")]
     [SerializeField] private string actorId;
     [SerializeField] private GameObject actorObject;
@@ -34,6 +40,7 @@ public class ActorRoomState : MonoBehaviour
     private Vector2 roomStageLocalPoint;
     private float boundWorldZ;
     private string boundRoomId;
+    private RoomStageBindingAnchorMode roomStageBindingAnchorMode = RoomStageBindingAnchorMode.ActorRoot;
     private bool subscribedToRoomChanges;
     private bool hasDiagnosticApplyState;
     private bool lastDiagnosticShouldBeVisible;
@@ -46,12 +53,6 @@ public class ActorRoomState : MonoBehaviour
     public bool IsInteractable => isInteractable;
     public bool IsSeated => isSeated;
     public bool IsVisibleInCurrentRoom => ShouldBeVisible();
-
-    public bool TryGetBoundRoomStageLocalFootPoint(string roomId, out Vector2 roomLocalFootPoint)
-    {
-        roomLocalFootPoint = roomStageLocalPoint;
-        return hasRoomStageLocalBinding && SameRoom(roomId, boundRoomId);
-    }
 
     private void Reset()
     {
@@ -171,6 +172,16 @@ public class ActorRoomState : MonoBehaviour
 
     public void BindToRoomStagePoint(Transform roomTarget)
     {
+        BindToRoomStagePoint(roomTarget, RoomStageBindingAnchorMode.ActorRoot);
+    }
+
+    public void BindVisibleFeetToRoomStagePoint(Transform roomTarget)
+    {
+        BindToRoomStagePoint(roomTarget, RoomStageBindingAnchorMode.VisibleFeet);
+    }
+
+    private void BindToRoomStagePoint(Transform roomTarget, RoomStageBindingAnchorMode anchorMode)
+    {
         ResolveReferences();
 
         Transform targetTransform = actorObject != null ? actorObject.transform : transform;
@@ -199,11 +210,11 @@ public class ActorRoomState : MonoBehaviour
         roomStageLocalPoint = new Vector2(localPoint.x, localPoint.y);
         boundWorldZ = targetTransform.position.z;
         boundRoomId = roomContentGroup.RoomName;
+        roomStageBindingAnchorMode = anchorMode;
         hasRoomStageLocalBinding = true;
 
-        // The room anchor is the persistent actor-root/foot reference. Refresh
-        // the display owner's target-room size from that stable point without
-        // deriving actor position from the current animation frame's bounds.
+        // Refresh immediately so first-frame placement uses the target room's
+        // current character scale instead of the previous room's display scale.
         TryApplyBoundAnimationDisplayScale(targetTransform.gameObject);
     }
 
@@ -213,6 +224,7 @@ public class ActorRoomState : MonoBehaviour
         roomStageLocalPoint = Vector2.zero;
         boundWorldZ = 0f;
         boundRoomId = string.Empty;
+        roomStageBindingAnchorMode = RoomStageBindingAnchorMode.ActorRoot;
     }
 
     public void ApplyState()
@@ -524,12 +536,44 @@ public class ActorRoomState : MonoBehaviour
         worldPoint.z = boundWorldZ;
         targetTransform.position = worldPoint;
 
-        // CharacterAnimationDisplay is the only runtime writer of body size.
-        // Refresh it from the stable room-local anchor without allowing the
-        // current animation frame's renderer bounds to move the actor root.
-        TryApplyBoundAnimationDisplayScale(targetObject);
+        if (roomStageBindingAnchorMode == RoomStageBindingAnchorMode.VisibleFeet)
+        {
+            AlignVisibleFeetToWorldPoint(targetObject, targetTransform, worldPoint);
+            TryApplyBoundAnimationDisplayScale(targetObject);
+            AlignVisibleFeetToWorldPoint(targetObject, targetTransform, worldPoint);
+            TryApplyBoundAnimationDisplayScale(targetObject);
+        }
+        else
+        {
+            SettleBoundAnimationDisplayScale(targetObject);
+        }
 
         return true;
+    }
+
+    private static void AlignVisibleFeetToWorldPoint(
+        GameObject targetObject,
+        Transform targetTransform,
+        Vector3 desiredFeetWorldPoint)
+    {
+        if (targetObject == null ||
+            targetTransform == null ||
+            !CharacterFootPositionUtility.TryGetWorldPoint(targetObject, true, false, out Vector3 feetWorldPoint))
+        {
+            return;
+        }
+
+        Vector3 footCorrection = desiredFeetWorldPoint - feetWorldPoint;
+        footCorrection.z = 0f;
+        targetTransform.position += footCorrection;
+    }
+
+    private void SettleBoundAnimationDisplayScale(GameObject targetObject)
+    {
+        for (int pass = 0; pass < 4; pass++)
+        {
+            TryApplyBoundAnimationDisplayScale(targetObject);
+        }
     }
 
     private void TryApplyBoundAnimationDisplayScale(GameObject targetObject)

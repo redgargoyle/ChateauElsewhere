@@ -3194,10 +3194,14 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         Transform doorTarget = GetWorldDoorArrivalTarget();
         Vector3 feetPosition = GetWorldDoorArrivalBasePosition(guestState);
-        PlaceGuestFeetAtPosition(guestState, feetPosition, doorTarget);
+        PlaceGuestFeetAtPosition(guestState, feetPosition, doorTarget, true);
     }
 
-    private void PlaceGuestFeetAtPosition(GuestRuntimeState guestState, Vector3 feetPosition, Transform roomStageTarget)
+    private void PlaceGuestFeetAtPosition(
+        GuestRuntimeState guestState,
+        Vector3 feetPosition,
+        Transform roomStageTarget,
+        bool bindVisibleFeetToTarget = false)
     {
         if (guestState == null)
         {
@@ -3209,14 +3213,23 @@ public class Chapter1ArrivalController : MonoBehaviour
             Transform guestTransform = guestState.GuestObject.transform;
             Vector3 targetPosition = feetPosition;
 
-            // Binding first gives CharacterAnimationDisplay the stable authored
-            // room-local point it needs to apply the final room/Y size. The
-            // authored anchor is also the persistent actor-root foot reference;
-            // animation-frame renderer bounds must never offset it.
-            BindGuestToRoomStagePoint(guestState, roomStageTarget);
+            BindGuestToRoomStagePoint(guestState, roomStageTarget, bindVisibleFeetToTarget);
+
+            if (bindVisibleFeetToTarget)
+            {
+                OffsetGuestRootToPlaceVisibleFeet(guestState.GuestObject, guestTransform, ref targetPosition, true);
+            }
 
             targetPosition.z = guestTransform.position.z;
             guestTransform.position = targetPosition;
+
+            if (bindVisibleFeetToTarget)
+            {
+                ApplyGuestCharacterScale(guestState);
+                AlignGuestVisibleFeetToPosition(guestState.GuestObject, guestTransform, feetPosition, true);
+                ApplyGuestCharacterScale(guestState);
+            }
+
             return;
         }
 
@@ -3227,7 +3240,10 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
     }
 
-    private void BindGuestToRoomStagePoint(GuestRuntimeState guestState, Transform target)
+    private void BindGuestToRoomStagePoint(
+        GuestRuntimeState guestState,
+        Transform target,
+        bool bindVisibleFeetToTarget = false)
     {
         if (guestState == null ||
             guestState.ActorState == null ||
@@ -3236,7 +3252,61 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
-        guestState.ActorState.BindToRoomStagePoint(target);
+        if (bindVisibleFeetToTarget)
+        {
+            guestState.ActorState.BindVisibleFeetToRoomStagePoint(target);
+        }
+        else
+        {
+            guestState.ActorState.BindToRoomStagePoint(target);
+        }
+    }
+
+    private static void OffsetGuestRootToPlaceVisibleFeet(
+        GameObject guestObject,
+        Transform guestTransform,
+        ref Vector3 targetPosition,
+        bool includeInactiveRenderers)
+    {
+        if (guestObject == null ||
+            guestTransform == null ||
+            !TryGetGuestFeetWorldPoint(guestObject, true, includeInactiveRenderers, out Vector3 currentFeetPosition))
+        {
+            return;
+        }
+
+        Vector3 feetOffset = currentFeetPosition - guestTransform.position;
+        targetPosition.x -= feetOffset.x;
+        targetPosition.y -= feetOffset.y;
+    }
+
+    private static void AlignGuestVisibleFeetToPosition(
+        GameObject guestObject,
+        Transform guestTransform,
+        Vector3 feetPosition,
+        bool includeInactiveRenderers)
+    {
+        if (guestObject == null ||
+            guestTransform == null ||
+            !TryGetGuestFeetWorldPoint(guestObject, true, includeInactiveRenderers, out Vector3 currentFeetPosition))
+        {
+            return;
+        }
+
+        Vector3 footCorrection = feetPosition - currentFeetPosition;
+        footCorrection.z = 0f;
+        guestTransform.position += footCorrection;
+    }
+
+    private static void ApplyGuestCharacterScale(GuestRuntimeState guestState)
+    {
+        if (guestState?.GuestObject == null)
+        {
+            return;
+        }
+
+        CharacterAnimationDisplay display = guestState.GuestObject.GetComponent<CharacterAnimationDisplay>();
+        display?.TryApplyCurrentRoomScale();
     }
 
     private void ClearGuestRoomStagePointBinding(GuestRuntimeState guestState)
@@ -3479,7 +3549,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         StopGuestFootsteps(guestState);
-        BindGuestToRoomStagePoint(guestState, target);
+        BindGuestToRoomStagePoint(guestState, target, true);
     }
 
     private void BeginGuestMoveTo(

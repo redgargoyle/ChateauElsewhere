@@ -160,10 +160,11 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(admitBody, Does.Not.Contain("CreateRuntimeAnchor"), "Entrance waiting should not calculate a replacement runtime target.");
         Assert.That(placeDoorBody, Does.Contain("PlaceGuestFeetAtPosition"), "Door arrival should use the shared room-anchor placement path.");
         Assert.That(placeDoorBody, Does.Not.Contain("RoomProjectedEntity"), "Door arrival should have one authored placement path, not a projection-side relocation path.");
-        Assert.That(placeFeetBody, Does.Not.Contain("TryGetGuestFeetWorldPoint"), "Door arrival must not derive actor-root placement from animation renderer bounds.");
-        Assert.That(placeFeetBody, Does.Not.Contain("feetOffset"), "Door arrival must not add a frame-dependent X/Y correction.");
+        Assert.That(placeFeetBody, Does.Contain("bindVisibleFeetToTarget"), "Door arrival should explicitly opt into visible-feet placement.");
+        Assert.That(placeFeetBody, Does.Contain("OffsetGuestRootToPlaceVisibleFeet"), "Feet-aware placement should offset the Guest root so visible feet land on the authored target.");
+        Assert.That(placeFeetBody, Does.Contain("AlignGuestVisibleFeetToPosition"), "Feet-aware placement should realign visible feet after the display scale refresh.");
         Assert.That(placeFeetBody, Does.Contain("guestTransform.position = targetPosition"), "Door arrival should assign the authored room anchor directly to the persistent Guest root.");
-        Assert.That(placeFeetBody, Does.Contain("BindGuestToRoomStagePoint(guestState, roomStageTarget)"), "World guests should remain locked to the door anchor until movement begins.");
+        Assert.That(placeFeetBody, Does.Contain("BindGuestToRoomStagePoint(guestState, roomStageTarget, bindVisibleFeetToTarget)"), "World guests should remain locked to the door anchor until movement begins.");
         Assert.That(placeDoorBody, Does.Contain("GetWorldDoorArrivalBasePosition(guestState)"), "World-space door spawning should begin at the same shared front-door foot point.");
         Assert.That(placeDoorBody, Does.Not.Contain("GetWorldGuestGridOffset"), "Door-answer spawning should not use batch/grid offsets.");
         Assert.That(controllerText, Does.Not.Contain("GetDoorArrivalPairSlotOffset"), "Door spawning should not retain a second pair-offset pathway.");
@@ -230,7 +231,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(sceneText, Does.Not.Contain("roomGuestScaleMultiplier"), "Legacy per-room guest scale data should be removed with its component.");
         Assert.That(firstPlacementIndex, Is.GreaterThanOrEqualTo(0), "The guest must be placed at GuestArrival_Door.");
         Assert.That(finalPlacementIndex, Is.EqualTo(firstPlacementIndex), "The door flow should not repeat placement around a hidden scale mutation.");
-        Assert.That(placeFeetMethodBody, Does.Contain("BindGuestToRoomStagePoint(guestState, roomStageTarget)"), "A spawned world guest should remain attached to GuestArrival_Door until walking begins.");
+        Assert.That(placeFeetMethodBody, Does.Contain("BindGuestToRoomStagePoint(guestState, roomStageTarget, bindVisibleFeetToTarget)"), "A spawned world guest should remain attached to GuestArrival_Door until walking begins.");
         Assert.That(placeFeetMethodBody, Does.Not.Match(@"\.localScale\s*="), "Feet-aware placement must leave authored body scale untouched.");
     }
 
@@ -447,7 +448,8 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(disablePlayerMethodBody, Does.Not.Contain("PerspectiveScale"));
         Assert.That(placeMethodBody, Does.Contain("PlaceGuestFeetAtPosition"), "World guests should use the shared room-anchor placement path.");
         Assert.That(placeFeetMethodBody, Does.Contain("BindGuestToRoomStagePoint"), "World guests should remain attached to their authored room anchors.");
-        Assert.That(placeFeetMethodBody, Does.Not.Contain("TryGetGuestFeetWorldPoint"), "Static room-anchor placement must not derive Guest root position from animation renderer bounds.");
+        Assert.That(controllerText, Does.Contain("bool bindVisibleFeetToTarget = false"), "Static room-anchor placement should default to actor-root anchoring.");
+        Assert.That(placeFeetMethodBody, Does.Contain("if (bindVisibleFeetToTarget)"), "Visible-feet placement must be an explicit opt-in path.");
         Assert.That(placeFeetMethodBody, Does.Contain("guestTransform.position = targetPosition"), "Static room-anchor placement should assign the mapped anchor directly to the persistent Guest root.");
         Assert.That(placeMethodBody, Does.Not.Match(@"\.localScale\s*="), "Authored placement must not resize guests.");
     }

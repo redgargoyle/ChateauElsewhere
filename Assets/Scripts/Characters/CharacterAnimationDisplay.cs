@@ -113,19 +113,6 @@ public sealed class CharacterAnimationDisplay : MonoBehaviour
             return false;
         }
 
-        // Authored story anchors are visible-foot points already expressed in
-        // room-local space. Reading that stable value avoids renderer-bound
-        // feedback while an anchored character's display scale changes.
-        if (actorRoomState != null &&
-            actorRoomState.TryGetBoundRoomStageLocalFootPoint(roomName, out Vector2 boundFootPoint))
-        {
-            return catalog.TryEvaluateScaleAtRoomY(
-                roomName,
-                boundFootPoint.y,
-                scaleRoom.CurrentStageScale,
-                out scale);
-        }
-
         Vector3 footWorldPosition = ResolveFootWorldPosition();
 
         return scaleRoom.TryGetCharacterRoomY(footWorldPosition, out float roomY) &&
