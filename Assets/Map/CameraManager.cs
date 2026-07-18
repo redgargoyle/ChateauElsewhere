@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
@@ -1969,6 +1970,11 @@ public class CameraManager : MonoBehaviour
 
 public static class NavigationCursorController
 {
+    public const int NavigationHoverPriority = 100;
+    public const int SceneActionHoverPriority = 200;
+    public const int GuestActionHoverPriority = 300;
+    public const int UiHoverPriority = 400;
+
     public enum HoverIcon
     {
         Door,
@@ -2021,6 +2027,16 @@ public static class NavigationCursorController
     private static int edgePanHorizontalDirection;
     private static int edgePanVerticalDirection;
     private static bool gameplayHoverBlocked;
+    private sealed class HoverRequest
+    {
+        public object Owner;
+        public HoverIcon Icon;
+        public int Priority;
+        public long RegistrationOrder;
+    }
+
+    private static readonly List<HoverRequest> hoverRequests = new List<HoverRequest>();
+    private static long nextHoverRegistrationOrder;
     private static object doorHoverOwner;
     private static HoverIcon doorHoverIcon;
     private static object walkHoverOwner;
@@ -2053,6 +2069,8 @@ public static class NavigationCursorController
         edgePanHorizontalDirection = 0;
         edgePanVerticalDirection = 0;
         gameplayHoverBlocked = false;
+        hoverRequests.Clear();
+        nextHoverRegistrationOrder = 0;
         doorHoverOwner = null;
         doorHoverIcon = HoverIcon.Door;
         walkHoverOwner = null;
@@ -2127,14 +2145,20 @@ public static class NavigationCursorController
         {
             edgePanHorizontalDirection = 0;
             edgePanVerticalDirection = 0;
-            if (doorHoverIcon != HoverIcon.Ui)
+
+            for (int i = hoverRequests.Count - 1; i >= 0; i--)
             {
-                doorHoverOwner = null;
+                if (hoverRequests[i].Icon != HoverIcon.Ui)
+                {
+                    hoverRequests.RemoveAt(i);
+                }
             }
+
             walkHoverOwner = null;
             walkHoverCanMove = false;
         }
 
+        ResolvePrimaryHoverRequest();
         ApplyCursor();
     }
 
@@ -2145,31 +2169,134 @@ public static class NavigationCursorController
 
     public static void SetDoorHover(object owner, HoverIcon icon, bool active)
     {
-        if (gameplayHoverBlocked && icon != HoverIcon.Ui)
+        SetDoorHover(owner, icon, GetDefaultHoverPriority(icon), active);
+    }
+
+    public static void SetDoorHover(object owner, HoverIcon icon, int priority, bool active)
+    {
+        if (!active)
+        {
+            ClearDoorHover(owner);
+            return;
+        }
+
+        if (owner == null || (gameplayHoverBlocked && icon != HoverIcon.Ui))
         {
             return;
         }
 
-        if (active)
+        HoverRequest request = FindHoverRequest(owner);
+
+        if (request == null)
         {
-            doorHoverOwner = owner;
-            doorHoverIcon = icon;
-            ApplyCursor();
-            return;
+            request = new HoverRequest
+            {
+                Owner = owner,
+                RegistrationOrder = nextHoverRegistrationOrder++
+            };
+            hoverRequests.Add(request);
         }
 
-        ClearDoorHover(owner);
+        request.Icon = icon;
+        request.Priority = priority;
+        ResolvePrimaryHoverRequest();
+        ApplyCursor();
     }
 
     public static void ClearDoorHover(object owner)
     {
-        if (doorHoverOwner != owner)
+        if (owner == null)
         {
             return;
         }
 
-        doorHoverOwner = null;
+        for (int i = hoverRequests.Count - 1; i >= 0; i--)
+        {
+            if (ReferenceEquals(hoverRequests[i].Owner, owner))
+            {
+                hoverRequests.RemoveAt(i);
+            }
+        }
+
+        ResolvePrimaryHoverRequest();
         ApplyCursor();
+    }
+
+    public static bool IsPrimaryHoverOwner(object owner)
+    {
+        return owner != null && ReferenceEquals(doorHoverOwner, owner);
+    }
+
+    private static HoverRequest FindHoverRequest(object owner)
+    {
+        for (int i = 0; i < hoverRequests.Count; i++)
+        {
+            if (ReferenceEquals(hoverRequests[i].Owner, owner))
+            {
+                return hoverRequests[i];
+            }
+        }
+
+        return null;
+    }
+
+    private static void ResolvePrimaryHoverRequest()
+    {
+        HoverRequest bestRequest = null;
+
+        for (int i = hoverRequests.Count - 1; i >= 0; i--)
+        {
+            HoverRequest request = hoverRequests[i];
+
+            if (!IsHoverOwnerAlive(request.Owner))
+            {
+                hoverRequests.RemoveAt(i);
+                continue;
+            }
+
+            if (bestRequest == null ||
+                request.Priority > bestRequest.Priority ||
+                (request.Priority == bestRequest.Priority &&
+                    request.RegistrationOrder < bestRequest.RegistrationOrder))
+            {
+                bestRequest = request;
+            }
+        }
+
+        doorHoverOwner = bestRequest != null ? bestRequest.Owner : null;
+        doorHoverIcon = bestRequest != null ? bestRequest.Icon : HoverIcon.Door;
+    }
+
+    private static bool IsHoverOwnerAlive(object owner)
+    {
+        if (owner == null)
+        {
+            return false;
+        }
+
+        return !(owner is Object unityObject) || unityObject != null;
+    }
+
+    private static int GetDefaultHoverPriority(HoverIcon icon)
+    {
+        switch (icon)
+        {
+            case HoverIcon.Ui:
+                return UiHoverPriority;
+            case HoverIcon.PickUpTake:
+            case HoverIcon.PickUpCoat:
+            case HoverIcon.Coat:
+            case HoverIcon.BlockedCoat:
+            case HoverIcon.Talk:
+                return GuestActionHoverPriority;
+            case HoverIcon.Inspect:
+            case HoverIcon.PlaceHangCoat:
+            case HoverIcon.Locked:
+            case HoverIcon.Unavailable:
+                return SceneActionHoverPriority;
+            default:
+                return NavigationHoverPriority;
+        }
     }
 
     public static void SetWalkHover(object owner, bool active, bool canMove)

@@ -741,6 +741,74 @@ public class NavigationRegressionTests
     }
 
     [Test]
+    public void CursorHoverArbitrationRestoresTheNextHighestPriorityOwner()
+    {
+        MethodInfo reset = typeof(NavigationCursorController).GetMethod(
+            "ResetForPlayMode",
+            BindingFlags.NonPublic | BindingFlags.Static);
+        MethodInfo setPrioritizedHover = typeof(NavigationCursorController).GetMethod(
+            "SetDoorHover",
+            BindingFlags.Public | BindingFlags.Static,
+            null,
+            new[] { typeof(object), typeof(NavigationCursorController.HoverIcon), typeof(int), typeof(bool) },
+            null);
+        MethodInfo isPrimaryOwner = typeof(NavigationCursorController).GetMethod(
+            "IsPrimaryHoverOwner",
+            BindingFlags.Public | BindingFlags.Static);
+        FieldInfo navigationPriority = typeof(NavigationCursorController).GetField("NavigationHoverPriority");
+        FieldInfo scenePriority = typeof(NavigationCursorController).GetField("SceneActionHoverPriority");
+        FieldInfo guestPriority = typeof(NavigationCursorController).GetField("GuestActionHoverPriority");
+
+        Assert.That(reset, Is.Not.Null);
+        reset.Invoke(null, null);
+
+        try
+        {
+            Assert.That(setPrioritizedHover, Is.Not.Null);
+            Assert.That(isPrimaryOwner, Is.Not.Null);
+            Assert.That(navigationPriority, Is.Not.Null);
+            Assert.That(scenePriority, Is.Not.Null);
+            Assert.That(guestPriority, Is.Not.Null);
+
+            object door = new object();
+            object hanger = new object();
+            object coat = new object();
+
+            setPrioritizedHover.Invoke(null, new object[]
+            {
+                hanger,
+                NavigationCursorController.HoverIcon.PlaceHangCoat,
+                scenePriority.GetValue(null),
+                true
+            });
+            setPrioritizedHover.Invoke(null, new object[]
+            {
+                coat,
+                NavigationCursorController.HoverIcon.PickUpCoat,
+                guestPriority.GetValue(null),
+                true
+            });
+            setPrioritizedHover.Invoke(null, new object[]
+            {
+                door,
+                NavigationCursorController.HoverIcon.Door,
+                navigationPriority.GetValue(null),
+                true
+            });
+
+            Assert.That((bool)isPrimaryOwner.Invoke(null, new[] { coat }), Is.True);
+            NavigationCursorController.ClearDoorHover(coat);
+            Assert.That((bool)isPrimaryOwner.Invoke(null, new[] { hanger }), Is.True);
+            NavigationCursorController.ClearDoorHover(hanger);
+            Assert.That((bool)isPrimaryOwner.Invoke(null, new[] { door }), Is.True);
+        }
+        finally
+        {
+            reset.Invoke(null, null);
+        }
+    }
+
+    [Test]
     public void MainMenuLayoutScalesToShortGameViews()
     {
         Scene mainMenuScene = EditorSceneManager.OpenScene(MainMenuScenePath, OpenSceneMode.Single);
