@@ -8,7 +8,9 @@ using NUnit.Framework;
 public class Chapter1GuestRoomVisibilityRegressionTests
 {
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
+    private const string Chapter1CoatPickupPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1CoatPickup.cs";
     private const string Chapter1SceneActionPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs";
+    private const string Chapter1PointerPriorityPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1PointerPriority.cs";
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
     private const string PointClickPlayerMovementPath = "Assets/Scripts/PointClickPlayerMovement.cs";
     private const string ActorRoomStatePath = "Assets/Scripts/Story/ActorRoomState.cs";
@@ -427,6 +429,89 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(controllerText, Does.Not.Contain("Wardrobe_" + "EntranceHall_" + "Runtime"), "The old runtime wardrobe object name must stay removed.");
         Assert.That(controllerText, Does.Not.Contain("CoatCloset_" + "EntranceHall_" + "Runtime"), "The old runtime closet object name must stay removed.");
         Assert.That(controllerText, Does.Not.Contain("Create" + "WardrobeSprite"), "The old generated wardrobe sprite path must stay removed.");
+    }
+
+    [Test]
+    public void CoatAndHangerClickboxesAlwaysMatchTheirVisibleSprites()
+    {
+        string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string coatSetupBody = ExtractMethodBody(controllerText, "CreateCoatPickup");
+        string hangerColliderBody = ExtractMethodBody(controllerText, "EnsureCoatHangerCollider");
+
+        Assert.That(coatSetupBody, Does.Match(
+            @"collider\.size\s*=\s*GetCoatClickColliderSize[\s\S]*collider\.offset[\s\S]*collider\.isTrigger\s*=\s*true[\s\S]*collider\.enabled\s*=\s*true"));
+        Assert.That(hangerColliderBody, Does.Match(
+            @"collider\.size\s*=\s*GetCoatHangerColliderSize[\s\S]*collider\.offset[\s\S]*collider\.isTrigger\s*=\s*true[\s\S]*collider\.enabled\s*=\s*true"));
+        Assert.That(hangerColliderBody, Does.Not.Contain("addedCollider"),
+            "Existing authored hanger colliders must be resized as well as newly added colliders.");
+    }
+
+    [Test]
+    public void Chapter1PointerPriorityUsesOneCoatFirstTargetForHoverAndClick()
+    {
+        Assert.That(
+            File.Exists(Chapter1PointerPriorityPath),
+            Is.True,
+            "Chapter 1 needs one shared pointer-priority resolver.");
+
+        string coatText = File.ReadAllText(Chapter1CoatPickupPath);
+        string actionText = File.ReadAllText(Chapter1SceneActionPath);
+        string priorityText = File.ReadAllText(Chapter1PointerPriorityPath);
+
+        Assert.That(priorityText, Does.Match(
+            @"TryGetCoatAtScreenPosition[\s\S]*TryGetSceneActionAtScreenPosition"));
+        Assert.That(coatText, Does.Contain("TryHandlePointerAction"));
+        Assert.That(actionText, Does.Contain("TryHandlePointerAction"));
+        Assert.That(coatText, Does.Contain("lastPointerActionFrame"));
+        Assert.That(actionText, Does.Contain("lastPerformedFrame"));
+        Assert.That(coatText, Does.Contain("GuestActionHoverPriority"));
+        Assert.That(actionText, Does.Contain("SceneActionHoverPriority"));
+        Assert.That(coatText, Does.Contain("IsPrimaryHoverOwner(this)"));
+        Assert.That(actionText, Does.Contain("IsPrimaryHoverOwner(this)"));
+    }
+
+    [Test]
+    public void Chapter1PointerRoutingUsesOnePressPhaseAndCachedActiveRegistries()
+    {
+        string coatText = File.ReadAllText(Chapter1CoatPickupPath);
+        string actionText = File.ReadAllText(Chapter1SceneActionPath);
+        string priorityText = File.ReadAllText(Chapter1PointerPriorityPath);
+        string coatPointerClickBody = ExtractMethodBody(coatText, "public void OnPointerClick");
+        string actionPointerClickBody = ExtractMethodBody(actionText, "public void OnPointerClick");
+        string coatPointerDownBody = ExtractMethodBody(coatText, "public void OnPointerDown");
+        string actionPointerDownBody = ExtractMethodBody(actionText, "public void OnPointerDown");
+        string actionUpdateBody = ExtractMethodBody(actionText, "private void Update");
+
+        Assert.That(coatPointerClickBody, Does.Contain("TryHandlePointerAction(eventData.position, false)"),
+            "The release callback must not repeat the coat action already consumed on press.");
+        Assert.That(actionPointerClickBody, Does.Contain("TryHandlePointerAction(eventData.position, false)"),
+            "The release callback must not repeat a scene action already consumed on press.");
+        Assert.That(coatText, Does.Contain("IPointerDownHandler"));
+        Assert.That(actionText, Does.Contain("IPointerDownHandler"));
+        Assert.That(coatPointerDownBody, Does.Contain("TryHandlePointerAction(eventData.position, true)"),
+            "EventSystem-only pointers should activate the coat once on press.");
+        Assert.That(actionPointerDownBody, Does.Contain("TryHandlePointerAction(eventData.position, true)"),
+            "EventSystem-only pointers should activate scene actions once on press.");
+        Assert.That(actionUpdateBody, Does.Contain("TryHandlePointerAction(screenPosition, TryGetPrimaryPointerDown())"),
+            "Every active Chapter 1 scene action should participate in the authoritative polling path.");
+        Assert.That(actionUpdateBody, Does.Not.Contain("UsesManualPointerPolling"),
+            "No scene-action subtype should depend exclusively on whichever raycast callback wins.");
+        Assert.That(coatText, Does.Contain("ActivePickups"));
+        Assert.That(actionText, Does.Contain("ActiveSceneActions"));
+        Assert.That(priorityText, Does.Contain("cachedFrame"));
+        Assert.That(priorityText, Does.Contain("InvalidateCache"));
+        Assert.That(priorityText, Does.Contain("SynchronizePointerHover"));
+        Assert.That(coatText, Does.Contain("ApplyPointerSelection"));
+        Assert.That(actionText, Does.Contain("ApplyPointerSelection"));
+        Assert.That(coatText, Does.Contain("RuntimeInitializeOnLoadMethod"));
+        Assert.That(actionText, Does.Contain("RuntimeInitializeOnLoadMethod"));
+        Assert.That(priorityText, Does.Contain("RuntimeInitializeOnLoadMethod"));
+        Assert.That(actionText, Does.Match(
+            @"GetPointerPriority[\s\S]*Chapter1SceneActionType\.FrontDoor[\s\S]*NavigationHoverPriority[\s\S]*SceneActionHoverPriority"),
+            "The coat hanger and other specific actions must outrank the broad Chapter 1 front-door action.");
+        Assert.That(actionText, Does.Contain("candidate.GetPointerPriority()"));
+        Assert.That(actionText, Does.Contain("cachedActionColliders2D"));
+        Assert.That(actionText, Does.Contain("cachedActionSpriteRenderers"));
     }
 
     [Test]

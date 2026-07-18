@@ -525,6 +525,18 @@ public class NavigationRegressionTests
     }
 
     [Test]
+    public void BlockingUiPointerQueriesReuseOneResultPerFrame()
+    {
+        string playerText = File.ReadAllText(PointClickPlayerMovementPath);
+        string blockingUiBody = ExtractMethodBody(playerText, "public static bool IsPointerOverBlockingUi");
+
+        Assert.That(playerText, Does.Contain("uiBlockingQueryFrame"));
+        Assert.That(playerText, Does.Contain("cachedUiPointerEventData"));
+        Assert.That(blockingUiBody, Does.Contain("uiBlockingQueryFrame == Time.frameCount"));
+        Assert.That(blockingUiBody, Does.Contain("cachedUiPointerEventData.Reset()"));
+    }
+
+    [Test]
     public void UiControlsUseDedicatedCursorDuringModalPause()
     {
         string cameraManagerText = File.ReadAllText(CameraManagerPath);
@@ -534,7 +546,7 @@ public class NavigationRegressionTests
 
         Assert.That(cameraManagerText, Does.Contain("HoverIcon.Ui"), "The shared cursor controller should have a dedicated UI/action icon.");
         Assert.That(cameraManagerText, Does.Contain("CreateUiCursor"), "UI clicks should have their own generated cursor instead of borrowing the door cursor.");
-        Assert.That(cameraManagerText, Does.Contain("gameplayHoverBlocked && icon != HoverIcon.Ui"), "Settings should block gameplay hover cursors without suppressing settings controls.");
+        Assert.That(cameraManagerText, Does.Contain("gameplayHoverBlocked && request.Icon != HoverIcon.Ui"), "Settings should mask retained gameplay hover cursors without suppressing settings controls.");
         Assert.That(cameraManagerText, Does.Contain("doorHoverIcon != HoverIcon.Ui"), "Opening settings should clear stale gameplay cursors while preserving hovered UI controls.");
         Assert.That(hoverTargetText, Does.Contain("HoverIcon.Ui"), "Generic UI hover targets should default to the UI cursor.");
         Assert.That(runtimeSettingsText, Does.Contain("ConfigureUiCursor(buttonRect, button)"), "Runtime settings buttons should advertise UI clicks.");
@@ -738,6 +750,223 @@ public class NavigationRegressionTests
         Assert.That(sceneActionText, Does.Contain("HoverIcon.ExitLeaveRoom"));
         Assert.That(guestFindText, Does.Contain("HoverIcon.Talk"));
         Assert.That(playerText, Does.Contain("SetWalkHover"), "Floor hover should keep driving selected walk/blocked cursor actions.");
+    }
+
+    [Test]
+    public void CursorHoverArbitrationRestoresTheNextHighestPriorityOwner()
+    {
+        MethodInfo reset = typeof(NavigationCursorController).GetMethod(
+            "ResetForPlayMode",
+            BindingFlags.NonPublic | BindingFlags.Static);
+        MethodInfo setPrioritizedHover = typeof(NavigationCursorController).GetMethod(
+            "SetDoorHover",
+            BindingFlags.Public | BindingFlags.Static,
+            null,
+            new[] { typeof(object), typeof(NavigationCursorController.HoverIcon), typeof(int), typeof(bool) },
+            null);
+        MethodInfo isPrimaryOwner = typeof(NavigationCursorController).GetMethod(
+            "IsPrimaryHoverOwner",
+            BindingFlags.Public | BindingFlags.Static);
+        FieldInfo navigationPriority = typeof(NavigationCursorController).GetField("NavigationHoverPriority");
+        FieldInfo scenePriority = typeof(NavigationCursorController).GetField("SceneActionHoverPriority");
+        FieldInfo guestPriority = typeof(NavigationCursorController).GetField("GuestActionHoverPriority");
+
+        Assert.That(reset, Is.Not.Null);
+        reset.Invoke(null, null);
+
+        try
+        {
+            Assert.That(setPrioritizedHover, Is.Not.Null);
+            Assert.That(isPrimaryOwner, Is.Not.Null);
+            Assert.That(navigationPriority, Is.Not.Null);
+            Assert.That(scenePriority, Is.Not.Null);
+            Assert.That(guestPriority, Is.Not.Null);
+
+            object door = new object();
+            object hanger = new object();
+            object coat = new object();
+
+            setPrioritizedHover.Invoke(null, new object[]
+            {
+                hanger,
+                NavigationCursorController.HoverIcon.PlaceHangCoat,
+                scenePriority.GetValue(null),
+                true
+            });
+            setPrioritizedHover.Invoke(null, new object[]
+            {
+                coat,
+                NavigationCursorController.HoverIcon.PickUpCoat,
+                guestPriority.GetValue(null),
+                true
+            });
+            setPrioritizedHover.Invoke(null, new object[]
+            {
+                door,
+                NavigationCursorController.HoverIcon.Door,
+                navigationPriority.GetValue(null),
+                true
+            });
+
+            Assert.That((bool)isPrimaryOwner.Invoke(null, new[] { coat }), Is.True);
+            NavigationCursorController.ClearDoorHover(coat);
+            Assert.That((bool)isPrimaryOwner.Invoke(null, new[] { hanger }), Is.True);
+            NavigationCursorController.ClearDoorHover(hanger);
+            Assert.That((bool)isPrimaryOwner.Invoke(null, new[] { door }), Is.True);
+        }
+        finally
+        {
+            reset.Invoke(null, null);
+        }
+    }
+
+    [Test]
+    public void CursorHoverArbitrationRetainsMaskedRequestsAndPrunesDestroyedOwners()
+    {
+        MethodInfo reset = typeof(NavigationCursorController).GetMethod(
+            "ResetForPlayMode",
+            BindingFlags.NonPublic | BindingFlags.Static);
+        GameObject hanger = new GameObject("CursorTest_Hanger");
+        GameObject coat = new GameObject("CursorTest_Coat");
+
+        Assert.That(reset, Is.Not.Null);
+        reset.Invoke(null, null);
+
+        try
+        {
+            NavigationCursorController.SetDoorHover(
+                hanger,
+                NavigationCursorController.HoverIcon.PlaceHangCoat,
+                NavigationCursorController.SceneActionHoverPriority,
+                true);
+            NavigationCursorController.SetDoorHover(
+                coat,
+                NavigationCursorController.HoverIcon.PickUpCoat,
+                NavigationCursorController.GuestActionHoverPriority,
+                true);
+
+            NavigationCursorController.SetGameplayHoverBlocked(true);
+            Assert.That(NavigationCursorController.IsPrimaryHoverOwner(coat), Is.False,
+                "Blocking UI should mask gameplay hover requests.");
+
+            NavigationCursorController.SetGameplayHoverBlocked(false);
+            Assert.That(NavigationCursorController.IsPrimaryHoverOwner(coat), Is.True,
+                "Unblocking UI should restore the still-active highest-priority request.");
+
+            Object.DestroyImmediate(coat);
+            Assert.That(NavigationCursorController.IsPrimaryHoverOwner(hanger), Is.True,
+                "A destroyed winning owner should be pruned before primary ownership is read.");
+        }
+        finally
+        {
+            if (hanger != null)
+            {
+                Object.DestroyImmediate(hanger);
+            }
+
+            if (coat != null)
+            {
+                Object.DestroyImmediate(coat);
+            }
+
+            reset.Invoke(null, null);
+        }
+    }
+
+    [Test]
+    public void CameraManagerRefreshesRetainedHoverOwnersEveryFrame()
+    {
+        string cameraManagerText = File.ReadAllText(CameraManagerPath);
+        string updateBody = ExtractMethodBody(cameraManagerText, "private void Update");
+
+        Assert.That(updateBody, Does.Contain("NavigationCursorController.RefreshHoverRequests()"),
+            "Destroyed hover owners must be pruned even when no new pointer event mutates the arbiter.");
+    }
+
+    [Test]
+    public void Chapter1ResolverSynchronizesHoverOwnershipBeforeClickDispatch()
+    {
+        MethodInfo reset = typeof(NavigationCursorController).GetMethod(
+            "ResetForPlayMode",
+            BindingFlags.NonPublic | BindingFlags.Static);
+        GameObject cameraObject = new GameObject("CursorTest_MainCamera");
+        GameObject firstCoatObject = new GameObject("CursorTest_FirstCoat");
+        GameObject secondCoatObject = new GameObject("CursorTest_SecondCoat");
+        FieldInfo activePickupsField = typeof(Chapter1CoatPickup).GetField(
+            "ActivePickups",
+            BindingFlags.NonPublic | BindingFlags.Static);
+        IList activePickups = activePickupsField?.GetValue(null) as IList;
+
+        Assert.That(reset, Is.Not.Null);
+        Assert.That(activePickups, Is.Not.Null);
+        reset.Invoke(null, null);
+
+        try
+        {
+            cameraObject.tag = "MainCamera";
+            Camera camera = cameraObject.AddComponent<Camera>();
+            camera.orthographic = true;
+            cameraObject.transform.position = new Vector3(0f, 0f, -10f);
+
+            Chapter1CoatPickup firstCoat = firstCoatObject.AddComponent<Chapter1CoatPickup>();
+            Chapter1CoatPickup secondCoat = secondCoatObject.AddComponent<Chapter1CoatPickup>();
+            activePickups.Add(firstCoat);
+            activePickups.Add(secondCoat);
+            Vector2 screenPosition = camera.WorldToScreenPoint(Vector3.zero);
+
+            Assert.That(
+                Chapter1PointerPriority.TryGetTarget(screenPosition, out MonoBehaviour firstTarget),
+                Is.True);
+            Assert.That(firstTarget, Is.TypeOf<Chapter1CoatPickup>());
+            Assert.That(NavigationCursorController.IsPrimaryHoverOwner(firstTarget), Is.True,
+                "The resolver must register its selected target before any click guard runs.");
+
+            firstTarget.transform.position = new Vector3(100f, 100f, 0f);
+            Chapter1PointerPriority.InvalidateCache();
+
+            Assert.That(
+                Chapter1PointerPriority.TryGetTarget(screenPosition, out MonoBehaviour secondTarget),
+                Is.True);
+            Assert.That(secondTarget, Is.Not.SameAs(firstTarget));
+            Assert.That(secondTarget, Is.SameAs(firstTarget == firstCoat ? secondCoat : firstCoat));
+            Assert.That(NavigationCursorController.IsPrimaryHoverOwner(secondTarget), Is.True,
+                "Changing the selected target must clear stale Chapter 1 hover ownership immediately.");
+        }
+        finally
+        {
+            activePickups.Clear();
+            Object.DestroyImmediate(firstCoatObject);
+            Object.DestroyImmediate(secondCoatObject);
+            Object.DestroyImmediate(cameraObject);
+            Chapter1PointerPriority.InvalidateCache();
+            reset.Invoke(null, null);
+        }
+    }
+
+    [Test]
+    public void Chapter1ActionsBeatDoorsAndFloorMovement()
+    {
+        string movementText = File.ReadAllText(PointClickPlayerMovementPath);
+        string doorText = File.ReadAllText(DoorTriggerNavigationPath);
+        string floorClickBody = ExtractMethodBody(movementText, "private bool TryGetFloorClick");
+        string walkCursorBody = ExtractMethodBody(movementText, "private void UpdateWalkCursor");
+
+        Assert.That(movementText, Does.Match(
+            @"TryGetFloorClick[\s\S]*Chapter1PointerPriority\.IsPointerOverAction\(screenPosition\)[\s\S]*return false"));
+        Assert.That(movementText, Does.Match(
+            @"UpdateWalkCursor[\s\S]*Chapter1PointerPriority\.IsPointerOverAction\(screenPosition\)[\s\S]*ClearWalkHover"));
+        Assert.That(doorText, Does.Match(
+            @"UpdateFallbackPointerHoverAndClick[\s\S]*Chapter1PointerPriority\.IsPointerOverAction\(screenPosition\)[\s\S]*ClearActiveDoorHover"));
+        Assert.That(doorText, Does.Match(
+            @"OnPointerClick[\s\S]*Chapter1PointerPriority\.IsPointerOverAction\(eventData\.position\)[\s\S]*return"));
+        Assert.That(
+            floorClickBody.IndexOf("IsPointerOverBlockingUi", StringComparison.Ordinal),
+            Is.LessThan(floorClickBody.IndexOf("Chapter1PointerPriority.IsPointerOverAction", StringComparison.Ordinal)),
+            "Blocking UI must win before Chapter 1 target resolution mutates hover state.");
+        Assert.That(
+            walkCursorBody.IndexOf("IsPointerOverBlockingUi", StringComparison.Ordinal),
+            Is.LessThan(walkCursorBody.IndexOf("Chapter1PointerPriority.IsPointerOverAction", StringComparison.Ordinal)),
+            "Blocking UI must win before Chapter 1 hover routing.");
     }
 
     [Test]

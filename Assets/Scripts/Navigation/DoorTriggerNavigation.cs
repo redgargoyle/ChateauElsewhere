@@ -172,7 +172,10 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (RuntimeSettingsMenu.BlocksGameInput || IsPointerOverAvailableGuestAction(eventData) || IsPlayerInputLocked())
+        if (RuntimeSettingsMenu.BlocksGameInput ||
+            (eventData != null && Chapter1PointerPriority.IsPointerOverAction(eventData.position)) ||
+            IsPointerOverAvailableGuestAction(eventData) ||
+            IsPlayerInputLocked())
         {
             ClearActiveDoorHover(this);
             return;
@@ -192,6 +195,12 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
     public void OnPointerClick(PointerEventData eventData)
     {
         if (RuntimeSettingsMenu.BlocksGameInput)
+        {
+            ClearActiveDoorHover(this);
+            return;
+        }
+
+        if (eventData != null && Chapter1PointerPriority.IsPointerOverAction(eventData.position))
         {
             ClearActiveDoorHover(this);
             return;
@@ -220,6 +229,11 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
 
         if (PointClickPlayerMovement.IsPointerOverBlockingUi(screenPosition))
+        {
+            return false;
+        }
+
+        if (Chapter1PointerPriority.IsPointerOverAction(screenPosition))
         {
             return false;
         }
@@ -873,6 +887,12 @@ public class DoorTriggerNavigation : MonoBehaviour, IPointerClickHandler, IPoint
         }
 
         if (PointClickPlayerMovement.IsPointerOverBlockingUi(screenPosition))
+        {
+            ClearActiveDoorHover(fallbackHoveredTrigger);
+            return;
+        }
+
+        if (Chapter1PointerPriority.IsPointerOverAction(screenPosition))
         {
             ClearActiveDoorHover(fallbackHoveredTrigger);
             return;
