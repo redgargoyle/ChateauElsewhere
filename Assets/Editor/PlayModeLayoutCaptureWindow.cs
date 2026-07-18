@@ -13,6 +13,7 @@ public sealed class PlayModeLayoutCaptureWindow : EditorWindow
     private const string DiningRoomId = "Dining Room";
     private const string DiningSeatPrefix = "Ch2_DiningSeat_";
     private const string ProtectedEntranceGuestSpotPrefix = "EntranceGuestSpot_";
+    private const string ProtectedFrontEntranceAnchorPrefix = "Front_Entrance_Anchor_";
     private const string PlayModeApplyBlockedMessage =
         "Captured layout is pending. Stop Play Mode to apply it to the edit-time scene; Unity does not allow scene writes while the game is running.";
 
@@ -783,15 +784,21 @@ public sealed class PlayModeLayoutCaptureWindow : EditorWindow
         }
 
         RoomAnchor roomAnchor = target.GetComponent<RoomAnchor>();
-        return StartsWithPrefix(target.name, ProtectedEntranceGuestSpotPrefix) ||
-               (roomAnchor != null && StartsWithPrefix(roomAnchor.AnchorId, ProtectedEntranceGuestSpotPrefix));
+        return IsProtectedEntranceAnchorName(target.name) ||
+               (roomAnchor != null && IsProtectedEntranceAnchorName(roomAnchor.AnchorId));
     }
 
     private static bool IsProtectedEntranceGuestSpot(PlayModeLayoutCaptureItem item)
     {
         return item != null &&
-               (StartsWithPrefix(item.ObjectName, ProtectedEntranceGuestSpotPrefix) ||
-                StartsWithPrefix(item.RoomAnchorId, ProtectedEntranceGuestSpotPrefix));
+               (IsProtectedEntranceAnchorName(item.ObjectName) ||
+                IsProtectedEntranceAnchorName(item.RoomAnchorId));
+    }
+
+    private static bool IsProtectedEntranceAnchorName(string value)
+    {
+        return StartsWithPrefix(value, ProtectedEntranceGuestSpotPrefix) ||
+               StartsWithPrefix(value, ProtectedFrontEntranceAnchorPrefix);
     }
 
     private static bool SameRoom(string left, string right)

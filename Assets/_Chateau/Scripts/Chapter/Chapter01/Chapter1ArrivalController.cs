@@ -17,6 +17,10 @@ public class Chapter1ArrivalController : MonoBehaviour
         public int GroupIndex;
         public bool WaitingOutside;
         public bool EnteredEntranceHall;
+        public bool FrontEntranceMoveResolved;
+        public bool FrontEntranceAnchorReached;
+        public bool EntranceDialogueQueued;
+        public bool EntranceDialogueAdvanceStarted;
         public bool Annoyed;
         public bool CoatOffered;
         public bool CoatTaken;
@@ -69,6 +73,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
     [Header("Required Anchors")]
     [SerializeField] private Transform frontDoorArrivalPoint;
+    [SerializeField] private Transform[] frontEntranceGuestAnchors = new Transform[EntranceHallGuestSpotCount];
     [SerializeField] private Transform[] entranceHallGuestSpots = new Transform[EntranceHallGuestSpotCount];
     [SerializeField, FormerlySerializedAs("butlerDoorSpot")] private Transform drawingRoomSideButlerSpot;
     [SerializeField] private Transform closetPoint;
@@ -1197,6 +1202,22 @@ public class Chapter1ArrivalController : MonoBehaviour
             Debug.LogWarning("Chapter1ArrivalController missing required field: frontDoorArrivalPoint.", this);
         }
 
+        if (frontEntranceGuestAnchors == null ||
+            frontEntranceGuestAnchors.Length != EntranceHallGuestSpotCount)
+        {
+            Debug.LogWarning(
+                $"Chapter1ArrivalController requires exactly {EntranceHallGuestSpotCount} front entrance guest anchors, ordered by GuestIndex.",
+                this);
+        }
+
+        if (entranceHallGuestSpots == null ||
+            entranceHallGuestSpots.Length != EntranceHallGuestSpotCount)
+        {
+            Debug.LogWarning(
+                $"Chapter1ArrivalController requires exactly {EntranceHallGuestSpotCount} entrance coat spots, ordered by GuestIndex.",
+                this);
+        }
+
         if (drawingRoomEntryPoint == null)
         {
             Debug.LogWarning("Chapter1ArrivalController missing required field: drawingRoomEntryPoint.", this);
@@ -1475,12 +1496,19 @@ public class Chapter1ArrivalController : MonoBehaviour
             yield break;
         }
 
+        List<GuestGroupRuntimeState> orderedGroups = new List<GuestGroupRuntimeState>(groupsToAdmit);
+        orderedGroups.Sort(CompareEntranceGroupsByRosterOrder);
+        List<GuestGroupRuntimeState> admittedGroups = new List<GuestGroupRuntimeState>();
         int startedGuestCount = 0;
         bool queuedWelcome = false;
 
-        for (int i = 0; i < groupsToAdmit.Count; i++)
+        // Start every admitted guest's first leg before any guest dialogue is
+        // queued. This preserves pair movement even when several groups have
+        // accumulated outside, while the ordered pass below keeps speech
+        // deterministic by group and GuestIndex.
+        for (int i = 0; i < orderedGroups.Count; i++)
         {
-            GuestGroupRuntimeState group = groupsToAdmit[i];
+            GuestGroupRuntimeState group = orderedGroups[i];
 
             if (group == null || group.EnteredEntranceHall)
             {
@@ -1490,18 +1518,30 @@ public class Chapter1ArrivalController : MonoBehaviour
             group.EnteredEntranceHall = true;
             group.QueuedOutside = false;
             activeEntranceGroups.Add(group);
+            admittedGroups.Add(group);
 
-            for (int guestIndex = 0; guestIndex < group.Guests.Count; guestIndex++)
+            List<GuestRuntimeState> orderedGuests = GetGuestsInRosterOrder(group);
+
+            for (int guestIndex = 0; guestIndex < orderedGuests.Count; guestIndex++)
             {
-                GuestRuntimeState guest = group.Guests[guestIndex];
+                GuestRuntimeState guest = orderedGuests[guestIndex];
+
+                if (guest == null)
+                {
+                    continue;
+                }
+
                 guest.WaitingOutside = false;
                 guest.EnteredEntranceHall = true;
                 guest.Annoyed = WasGuestWaitingLongEnoughToBeAnnoyed(guest);
+                guest.FrontEntranceMoveResolved = false;
+                guest.FrontEntranceAnchorReached = false;
+                guest.EntranceDialogueQueued = false;
+                guest.EntranceDialogueAdvanceStarted = false;
                 currentGuestIndex = guest.GuestIndex;
 
                 if (!queuedWelcome)
                 {
-                    QueueButlerLine("SUB_CH01_BUTLER_WELCOME_001");
                     queuedWelcome = true;
                 }
 
@@ -1512,7 +1552,45 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (startedGuestCount > 0)
         {
+            // Let all first-leg coroutines enter their movement routines before
+            // the Butler welcome begins. Guest dialogue waits on the per-group
+            // physical-arrival barrier below.
             yield return null;
+
+            if (queuedWelcome)
+            {
+                QueueButlerLine("SUB_CH01_BUTLER_WELCOME_001");
+            }
+        }
+
+        for (int i = 0; i < admittedGroups.Count; i++)
+        {
+            GuestGroupRuntimeState group = admittedGroups[i];
+
+            if (group == null || group.Guests.Count == 0)
+            {
+                continue;
+            }
+
+            while (!AreFrontEntranceMovesResolved(group))
+            {
+                yield return null;
+            }
+
+            if (!HasEntranceGroupReachedFrontAnchors(group))
+            {
+                Debug.LogError(
+                    $"[Chapter1] Guest group {group.GroupIndex + 1} did not reach every assigned front entrance anchor. Entry dialogue and coat staging will not advance for this group.",
+                    this);
+                continue;
+            }
+
+            List<GuestRuntimeState> orderedGuests = GetGuestsInRosterOrder(group);
+
+            for (int guestIndex = 0; guestIndex < orderedGuests.Count; guestIndex++)
+            {
+                QueueGuestEntranceDialogue(orderedGuests[guestIndex]);
+            }
         }
 
         RefreshInteractionState();
@@ -1523,6 +1601,16 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         if (guest == null)
         {
+            yield break;
+        }
+
+        if (guest.Config == null)
+        {
+            guest.FrontEntranceMoveResolved = true;
+            guest.FrontEntranceAnchorReached = false;
+            Debug.LogError(
+                $"[Chapter1] Guest {guest.GuestIndex + 1} is missing its arrival configuration. Front entrance staging cannot continue for this guest.",
+                this);
             yield break;
         }
 
@@ -1538,29 +1626,217 @@ public class Chapter1ArrivalController : MonoBehaviour
         PrepareGuestCoatForArrival(guest);
         SetGuestState(guest, GuestArrivalState.Arriving);
         ForceGuestVisibleForDoorFlow(guest);
+        Transform frontAnchor = GetFrontEntranceGuestAnchor(guest);
+
+        if (frontAnchor == null)
+        {
+            guest.FrontEntranceMoveResolved = true;
+            guest.FrontEntranceAnchorReached = false;
+            Debug.LogError(
+                $"[Chapter1] Missing authored front entrance anchor for guest {guest.GuestIndex + 1} ({guest.Config.GuestId}).",
+                this);
+            yield break;
+        }
+
+        bool moveResolved = false;
+        bool reachedFrontAnchor = false;
+        Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} moving to front entrance anchor.", this);
+        yield return MoveGuestTo(
+            guest,
+            frontAnchor,
+            $"front entrance anchor for guest {guest.GuestIndex + 1}",
+            GetEntranceApproachAnimationDirection(guest, frontAnchor),
+            succeeded =>
+            {
+                moveResolved = true;
+                reachedFrontAnchor = succeeded;
+            });
+
+        guest.FrontEntranceMoveResolved = true;
+        guest.FrontEntranceAnchorReached = moveResolved && reachedFrontAnchor;
+
+        if (!guest.FrontEntranceAnchorReached)
+        {
+            Debug.LogError(
+                $"[Chapter1] Guest {guest.Config.GuestId} failed to reach front entrance anchor '{frontAnchor.name}'. Entry dialogue will not start.",
+                this);
+            yield break;
+        }
+
+        ForceGuestVisibleForDoorFlow(guest);
+        SetGuestState(guest, GuestArrivalState.AwaitingGreeting);
+        Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} reached front entrance anchor.", this);
+    }
+
+    private static int CompareEntranceGroupsByRosterOrder(
+        GuestGroupRuntimeState left,
+        GuestGroupRuntimeState right)
+    {
+        if (ReferenceEquals(left, right))
+        {
+            return 0;
+        }
+
+        if (left == null)
+        {
+            return 1;
+        }
+
+        if (right == null)
+        {
+            return -1;
+        }
+
+        return left.GroupIndex.CompareTo(right.GroupIndex);
+    }
+
+    private static List<GuestRuntimeState> GetGuestsInRosterOrder(GuestGroupRuntimeState group)
+    {
+        List<GuestRuntimeState> orderedGuests = group != null
+            ? new List<GuestRuntimeState>(group.Guests)
+            : new List<GuestRuntimeState>();
+        orderedGuests.Sort((left, right) =>
+        {
+            if (ReferenceEquals(left, right))
+            {
+                return 0;
+            }
+
+            if (left == null)
+            {
+                return 1;
+            }
+
+            if (right == null)
+            {
+                return -1;
+            }
+
+            return left.GuestIndex.CompareTo(right.GuestIndex);
+        });
+        return orderedGuests;
+    }
+
+    private static bool AreFrontEntranceMovesResolved(GuestGroupRuntimeState group)
+    {
+        if (group == null)
+        {
+            return true;
+        }
+
+        for (int i = 0; i < group.Guests.Count; i++)
+        {
+            GuestRuntimeState guest = group.Guests[i];
+
+            if (guest != null && !guest.FrontEntranceMoveResolved)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool HasEntranceGroupReachedFrontAnchors(GuestGroupRuntimeState group)
+    {
+        if (group == null || group.Guests.Count == 0)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < group.Guests.Count; i++)
+        {
+            GuestRuntimeState guest = group.Guests[i];
+
+            if (guest == null || !guest.FrontEntranceAnchorReached)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void QueueGuestEntranceDialogue(GuestRuntimeState guest)
+    {
+        if (guest == null ||
+            guest.Config == null ||
+            !guest.FrontEntranceAnchorReached ||
+            guest.EntranceDialogueQueued)
+        {
+            return;
+        }
+
+        guest.EntranceDialogueQueued = true;
         LogGuestLine(guest.Config, guest.Config.GreetingLine);
-        QueueGuestLine(guest, "GREETING", GetGuestGreetingLine(guest));
+        Action advanceToCoatSpot = () => CompleteGuestEntranceDialogueAndMoveToCoatSpot(guest);
 
         if (guest.Annoyed)
         {
-            Debug.Log($"{guest.Config.GuestDisplayName}: {GetAnnoyedLine(guest.GuestIndex)}", this);
-            QueueGuestLine(guest, "ANNOYED", GetAnnoyedLine(guest.GuestIndex));
+            string annoyedLine = GetAnnoyedLine(guest.GuestIndex);
+            Debug.Log($"{guest.Config.GuestDisplayName}: {annoyedLine}", this);
+            QueueGuestLine(guest, "GREETING", GetGuestGreetingLine(guest));
+            QueueGuestLine(guest, "ANNOYED", annoyedLine, advanceToCoatSpot);
+            return;
+        }
+
+        QueueGuestLine(guest, "GREETING", GetGuestGreetingLine(guest), advanceToCoatSpot);
+    }
+
+    private void CompleteGuestEntranceDialogueAndMoveToCoatSpot(GuestRuntimeState guest)
+    {
+        if (guest == null ||
+            !guest.FrontEntranceAnchorReached ||
+            guest.EntranceDialogueAdvanceStarted)
+        {
+            return;
+        }
+
+        guest.EntranceDialogueAdvanceStarted = true;
+        StartCoroutine(MoveGuestFromFrontAnchorToCoatSpot(guest));
+    }
+
+    private IEnumerator MoveGuestFromFrontAnchorToCoatSpot(GuestRuntimeState guest)
+    {
+        if (guest == null ||
+            guest.CoatTaken ||
+            guest.MovingToDrawingRoom ||
+            guest.Seated)
+        {
+            yield break;
         }
 
         Transform waitSpot = GetEntranceHallGuestSpot(guest);
 
         if (waitSpot == null)
         {
-            Debug.LogError($"[Chapter1] Missing authored Entrance Hall spot for guest index {guest.GuestIndex}.", this);
+            Debug.LogError(
+                $"[Chapter1] Missing authored entrance coat spot for guest {guest.GuestIndex + 1} ({guest.Config.GuestId}).",
+                this);
             yield break;
         }
 
-        Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} moving to entrance wait spot.", this);
+        bool moveResolved = false;
+        bool reachedWaitSpot = false;
+        Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} moving to entrance coat spot.", this);
         yield return MoveGuestTo(
             guest,
             waitSpot,
-            "entrance waiting spot",
-            GetEntranceApproachAnimationDirection(guest, waitSpot));
+            $"entrance coat spot for guest {guest.GuestIndex + 1}",
+            GetEntranceApproachAnimationDirection(guest, waitSpot),
+            succeeded =>
+            {
+                moveResolved = true;
+                reachedWaitSpot = succeeded;
+            });
+
+        if (!moveResolved || !reachedWaitSpot)
+        {
+            Debug.LogError(
+                $"[Chapter1] Guest {guest.Config.GuestId} failed to reach entrance coat spot '{waitSpot.name}'. The coat will remain unavailable.",
+                this);
+            yield break;
+        }
 
         if (guest.CoatTaken || guest.MovingToDrawingRoom || guest.Seated)
         {
@@ -1569,7 +1845,8 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         ForceGuestVisibleForDoorFlow(guest);
         OfferGuestCoat(guest);
-        Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} reached entrance wait spot.", this);
+        RefreshInteractionState();
+        Debug.Log($"[Chapter1] Guest {guest.Config.GuestId} reached entrance coat spot.", this);
     }
 
     private void PrepareGuestAtDoorArrival(GuestRuntimeState guest)
@@ -3256,9 +3533,15 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         Vector2 movement = target.position - startPosition;
-        return Mathf.Abs(movement.x) > Mathf.Abs(movement.y)
-            ? CharacterWalkDirection.Right
-            : CharacterWalkDirection.Down;
+
+        if (Mathf.Abs(movement.x) <= Mathf.Abs(movement.y))
+        {
+            return CharacterWalkDirection.Down;
+        }
+
+        return movement.x < 0f
+            ? CharacterWalkDirection.Left
+            : CharacterWalkDirection.Right;
     }
 
     private static void SetGuestIdleAnimation(
@@ -3613,16 +3896,19 @@ public class Chapter1ArrivalController : MonoBehaviour
     private IEnumerator MoveGuestTo(GuestRuntimeState guestState,
         Transform target,
         string fieldName,
-        CharacterWalkDirection animationDirection)
+        CharacterWalkDirection animationDirection,
+        Action<bool> onResolved = null)
     {
         if (guestState == null)
         {
+            onResolved?.Invoke(false);
             yield break;
         }
 
         if (target == null)
         {
             Debug.LogWarning($"Chapter1ArrivalController missing required field: {fieldName}.", this);
+            onResolved?.Invoke(false);
             yield break;
         }
 
@@ -3630,7 +3916,10 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (mover == null)
         {
-            PlaceGuestAt(guestState, target, fieldName);
+            Debug.LogError(
+                $"[Chapter1] Guest '{guestState.Config?.GuestId ?? "unknown_guest"}' cannot move to {fieldName} because its NPCWaypointMover is missing.",
+                this);
+            onResolved?.Invoke(false);
             yield break;
         }
 
@@ -3646,8 +3935,9 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         StopGuestFootsteps(guestState);
 
-        if (mover.LastMoveFailed)
+        if (mover == null || mover.LastMoveFailed || !mover.HasReachedTarget(target))
         {
+            onResolved?.Invoke(false);
             yield break;
         }
 
@@ -3659,6 +3949,8 @@ public class Chapter1ArrivalController : MonoBehaviour
         {
             BindGuestToRoomStagePoint(guestState, target, true);
         }
+
+        onResolved?.Invoke(true);
     }
 
     private void BeginGuestMoveTo(
@@ -3765,16 +4057,34 @@ public class Chapter1ArrivalController : MonoBehaviour
         QueueGuestLine(guestState, lineKind, text);
     }
 
-    private void QueueGuestLine(GuestRuntimeState guestState, string lineKind, string text)
+    private void QueueGuestLine(
+        GuestRuntimeState guestState,
+        string lineKind,
+        string text,
+        Action onComplete = null)
     {
         if (guestState == null || guestState.Config == null)
         {
+            onComplete?.Invoke();
             return;
         }
 
         string lineId = GetChapter1GuestLineId(guestState.GuestIndex, lineKind);
         DialogueSpeechService service = ResolveSpeechService();
-        service?.BeginSpeakLine(lineId, guestState.Config.GuestDisplayName, text, false, false);
+
+        if (service == null)
+        {
+            onComplete?.Invoke();
+            return;
+        }
+
+        service.BeginSpeakLine(
+            lineId,
+            guestState.Config.GuestDisplayName,
+            text,
+            false,
+            false,
+            onComplete);
     }
 
     private IEnumerator SpeakGuestLine(GuestRuntimeState guestState, string lineKind, string text)
@@ -5335,6 +5645,21 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         return entranceHallGuestSpots[guestIndex];
+    }
+
+    private Transform GetFrontEntranceGuestAnchor(GuestRuntimeState guestState)
+    {
+        int guestIndex = guestState != null ? guestState.GuestIndex : -1;
+
+        if (frontEntranceGuestAnchors == null ||
+            frontEntranceGuestAnchors.Length != EntranceHallGuestSpotCount ||
+            guestIndex < 0 ||
+            guestIndex >= EntranceHallGuestSpotCount)
+        {
+            return null;
+        }
+
+        return frontEntranceGuestAnchors[guestIndex];
     }
 
     private Vector3 GetWorldDoorArrivalBasePosition(GuestRuntimeState guestState)

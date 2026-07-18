@@ -146,6 +146,129 @@ public sealed class DialogueSpeechMovementRegressionTests
     }
 
     [Test]
+    public void FrontAnchorBarrierRequiresEveryGuestToReportSuccessfulArrival()
+    {
+        GameObject controllerObject = new GameObject("FrontAnchorBarrierTest");
+
+        try
+        {
+            Chapter1ArrivalController controller = controllerObject.AddComponent<Chapter1ArrivalController>();
+            Type controllerType = typeof(Chapter1ArrivalController);
+            Type guestType = controllerType.GetNestedType("GuestRuntimeState", BindingFlags.NonPublic);
+            Type groupType = controllerType.GetNestedType("GuestGroupRuntimeState", BindingFlags.NonPublic);
+            Assert.That(guestType, Is.Not.Null);
+            Assert.That(groupType, Is.Not.Null);
+
+            object firstGuest = Activator.CreateInstance(guestType, true);
+            object secondGuest = Activator.CreateInstance(guestType, true);
+            object pair = Activator.CreateInstance(groupType, true);
+            FieldInfo reachedField = guestType.GetField(
+                "FrontEntranceAnchorReached",
+                BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo guestsField = groupType.GetField("Guests", BindingFlags.Instance | BindingFlags.Public);
+            MethodInfo hasReachedBarrier = controllerType.GetMethod(
+                "HasEntranceGroupReachedFrontAnchors",
+                BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.That(reachedField, Is.Not.Null);
+            Assert.That(guestsField, Is.Not.Null);
+            Assert.That(hasReachedBarrier, Is.Not.Null);
+
+            IList pairGuests = (IList)guestsField.GetValue(pair);
+            pairGuests.Add(firstGuest);
+            pairGuests.Add(secondGuest);
+
+            Assert.That((bool)hasReachedBarrier.Invoke(null, new[] { pair }), Is.False);
+
+            reachedField.SetValue(firstGuest, true);
+            Assert.That(
+                (bool)hasReachedBarrier.Invoke(null, new[] { pair }),
+                Is.False,
+                "One successful arrival must not release dialogue while the partner failed or stopped early.");
+
+            reachedField.SetValue(secondGuest, true);
+            Assert.That(
+                (bool)hasReachedBarrier.Invoke(null, new[] { pair }),
+                Is.True,
+                "The pair may begin ordered dialogue only after both assigned anchors were reached.");
+        }
+        finally
+        {
+            Object.DestroyImmediate(controllerObject);
+        }
+    }
+
+    [Test]
+    public void FrontAndCoatAnchorLookupsUseGuestIndexInsteadOfHierarchyOrder()
+    {
+        GameObject controllerObject = new GameObject("EntranceAnchorMappingTest");
+        GameObject anchorParent = new GameObject("DeliberatelyScrambledEntranceAnchors");
+
+        try
+        {
+            Chapter1ArrivalController controller = controllerObject.AddComponent<Chapter1ArrivalController>();
+            Type controllerType = typeof(Chapter1ArrivalController);
+            Type guestType = controllerType.GetNestedType("GuestRuntimeState", BindingFlags.NonPublic);
+            FieldInfo guestIndexField = guestType?.GetField("GuestIndex", BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo frontAnchorsField = controllerType.GetField(
+                "frontEntranceGuestAnchors",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo coatSpotsField = controllerType.GetField(
+                "entranceHallGuestSpots",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            MethodInfo getFrontAnchor = controllerType.GetMethod(
+                "GetFrontEntranceGuestAnchor",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            MethodInfo getCoatSpot = controllerType.GetMethod(
+                "GetEntranceHallGuestSpot",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(guestType, Is.Not.Null);
+            Assert.That(guestIndexField, Is.Not.Null);
+            Assert.That(frontAnchorsField, Is.Not.Null);
+            Assert.That(coatSpotsField, Is.Not.Null);
+            Assert.That(getFrontAnchor, Is.Not.Null);
+            Assert.That(getCoatSpot, Is.Not.Null);
+
+            Transform[] frontAnchors = new Transform[8];
+            Transform[] coatSpots = new Transform[8];
+
+            // Creation order is intentionally 8..1. Correct results therefore
+            // cannot come from GetSiblingIndex or a hierarchy scan.
+            for (int guestIndex = 7; guestIndex >= 0; guestIndex--)
+            {
+                GameObject frontAnchor = new GameObject($"Front_Entrance_Anchor_{guestIndex + 1}");
+                frontAnchor.transform.SetParent(anchorParent.transform, false);
+                frontAnchors[guestIndex] = frontAnchor.transform;
+
+                GameObject coatSpot = new GameObject($"EntranceGuestSpot_{guestIndex + 1:00}");
+                coatSpot.transform.SetParent(anchorParent.transform, false);
+                coatSpots[guestIndex] = coatSpot.transform;
+            }
+
+            frontAnchorsField.SetValue(controller, frontAnchors);
+            coatSpotsField.SetValue(controller, coatSpots);
+            object guestState = Activator.CreateInstance(guestType, true);
+
+            for (int guestIndex = 0; guestIndex < 8; guestIndex++)
+            {
+                guestIndexField.SetValue(guestState, guestIndex);
+                Assert.That(
+                    getFrontAnchor.Invoke(controller, new[] { guestState }),
+                    Is.SameAs(frontAnchors[guestIndex]),
+                    $"Guest {guestIndex + 1} should receive its explicitly serialized speaking anchor.");
+                Assert.That(
+                    getCoatSpot.Invoke(controller, new[] { guestState }),
+                    Is.SameAs(coatSpots[guestIndex]),
+                    $"Guest {guestIndex + 1} should independently receive its explicitly serialized coat spot.");
+            }
+        }
+        finally
+        {
+            Object.DestroyImmediate(anchorParent);
+            Object.DestroyImmediate(controllerObject);
+        }
+    }
+
+    [Test]
     public void UnequalEntrancePairRoutesUseOneTravelDuration()
     {
         MethodInfo calculateSpeed = typeof(Chapter1ArrivalController).GetMethod(
@@ -732,6 +855,83 @@ public sealed class DialogueSpeechMovementRegressionTests
                 "Changing rooms must not resurrect the paused or pending dialogue in the new room.");
             Assert.That(speechService.IsSpeechInterruptionActive, Is.False);
             Assert.That(speechService.IsNormalSpeechActive, Is.False);
+        }
+        finally
+        {
+            speechService?.CancelQueuedSpeech();
+            Object.Destroy(speechObject);
+        }
+
+        yield return null;
+        yield return new ExitPlayMode();
+    }
+
+    [UnityTest]
+    public IEnumerator SpeechCompletionCallbacksRunExactlyOnceAfterSkipOrQueueCancellation()
+    {
+        yield return new EnterPlayMode();
+
+        GameObject speechObject = new GameObject("DialogueSpeechService_CompletionOnceTest");
+        DialogueSpeechService speechService = null;
+
+        try
+        {
+            speechService = speechObject.AddComponent<DialogueSpeechService>();
+            SubtitleService subtitleService = speechObject.AddComponent<SubtitleService>();
+            GuestVoiceLinePlayback voicePlayback = speechObject.AddComponent<GuestVoiceLinePlayback>();
+            SpeakingCharacterIndicator speakingIndicator = speechObject.AddComponent<SpeakingCharacterIndicator>();
+            SetPrivateField(speechService, "subtitleService", subtitleService);
+            SetPrivateField(speechService, "voicePlayback", voicePlayback);
+            SetPrivateField(speechService, "speakingIndicator", speakingIndicator);
+
+            int skippedCompletions = 0;
+            speechService.BeginSpeakLine(
+                "TEST_SKIP_COMPLETION_ONCE",
+                "Guest01",
+                "This line will be skipped.",
+                onComplete: () => skippedCompletions++,
+                showSubtitleOverlay: false);
+            yield return null;
+            speechService.SkipCurrentSpeech();
+
+            for (int frame = 0; frame < 5 && skippedCompletions == 0; frame++)
+            {
+                yield return null;
+            }
+
+            Assert.That(skippedCompletions, Is.EqualTo(1), "Skipping a guest line should release its continuation exactly once.");
+            speechService.SkipCurrentSpeech();
+            speechService.CancelQueuedSpeech();
+            yield return null;
+            Assert.That(skippedCompletions, Is.EqualTo(1), "Later skip/cancel requests must not replay an already completed continuation.");
+
+            speechService.BeginSpeakLine(
+                "TEST_QUEUE_CANCELLATION_HOLD",
+                "Butler",
+                "This line keeps the next guest line queued.",
+                showSubtitleOverlay: false);
+            yield return null;
+
+            int cancelledCompletions = 0;
+            speechService.BeginSpeakLine(
+                "TEST_QUEUE_CANCELLATION_COMPLETION_ONCE",
+                "Guest02",
+                "This queued line will be cancelled.",
+                onComplete: () => cancelledCompletions++,
+                showSubtitleOverlay: false);
+            yield return null;
+
+            speechService.CancelQueuedSpeech();
+
+            for (int frame = 0; frame < 5 && cancelledCompletions == 0; frame++)
+            {
+                yield return null;
+            }
+
+            Assert.That(cancelledCompletions, Is.EqualTo(1), "Cancelling the speech queue should still release the queued guest continuation exactly once.");
+            speechService.CancelQueuedSpeech();
+            yield return null;
+            Assert.That(cancelledCompletions, Is.EqualTo(1), "Repeated queue cancellation must not start the guest's second movement leg twice.");
         }
         finally
         {
