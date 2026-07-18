@@ -478,12 +478,20 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string priorityText = File.ReadAllText(Chapter1PointerPriorityPath);
         string coatPointerClickBody = ExtractMethodBody(coatText, "public void OnPointerClick");
         string actionPointerClickBody = ExtractMethodBody(actionText, "public void OnPointerClick");
+        string coatPointerDownBody = ExtractMethodBody(coatText, "public void OnPointerDown");
+        string actionPointerDownBody = ExtractMethodBody(actionText, "public void OnPointerDown");
         string actionUpdateBody = ExtractMethodBody(actionText, "private void Update");
 
         Assert.That(coatPointerClickBody, Does.Contain("TryHandlePointerAction(eventData.position, false)"),
             "The release callback must not repeat the coat action already consumed on press.");
         Assert.That(actionPointerClickBody, Does.Contain("TryHandlePointerAction(eventData.position, false)"),
             "The release callback must not repeat a scene action already consumed on press.");
+        Assert.That(coatText, Does.Contain("IPointerDownHandler"));
+        Assert.That(actionText, Does.Contain("IPointerDownHandler"));
+        Assert.That(coatPointerDownBody, Does.Contain("TryHandlePointerAction(eventData.position, true)"),
+            "EventSystem-only pointers should activate the coat once on press.");
+        Assert.That(actionPointerDownBody, Does.Contain("TryHandlePointerAction(eventData.position, true)"),
+            "EventSystem-only pointers should activate scene actions once on press.");
         Assert.That(actionUpdateBody, Does.Contain("TryHandlePointerAction(screenPosition, TryGetPrimaryPointerDown())"),
             "Every active Chapter 1 scene action should participate in the authoritative polling path.");
         Assert.That(actionUpdateBody, Does.Not.Contain("UsesManualPointerPolling"),
@@ -502,6 +510,8 @@ public class Chapter1GuestRoomVisibilityRegressionTests
             @"GetPointerPriority[\s\S]*Chapter1SceneActionType\.FrontDoor[\s\S]*NavigationHoverPriority[\s\S]*SceneActionHoverPriority"),
             "The coat hanger and other specific actions must outrank the broad Chapter 1 front-door action.");
         Assert.That(actionText, Does.Contain("candidate.GetPointerPriority()"));
+        Assert.That(actionText, Does.Contain("cachedActionColliders2D"));
+        Assert.That(actionText, Does.Contain("cachedActionSpriteRenderers"));
     }
 
     [Test]

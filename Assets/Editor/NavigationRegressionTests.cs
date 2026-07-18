@@ -525,6 +525,18 @@ public class NavigationRegressionTests
     }
 
     [Test]
+    public void BlockingUiPointerQueriesReuseOneResultPerFrame()
+    {
+        string playerText = File.ReadAllText(PointClickPlayerMovementPath);
+        string blockingUiBody = ExtractMethodBody(playerText, "public static bool IsPointerOverBlockingUi");
+
+        Assert.That(playerText, Does.Contain("uiBlockingQueryFrame"));
+        Assert.That(playerText, Does.Contain("cachedUiPointerEventData"));
+        Assert.That(blockingUiBody, Does.Contain("uiBlockingQueryFrame == Time.frameCount"));
+        Assert.That(blockingUiBody, Does.Contain("cachedUiPointerEventData.Reset()"));
+    }
+
+    [Test]
     public void UiControlsUseDedicatedCursorDuringModalPause()
     {
         string cameraManagerText = File.ReadAllText(CameraManagerPath);
@@ -534,7 +546,7 @@ public class NavigationRegressionTests
 
         Assert.That(cameraManagerText, Does.Contain("HoverIcon.Ui"), "The shared cursor controller should have a dedicated UI/action icon.");
         Assert.That(cameraManagerText, Does.Contain("CreateUiCursor"), "UI clicks should have their own generated cursor instead of borrowing the door cursor.");
-        Assert.That(cameraManagerText, Does.Contain("gameplayHoverBlocked && icon != HoverIcon.Ui"), "Settings should block gameplay hover cursors without suppressing settings controls.");
+        Assert.That(cameraManagerText, Does.Contain("gameplayHoverBlocked && request.Icon != HoverIcon.Ui"), "Settings should mask retained gameplay hover cursors without suppressing settings controls.");
         Assert.That(cameraManagerText, Does.Contain("doorHoverIcon != HoverIcon.Ui"), "Opening settings should clear stale gameplay cursors while preserving hovered UI controls.");
         Assert.That(hoverTargetText, Does.Contain("HoverIcon.Ui"), "Generic UI hover targets should default to the UI cursor.");
         Assert.That(runtimeSettingsText, Does.Contain("ConfigureUiCursor(buttonRect, button)"), "Runtime settings buttons should advertise UI clicks.");

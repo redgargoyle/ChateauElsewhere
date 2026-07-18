@@ -13,7 +13,7 @@ public enum Chapter1SceneActionType
 }
 
 [DisallowMultipleComponent]
-public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
+public class Chapter1SceneAction : MonoBehaviour, IPointerDownHandler, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
     private const float FrontDoorClickScreenRadius = 90f;
     private const float FrontDoorReadyScreenDistance = 110f;
@@ -30,6 +30,8 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
     private bool cursorHoverActive;
     private NavigationCursorController.HoverIcon cursorHoverIcon = NavigationCursorController.HoverIcon.Door;
     private PointClickPlayerMovement pendingFrontDoorApproachPlayer;
+    private Collider2D[] cachedActionColliders2D;
+    private SpriteRenderer[] cachedActionSpriteRenderers;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void ResetActiveSceneActionsForPlayMode()
@@ -55,6 +57,11 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         TryHandlePointerAction(eventData.position, false);
     }
 
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        TryHandlePointerAction(eventData.position, true);
+    }
+
     public void OnPointerEnter(PointerEventData eventData)
     {
         TryHandlePointerAction(eventData.position, false);
@@ -75,6 +82,8 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
     private void OnEnable()
     {
+        InvalidateActionBoundsComponents();
+
         if (!ActiveSceneActions.Contains(this))
         {
             ActiveSceneActions.Add(this);
@@ -89,6 +98,12 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         Chapter1PointerPriority.InvalidateCache();
         CancelPendingFrontDoorApproach();
         SetDoorCursorHover(false);
+    }
+
+    private void OnTransformChildrenChanged()
+    {
+        InvalidateActionBoundsComponents();
+        Chapter1PointerPriority.InvalidateCache();
     }
 
     private void Update()
@@ -441,11 +456,11 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
         bool hasBounds = false;
 
-        Collider2D[] colliders2D = GetComponentsInChildren<Collider2D>(true);
+        CacheActionBoundsComponents();
 
-        for (int i = 0; i < colliders2D.Length; i++)
+        for (int i = 0; i < cachedActionColliders2D.Length; i++)
         {
-            Collider2D collider2D = colliders2D[i];
+            Collider2D collider2D = cachedActionColliders2D[i];
 
             if (collider2D == null ||
                 !collider2D.enabled ||
@@ -458,11 +473,9 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
             hasBounds = true;
         }
 
-        SpriteRenderer[] spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
-
-        for (int i = 0; i < spriteRenderers.Length; i++)
+        for (int i = 0; i < cachedActionSpriteRenderers.Length; i++)
         {
-            SpriteRenderer spriteRenderer = spriteRenderers[i];
+            SpriteRenderer spriteRenderer = cachedActionSpriteRenderers[i];
 
             if (spriteRenderer == null ||
                 !spriteRenderer.enabled ||
@@ -476,6 +489,25 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         }
 
         return hasBounds;
+    }
+
+    private void CacheActionBoundsComponents()
+    {
+        if (cachedActionColliders2D == null)
+        {
+            cachedActionColliders2D = GetComponentsInChildren<Collider2D>(true);
+        }
+
+        if (cachedActionSpriteRenderers == null)
+        {
+            cachedActionSpriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+        }
+    }
+
+    private void InvalidateActionBoundsComponents()
+    {
+        cachedActionColliders2D = null;
+        cachedActionSpriteRenderers = null;
     }
 
     private static void AddWorldBoundsToScreenBounds(Bounds bounds, Camera worldCamera, ref Vector2 min, ref Vector2 max)

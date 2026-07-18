@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 #endif
 
 [DisallowMultipleComponent]
-public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
+public class Chapter1CoatPickup : MonoBehaviour, IPointerDownHandler, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
     private const float MinimumScreenClickRadius = 38f;
     private static readonly System.Collections.Generic.List<Chapter1CoatPickup> ActivePickups =
@@ -40,6 +40,11 @@ public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerE
     public void OnPointerClick(PointerEventData eventData)
     {
         TryHandlePointerAction(eventData.position, false);
+    }
+
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        TryHandlePointerAction(eventData.position, true);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
