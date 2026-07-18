@@ -42,44 +42,25 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        PerformAction();
+        TryHandlePointerAction(eventData.position, true);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (RuntimeSettingsMenu.BlocksGameInput)
-        {
-            return;
-        }
-
-        if (!UsesManualPointerPolling())
-        {
-            SetDoorCursorHover(IsActionCurrentlyAvailable());
-            return;
-        }
-
-        if (TryGetPrimaryPointerPosition(out Vector2 screenPosition) &&
-            IsPointerInsideActionBounds(screenPosition) &&
-            IsActionCurrentlyAvailable())
-        {
-            SetDoorCursorHover(true);
-        }
+        TryHandlePointerAction(eventData.position, false);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        SetDoorCursorHover(false);
+        RefreshPointerHover();
     }
 
     private void OnMouseDown()
     {
-        if (TryGetPrimaryPointerPosition(out Vector2 screenPosition) &&
-            PointClickPlayerMovement.IsPointerOverBlockingUi(screenPosition))
+        if (TryGetPrimaryPointerPosition(out Vector2 screenPosition))
         {
-            return;
+            TryHandlePointerAction(screenPosition, true);
         }
-
-        PerformAction();
     }
 
     private void OnDisable()
@@ -107,30 +88,42 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
             return;
         }
 
-        if (PointClickPlayerMovement.IsPointerOverBlockingUi(screenPosition))
+        TryHandlePointerAction(screenPosition, TryGetPrimaryPointerDown());
+    }
+
+    private void RefreshPointerHover()
+    {
+        if (TryGetPrimaryPointerPosition(out Vector2 screenPosition))
+        {
+            TryHandlePointerAction(screenPosition, false);
+            return;
+        }
+
+        SetDoorCursorHover(false);
+    }
+
+    private void TryHandlePointerAction(Vector2 screenPosition, bool activate)
+    {
+        if (RuntimeSettingsMenu.BlocksGameInput ||
+            PointClickPlayerMovement.IsPointerOverBlockingUi(screenPosition))
         {
             SetDoorCursorHover(false);
             return;
         }
 
-        bool pointerInsideAction = IsPointerInsideActionBounds(screenPosition);
-        SetDoorCursorHover(pointerInsideAction && IsActionCurrentlyAvailable());
+        bool isSelectedTarget = Chapter1PointerPriority.TryGetTarget(
+            screenPosition,
+            out MonoBehaviour target) && target == this;
+        SetDoorCursorHover(isSelectedTarget && IsActionCurrentlyAvailable());
 
-        if (!TryGetPrimaryPointerDown())
+        if (!activate ||
+            !isSelectedTarget ||
+            !NavigationCursorController.IsPrimaryHoverOwner(this))
         {
             return;
         }
 
-        if (pointerInsideAction)
-        {
-            PerformAction();
-            return;
-        }
-
-        if (actionType == Chapter1SceneActionType.FrontDoor)
-        {
-            CancelPendingFrontDoorApproach();
-        }
+        PerformAction();
     }
 
     private void PerformAction()
@@ -343,6 +336,36 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         return IsPointerInsideScreenBounds(screenPosition);
     }
 
+    public static bool TryGetSceneActionAtScreenPosition(
+        Vector2 screenPosition,
+        out Chapter1SceneAction sceneAction)
+    {
+        sceneAction = null;
+        Chapter1SceneAction[] candidates = FindObjectsByType<Chapter1SceneAction>(
+            FindObjectsInactive.Exclude);
+
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            Chapter1SceneAction candidate = candidates[i];
+
+            if (candidate == null ||
+                !candidate.enabled ||
+                !candidate.gameObject.activeInHierarchy ||
+                !candidate.IsActionCurrentlyAvailable() ||
+                !candidate.IsPointerInsideActionBounds(screenPosition))
+            {
+                continue;
+            }
+
+            if (sceneAction == null || candidate.GetInstanceID() < sceneAction.GetInstanceID())
+            {
+                sceneAction = candidate;
+            }
+        }
+
+        return sceneAction != null;
+    }
+
     private bool IsCurrentPointerOnFrontDoor()
     {
         return TryGetPrimaryPointerPosition(out Vector2 screenPosition) && IsFrontDoorPointerHit(screenPosition);
@@ -463,7 +486,11 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
         cursorHoverActive = active;
         cursorHoverIcon = nextIcon;
-        NavigationCursorController.SetDoorHover(this, nextIcon, active);
+        NavigationCursorController.SetDoorHover(
+            this,
+            nextIcon,
+            NavigationCursorController.SceneActionHoverPriority,
+            active);
     }
 
     private bool UsesManualPointerPolling()

@@ -16,6 +16,7 @@ public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerE
 
     private bool cursorHoverActive;
     private NavigationCursorController.HoverIcon cursorHoverIcon = NavigationCursorController.HoverIcon.PickUpCoat;
+    private int lastPointerActionFrame = -1;
 
     public string GuestId => guestId;
     public string CoatId => coatId;
@@ -29,38 +30,35 @@ public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerE
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        TryPickUp();
+        TryHandlePointerAction(eventData.position, true);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        SetCoatCursorHover(true);
+        TryHandlePointerAction(eventData.position, false);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        SetCoatCursorHover(false);
+        RefreshPointerHover();
     }
 
     private void OnMouseDown()
     {
-        if (TryGetPrimaryPointerPosition(out Vector2 screenPosition) &&
-            PointClickPlayerMovement.IsPointerOverBlockingUi(screenPosition))
+        if (TryGetPrimaryPointerPosition(out Vector2 screenPosition))
         {
-            return;
+            TryHandlePointerAction(screenPosition, true);
         }
-
-        TryPickUp();
     }
 
     private void OnMouseEnter()
     {
-        SetCoatCursorHover(true);
+        RefreshPointerHover();
     }
 
     private void OnMouseExit()
     {
-        SetCoatCursorHover(false);
+        RefreshPointerHover();
     }
 
     private void Update()
@@ -71,19 +69,7 @@ public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerE
             return;
         }
 
-        if (PointClickPlayerMovement.IsPointerOverBlockingUi(screenPosition))
-        {
-            SetCoatCursorHover(false);
-            return;
-        }
-
-        bool pointerOverCoat = IsPointerOverCoat(screenPosition);
-        SetCoatCursorHover(pointerOverCoat);
-
-        if (pointerOverCoat && TryGetPrimaryPointerDown())
-        {
-            TryPickUp();
-        }
+        TryHandlePointerAction(screenPosition, TryGetPrimaryPointerDown());
     }
 
     private void OnDisable()
@@ -104,6 +90,42 @@ public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerE
         }
     }
 
+    private void RefreshPointerHover()
+    {
+        if (TryGetPrimaryPointerPosition(out Vector2 screenPosition))
+        {
+            TryHandlePointerAction(screenPosition, false);
+            return;
+        }
+
+        SetCoatCursorHover(false);
+    }
+
+    private void TryHandlePointerAction(Vector2 screenPosition, bool activate)
+    {
+        if (PointClickPlayerMovement.IsPointerOverBlockingUi(screenPosition))
+        {
+            SetCoatCursorHover(false);
+            return;
+        }
+
+        bool isSelectedTarget = Chapter1PointerPriority.TryGetTarget(
+            screenPosition,
+            out MonoBehaviour target) && target == this;
+        SetCoatCursorHover(isSelectedTarget);
+
+        if (!activate ||
+            !isSelectedTarget ||
+            !NavigationCursorController.IsPrimaryHoverOwner(this) ||
+            lastPointerActionFrame == Time.frameCount)
+        {
+            return;
+        }
+
+        lastPointerActionFrame = Time.frameCount;
+        TryPickUp();
+    }
+
     private void SetCoatCursorHover(bool active)
     {
         NavigationCursorController.HoverIcon nextIcon = CanTakeThisCoat()
@@ -120,11 +142,15 @@ public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerE
 
         if (!active)
         {
-            NavigationCursorController.SetDoorHover(this, false);
+            NavigationCursorController.ClearDoorHover(this);
             return;
         }
 
-        NavigationCursorController.SetDoorHover(this, cursorHoverIcon, true);
+        NavigationCursorController.SetDoorHover(
+            this,
+            cursorHoverIcon,
+            NavigationCursorController.GuestActionHoverPriority,
+            true);
     }
 
     private bool CanTakeThisCoat()
@@ -162,6 +188,35 @@ public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerE
 
         Vector2 fallbackCenter = worldCamera.WorldToScreenPoint(transform.position);
         return Vector2.Distance(screenPosition, fallbackCenter) <= MinimumScreenClickRadius;
+    }
+
+    public static bool TryGetCoatAtScreenPosition(
+        Vector2 screenPosition,
+        out Chapter1CoatPickup coat)
+    {
+        coat = null;
+        Chapter1CoatPickup[] candidates = FindObjectsByType<Chapter1CoatPickup>(
+            FindObjectsInactive.Exclude);
+
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            Chapter1CoatPickup candidate = candidates[i];
+
+            if (candidate == null ||
+                !candidate.enabled ||
+                !candidate.gameObject.activeInHierarchy ||
+                !candidate.IsPointerOverCoat(screenPosition))
+            {
+                continue;
+            }
+
+            if (coat == null || candidate.GetInstanceID() < coat.GetInstanceID())
+            {
+                coat = candidate;
+            }
+        }
+
+        return coat != null;
     }
 
     private bool TryGetScreenBounds(Camera worldCamera, out Vector2 min, out Vector2 max)

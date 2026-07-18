@@ -8,7 +8,9 @@ using NUnit.Framework;
 public class Chapter1GuestRoomVisibilityRegressionTests
 {
     private const string Chapter1ArrivalControllerPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1ArrivalController.cs";
+    private const string Chapter1CoatPickupPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1CoatPickup.cs";
     private const string Chapter1SceneActionPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1SceneAction.cs";
+    private const string Chapter1PointerPriorityPath = "Assets/_Chateau/Scripts/Chapter/Chapter01/Chapter1PointerPriority.cs";
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
     private const string PointClickPlayerMovementPath = "Assets/Scripts/PointClickPlayerMovement.cs";
     private const string ActorRoomStatePath = "Assets/Scripts/Story/ActorRoomState.cs";
@@ -427,6 +429,30 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(controllerText, Does.Not.Contain("Wardrobe_" + "EntranceHall_" + "Runtime"), "The old runtime wardrobe object name must stay removed.");
         Assert.That(controllerText, Does.Not.Contain("CoatCloset_" + "EntranceHall_" + "Runtime"), "The old runtime closet object name must stay removed.");
         Assert.That(controllerText, Does.Not.Contain("Create" + "WardrobeSprite"), "The old generated wardrobe sprite path must stay removed.");
+    }
+
+    [Test]
+    public void Chapter1PointerPriorityUsesOneCoatFirstTargetForHoverAndClick()
+    {
+        Assert.That(
+            File.Exists(Chapter1PointerPriorityPath),
+            Is.True,
+            "Chapter 1 needs one shared pointer-priority resolver.");
+
+        string coatText = File.ReadAllText(Chapter1CoatPickupPath);
+        string actionText = File.ReadAllText(Chapter1SceneActionPath);
+        string priorityText = File.ReadAllText(Chapter1PointerPriorityPath);
+
+        Assert.That(priorityText, Does.Match(
+            @"TryGetCoatAtScreenPosition[\s\S]*TryGetSceneActionAtScreenPosition"));
+        Assert.That(coatText, Does.Contain("TryHandlePointerAction"));
+        Assert.That(actionText, Does.Contain("TryHandlePointerAction"));
+        Assert.That(coatText, Does.Contain("lastPointerActionFrame"));
+        Assert.That(actionText, Does.Contain("lastPerformedFrame"));
+        Assert.That(coatText, Does.Contain("GuestActionHoverPriority"));
+        Assert.That(actionText, Does.Contain("SceneActionHoverPriority"));
+        Assert.That(coatText, Does.Contain("IsPrimaryHoverOwner(this)"));
+        Assert.That(actionText, Does.Contain("IsPrimaryHoverOwner(this)"));
     }
 
     [Test]
