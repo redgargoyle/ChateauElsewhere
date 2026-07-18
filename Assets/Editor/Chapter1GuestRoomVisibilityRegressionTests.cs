@@ -432,6 +432,21 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     }
 
     [Test]
+    public void CoatAndHangerClickboxesAlwaysMatchTheirVisibleSprites()
+    {
+        string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string coatSetupBody = ExtractMethodBody(controllerText, "CreateCoatPickup");
+        string hangerColliderBody = ExtractMethodBody(controllerText, "EnsureCoatHangerCollider");
+
+        Assert.That(coatSetupBody, Does.Match(
+            @"collider\.size\s*=\s*GetCoatClickColliderSize[\s\S]*collider\.offset[\s\S]*collider\.isTrigger\s*=\s*true[\s\S]*collider\.enabled\s*=\s*true"));
+        Assert.That(hangerColliderBody, Does.Match(
+            @"collider\.size\s*=\s*GetCoatHangerColliderSize[\s\S]*collider\.offset[\s\S]*collider\.isTrigger\s*=\s*true[\s\S]*collider\.enabled\s*=\s*true"));
+        Assert.That(hangerColliderBody, Does.Not.Contain("addedCollider"),
+            "Existing authored hanger colliders must be resized as well as newly added colliders.");
+    }
+
+    [Test]
     public void Chapter1PointerPriorityUsesOneCoatFirstTargetForHoverAndClick()
     {
         Assert.That(

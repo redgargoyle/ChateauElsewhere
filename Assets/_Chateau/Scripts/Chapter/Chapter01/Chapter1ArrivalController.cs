@@ -1665,6 +1665,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         collider.size = GetCoatClickColliderSize(coatObject, out Vector2 colliderOffset);
         collider.offset = colliderOffset;
         collider.isTrigger = true;
+        collider.enabled = true;
 
         Chapter1CoatPickup pickup = coatObject.GetComponent<Chapter1CoatPickup>();
 
@@ -5227,19 +5228,14 @@ public class Chapter1ArrivalController : MonoBehaviour
     private void EnsureCoatHangerCollider(GameObject coatHangerObject)
     {
         BoxCollider2D collider = coatHangerObject.GetComponent<BoxCollider2D>();
-        bool addedCollider = collider == null;
 
-        if (addedCollider)
+        if (collider == null)
         {
             collider = coatHangerObject.AddComponent<BoxCollider2D>();
         }
 
-        if (addedCollider)
-        {
-            collider.size = GetCoatHangerColliderSize(coatHangerObject, out Vector2 colliderOffset);
-            collider.offset = colliderOffset;
-        }
-
+        collider.size = GetCoatHangerColliderSize(coatHangerObject, out Vector2 colliderOffset);
+        collider.offset = colliderOffset;
         collider.isTrigger = true;
         collider.enabled = true;
     }
