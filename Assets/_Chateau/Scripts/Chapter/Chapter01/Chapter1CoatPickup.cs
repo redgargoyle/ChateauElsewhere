@@ -9,6 +9,8 @@ using UnityEngine.InputSystem;
 public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
     private const float MinimumScreenClickRadius = 38f;
+    private static readonly System.Collections.Generic.List<Chapter1CoatPickup> ActivePickups =
+        new System.Collections.Generic.List<Chapter1CoatPickup>();
 
     [SerializeField] private Chapter1ArrivalController arrivalController;
     [SerializeField] private string guestId;
@@ -21,16 +23,23 @@ public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerE
     public string GuestId => guestId;
     public string CoatId => coatId;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void ResetActivePickupsForPlayMode()
+    {
+        ActivePickups.Clear();
+    }
+
     public void Initialize(Chapter1ArrivalController controller, string ownerGuestId, string ownerCoatId)
     {
         arrivalController = controller;
         guestId = ownerGuestId;
         coatId = ownerCoatId;
+        Chapter1PointerPriority.InvalidateCache();
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        TryHandlePointerAction(eventData.position, true);
+        TryHandlePointerAction(eventData.position, false);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
@@ -47,8 +56,18 @@ public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerE
     {
         if (TryGetPrimaryPointerPosition(out Vector2 screenPosition))
         {
-            TryHandlePointerAction(screenPosition, true);
+            TryHandlePointerAction(screenPosition, false);
         }
+    }
+
+    private void OnEnable()
+    {
+        if (!ActivePickups.Contains(this))
+        {
+            ActivePickups.Add(this);
+        }
+
+        Chapter1PointerPriority.InvalidateCache();
     }
 
     private void OnMouseEnter()
@@ -74,6 +93,8 @@ public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerE
 
     private void OnDisable()
     {
+        ActivePickups.Remove(this);
+        Chapter1PointerPriority.InvalidateCache();
         SetCoatCursorHover(false);
     }
 
@@ -128,29 +149,53 @@ public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerE
 
     private void SetCoatCursorHover(bool active)
     {
+        if (!active)
+        {
+            if (!cursorHoverActive)
+            {
+                return;
+            }
+
+            cursorHoverActive = false;
+            NavigationCursorController.ClearDoorHover(this);
+            return;
+        }
+
         NavigationCursorController.HoverIcon nextIcon = CanTakeThisCoat()
             ? NavigationCursorController.HoverIcon.PickUpCoat
             : NavigationCursorController.HoverIcon.Locked;
 
-        if (cursorHoverActive == active && (!active || cursorHoverIcon == nextIcon))
+        if (cursorHoverActive && cursorHoverIcon == nextIcon)
         {
             return;
         }
 
-        cursorHoverActive = active;
+        cursorHoverActive = true;
         cursorHoverIcon = nextIcon;
-
-        if (!active)
-        {
-            NavigationCursorController.ClearDoorHover(this);
-            return;
-        }
 
         NavigationCursorController.SetDoorHover(
             this,
             cursorHoverIcon,
             NavigationCursorController.GuestActionHoverPriority,
             true);
+    }
+
+    public static void ApplyPointerSelection(Chapter1CoatPickup selectedPickup)
+    {
+        for (int i = ActivePickups.Count - 1; i >= 0; i--)
+        {
+            Chapter1CoatPickup candidate = ActivePickups[i];
+
+            if (candidate == null ||
+                !candidate.enabled ||
+                !candidate.gameObject.activeInHierarchy)
+            {
+                ActivePickups.RemoveAt(i);
+                continue;
+            }
+
+            candidate.SetCoatCursorHover(candidate == selectedPickup);
+        }
     }
 
     private bool CanTakeThisCoat()
@@ -195,17 +240,19 @@ public class Chapter1CoatPickup : MonoBehaviour, IPointerClickHandler, IPointerE
         out Chapter1CoatPickup coat)
     {
         coat = null;
-        Chapter1CoatPickup[] candidates = FindObjectsByType<Chapter1CoatPickup>(
-            FindObjectsInactive.Exclude);
-
-        for (int i = 0; i < candidates.Length; i++)
+        for (int i = ActivePickups.Count - 1; i >= 0; i--)
         {
-            Chapter1CoatPickup candidate = candidates[i];
+            Chapter1CoatPickup candidate = ActivePickups[i];
 
             if (candidate == null ||
                 !candidate.enabled ||
-                !candidate.gameObject.activeInHierarchy ||
-                !candidate.IsPointerOverCoat(screenPosition))
+                !candidate.gameObject.activeInHierarchy)
+            {
+                ActivePickups.RemoveAt(i);
+                continue;
+            }
+
+            if (!candidate.IsPointerOverCoat(screenPosition))
             {
                 continue;
             }

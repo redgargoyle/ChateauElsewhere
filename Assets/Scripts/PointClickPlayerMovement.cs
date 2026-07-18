@@ -533,6 +533,11 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (!TryGetPrimaryPointerDown(out screenPosition))
 			return false;
 
+		pointerOverUi = IsPointerOverBlockingUi(screenPosition);
+
+		if (pointerOverUi)
+			return false;
+
 		if (Chapter1PointerPriority.IsPointerOverAction(screenPosition))
 			return false;
 
@@ -540,11 +545,6 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return false;
 
 		if (DoorTriggerNavigation.IsPointerOverActiveTrigger(screenPosition))
-			return false;
-
-		pointerOverUi = IsPointerOverBlockingUi(screenPosition);
-
-		if (pointerOverUi)
 			return false;
 
 		if (!TryEvaluateMovementAtScreenPoint(screenPosition, false, true, out movementQuery))
@@ -1373,6 +1373,12 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return;
 		}
 
+		if (IsPointerOverBlockingUi(screenPosition))
+		{
+			NavigationCursorController.ClearWalkHover(this);
+			return;
+		}
+
 		if (Chapter1PointerPriority.IsPointerOverAction(screenPosition))
 		{
 			NavigationCursorController.ClearWalkHover(this);
@@ -1385,7 +1391,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return;
 		}
 
-		if (DoorTriggerNavigation.IsPointerOverActiveTrigger(screenPosition) || IsPointerOverBlockingUi(screenPosition))
+		if (DoorTriggerNavigation.IsPointerOverActiveTrigger(screenPosition))
 		{
 			NavigationCursorController.ClearWalkHover(this);
 			return;

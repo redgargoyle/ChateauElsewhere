@@ -19,6 +19,8 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
     private const float FrontDoorReadyScreenDistance = 110f;
     private const float DefaultSceneActionClickScreenRadius = 54f;
     private const float CoatClosetClickScreenRadius = 90f;
+    private static readonly System.Collections.Generic.List<Chapter1SceneAction> ActiveSceneActions =
+        new System.Collections.Generic.List<Chapter1SceneAction>();
 
     [SerializeField] private Chapter1SceneActionType actionType;
     [SerializeField] private Chapter1ArrivalController arrivalController;
@@ -29,20 +31,28 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
     private NavigationCursorController.HoverIcon cursorHoverIcon = NavigationCursorController.HoverIcon.Door;
     private PointClickPlayerMovement pendingFrontDoorApproachPlayer;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void ResetActiveSceneActionsForPlayMode()
+    {
+        ActiveSceneActions.Clear();
+    }
+
     public void Initialize(Chapter1SceneActionType nextActionType, Chapter1ArrivalController controller)
     {
         actionType = nextActionType;
         arrivalController = controller;
+        Chapter1PointerPriority.InvalidateCache();
     }
 
     public void SetAvailable(bool value)
     {
         isActionAvailable = value;
+        Chapter1PointerPriority.InvalidateCache();
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        TryHandlePointerAction(eventData.position, true);
+        TryHandlePointerAction(eventData.position, false);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
@@ -59,12 +69,24 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
     {
         if (TryGetPrimaryPointerPosition(out Vector2 screenPosition))
         {
-            TryHandlePointerAction(screenPosition, true);
+            TryHandlePointerAction(screenPosition, false);
         }
+    }
+
+    private void OnEnable()
+    {
+        if (!ActiveSceneActions.Contains(this))
+        {
+            ActiveSceneActions.Add(this);
+        }
+
+        Chapter1PointerPriority.InvalidateCache();
     }
 
     private void OnDisable()
     {
+        ActiveSceneActions.Remove(this);
+        Chapter1PointerPriority.InvalidateCache();
         CancelPendingFrontDoorApproach();
         SetDoorCursorHover(false);
     }
@@ -74,11 +96,6 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         if (RuntimeSettingsMenu.BlocksGameInput)
         {
             SetDoorCursorHover(false);
-            return;
-        }
-
-        if (!UsesManualPointerPolling())
-        {
             return;
         }
 
@@ -341,23 +358,30 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
         out Chapter1SceneAction sceneAction)
     {
         sceneAction = null;
-        Chapter1SceneAction[] candidates = FindObjectsByType<Chapter1SceneAction>(
-            FindObjectsInactive.Exclude);
-
-        for (int i = 0; i < candidates.Length; i++)
+        for (int i = ActiveSceneActions.Count - 1; i >= 0; i--)
         {
-            Chapter1SceneAction candidate = candidates[i];
+            Chapter1SceneAction candidate = ActiveSceneActions[i];
 
             if (candidate == null ||
                 !candidate.enabled ||
-                !candidate.gameObject.activeInHierarchy ||
-                !candidate.IsActionCurrentlyAvailable() ||
+                !candidate.gameObject.activeInHierarchy)
+            {
+                ActiveSceneActions.RemoveAt(i);
+                continue;
+            }
+
+            if (!candidate.IsActionCurrentlyAvailable() ||
                 !candidate.IsPointerInsideActionBounds(screenPosition))
             {
                 continue;
             }
 
-            if (sceneAction == null || candidate.GetInstanceID() < sceneAction.GetInstanceID())
+            int candidatePriority = candidate.GetPointerPriority();
+
+            if (sceneAction == null ||
+                candidatePriority > sceneAction.GetPointerPriority() ||
+                (candidatePriority == sceneAction.GetPointerPriority() &&
+                    candidate.GetInstanceID() < sceneAction.GetInstanceID()))
             {
                 sceneAction = candidate;
             }
@@ -477,26 +501,57 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerClickHandler, IPointer
 
     private void SetDoorCursorHover(bool active)
     {
+        if (!active)
+        {
+            if (!cursorHoverActive)
+            {
+                return;
+            }
+
+            cursorHoverActive = false;
+            NavigationCursorController.ClearDoorHover(this);
+            return;
+        }
+
         NavigationCursorController.HoverIcon nextIcon = GetActionHoverIcon();
 
-        if (cursorHoverActive == active && cursorHoverIcon == nextIcon)
+        if (cursorHoverActive && cursorHoverIcon == nextIcon)
         {
             return;
         }
 
-        cursorHoverActive = active;
+        cursorHoverActive = true;
         cursorHoverIcon = nextIcon;
         NavigationCursorController.SetDoorHover(
             this,
             nextIcon,
-            NavigationCursorController.SceneActionHoverPriority,
-            active);
+            GetPointerPriority(),
+            true);
     }
 
-    private bool UsesManualPointerPolling()
+    public static void ApplyPointerSelection(Chapter1SceneAction selectedAction)
     {
-        return actionType == Chapter1SceneActionType.FrontDoor ||
-            actionType == Chapter1SceneActionType.CoatCloset;
+        for (int i = ActiveSceneActions.Count - 1; i >= 0; i--)
+        {
+            Chapter1SceneAction candidate = ActiveSceneActions[i];
+
+            if (candidate == null ||
+                !candidate.enabled ||
+                !candidate.gameObject.activeInHierarchy)
+            {
+                ActiveSceneActions.RemoveAt(i);
+                continue;
+            }
+
+            candidate.SetDoorCursorHover(candidate == selectedAction);
+        }
+    }
+
+    private int GetPointerPriority()
+    {
+        return actionType == Chapter1SceneActionType.FrontDoor
+            ? NavigationCursorController.NavigationHoverPriority
+            : NavigationCursorController.SceneActionHoverPriority;
     }
 
     private NavigationCursorController.HoverIcon GetActionHoverIcon()

@@ -272,6 +272,8 @@ public class CameraManager : MonoBehaviour
 
     private void Update()
     {
+        NavigationCursorController.RefreshHoverRequests();
+
         if (Screen.width != lastScreenWidth ||
             Screen.height != lastScreenHeight ||
             HasRoomViewportSizeChanged())
@@ -2145,15 +2147,6 @@ public static class NavigationCursorController
         {
             edgePanHorizontalDirection = 0;
             edgePanVerticalDirection = 0;
-
-            for (int i = hoverRequests.Count - 1; i >= 0; i--)
-            {
-                if (hoverRequests[i].Icon != HoverIcon.Ui)
-                {
-                    hoverRequests.RemoveAt(i);
-                }
-            }
-
             walkHoverOwner = null;
             walkHoverCanMove = false;
         }
@@ -2180,7 +2173,7 @@ public static class NavigationCursorController
             return;
         }
 
-        if (owner == null || (gameplayHoverBlocked && icon != HoverIcon.Ui))
+        if (owner == null)
         {
             return;
         }
@@ -2224,7 +2217,21 @@ public static class NavigationCursorController
 
     public static bool IsPrimaryHoverOwner(object owner)
     {
+        RefreshHoverRequests();
         return owner != null && ReferenceEquals(doorHoverOwner, owner);
+    }
+
+    public static void RefreshHoverRequests()
+    {
+        object previousPrimaryOwner = doorHoverOwner;
+        HoverIcon previousPrimaryIcon = doorHoverIcon;
+        ResolvePrimaryHoverRequest();
+
+        if (!ReferenceEquals(previousPrimaryOwner, doorHoverOwner) ||
+            previousPrimaryIcon != doorHoverIcon)
+        {
+            ApplyCursor();
+        }
     }
 
     private static HoverRequest FindHoverRequest(object owner)
@@ -2251,6 +2258,11 @@ public static class NavigationCursorController
             if (!IsHoverOwnerAlive(request.Owner))
             {
                 hoverRequests.RemoveAt(i);
+                continue;
+            }
+
+            if (gameplayHoverBlocked && request.Icon != HoverIcon.Ui)
+            {
                 continue;
             }
 

@@ -471,6 +471,40 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     }
 
     [Test]
+    public void Chapter1PointerRoutingUsesOnePressPhaseAndCachedActiveRegistries()
+    {
+        string coatText = File.ReadAllText(Chapter1CoatPickupPath);
+        string actionText = File.ReadAllText(Chapter1SceneActionPath);
+        string priorityText = File.ReadAllText(Chapter1PointerPriorityPath);
+        string coatPointerClickBody = ExtractMethodBody(coatText, "public void OnPointerClick");
+        string actionPointerClickBody = ExtractMethodBody(actionText, "public void OnPointerClick");
+        string actionUpdateBody = ExtractMethodBody(actionText, "private void Update");
+
+        Assert.That(coatPointerClickBody, Does.Contain("TryHandlePointerAction(eventData.position, false)"),
+            "The release callback must not repeat the coat action already consumed on press.");
+        Assert.That(actionPointerClickBody, Does.Contain("TryHandlePointerAction(eventData.position, false)"),
+            "The release callback must not repeat a scene action already consumed on press.");
+        Assert.That(actionUpdateBody, Does.Contain("TryHandlePointerAction(screenPosition, TryGetPrimaryPointerDown())"),
+            "Every active Chapter 1 scene action should participate in the authoritative polling path.");
+        Assert.That(actionUpdateBody, Does.Not.Contain("UsesManualPointerPolling"),
+            "No scene-action subtype should depend exclusively on whichever raycast callback wins.");
+        Assert.That(coatText, Does.Contain("ActivePickups"));
+        Assert.That(actionText, Does.Contain("ActiveSceneActions"));
+        Assert.That(priorityText, Does.Contain("cachedFrame"));
+        Assert.That(priorityText, Does.Contain("InvalidateCache"));
+        Assert.That(priorityText, Does.Contain("SynchronizePointerHover"));
+        Assert.That(coatText, Does.Contain("ApplyPointerSelection"));
+        Assert.That(actionText, Does.Contain("ApplyPointerSelection"));
+        Assert.That(coatText, Does.Contain("RuntimeInitializeOnLoadMethod"));
+        Assert.That(actionText, Does.Contain("RuntimeInitializeOnLoadMethod"));
+        Assert.That(priorityText, Does.Contain("RuntimeInitializeOnLoadMethod"));
+        Assert.That(actionText, Does.Match(
+            @"GetPointerPriority[\s\S]*Chapter1SceneActionType\.FrontDoor[\s\S]*NavigationHoverPriority[\s\S]*SceneActionHoverPriority"),
+            "The coat hanger and other specific actions must outrank the broad Chapter 1 front-door action.");
+        Assert.That(actionText, Does.Contain("candidate.GetPointerPriority()"));
+    }
+
+    [Test]
     public void Chapter1GuestsKeepAuthoredStaticScaleWhileUsingRoomAnchors()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
