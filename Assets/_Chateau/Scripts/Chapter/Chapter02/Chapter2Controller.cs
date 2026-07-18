@@ -56,7 +56,7 @@ public class Chapter2Controller : MonoBehaviour
     [SerializeField]
     private string[] openingSpeechLines =
     {
-        "Welcome friends and gentlemen, guests of the evening, Count and Countess of Chantilly—"
+        "Welcome, friends and honored guests, to Chateau Chantilly. On behalf of the Count and Countess—"
     };
 
     [Header("Subtitles")]

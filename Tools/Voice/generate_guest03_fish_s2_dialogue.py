@@ -105,7 +105,7 @@ LINES = [
     DialogueLine("CH2_G03_SMOKE_PIPE", "A pipe. It gives one the illusion of wisdom.", 73315),
     DialogueLine("CH2_G03_SMOKE_NONE", "No smoke. The monster already supplied quite enough atmosphere.", 73316),
     DialogueLine("CH2_G03_SPIRITS_REPLY", "Make it visible. I may need to toast survival several times.", 73317),
-    DialogueLine("CH2_G03_EXIT_TO_DINING", "Very good. I shall present myself in the Dining Room and recover what dignity remains to us.", 73318),
+    DialogueLine("CH2_G03_EXIT_TO_DINING", "To the Dining Room, then. I shall arrive composed, even if I must rehearse it on the way.", 73318),
     DialogueLine("CH2_G03_CLOCK_REACTION", "If anyone asks, I was never frightened. I was arranging my face.", 73319),
     DialogueLine("CH2_G03_DINING_REVEAL", "Look at us. Pale, terrified, and still punctual.", 73320),
 ]

@@ -1,0 +1,85 @@
+# Butler Pre-Scare Natural Delivery — Fish Audio S2
+
+Targeted regeneration of only `SUB_CH02_BUTLER_ADDRESS_GUESTS_001.wav`.
+
+- Canonical text: Welcome, friends and honored guests, to Chateau Chantilly. On behalf of the Count and Countess—
+- Original human reference: `/home/hamzak/Desktop/FishAudio_S2_Butler_Hello_YoutubeRef_20260620_090942/ref/butler_youtube_ref.wav`
+- Synthesized-reference inputs: `None`
+- Tempo/time-stretch processing: `None`
+- Candidates generated: `16`
+- Selected candidate: `#16` (`allow_me`)
+- Selected transcript: Welcome friends and honoured guests to Chateau Chantilly and on behalf of the Count and Countess, allow me to begin.
+- Final transcript: Welcome friends and honored guests to Chateau Chantilly on behalf of the Count and Countess.
+- Final duration: `5.535s`
+- Final peak: `0.7079`
+- Unity `.meta` SHA-256 preserved: `True`
+- Other live voice WAV/meta files verified byte-identical: `371`
+- Staging and backup: `/tmp/chateau_butler_prescare_fish_s2_20260718_090601`
+- Elapsed: `10.4s`
+
+## Candidate audit
+
+- `#1` seed `1820071` / `allow_me` — pass=`False`, score=`100.000`
+  - Transcript: Welcome friends and honored guests to Shadow Chantilly, and on behalf of the Count and Countess, allow me to begin.
+  - Rate `0.00` w/s; final clause `0.00` w/s; Chantilly `0.00s`; Chateau `0.00s`; post-Chantilly pause `0.00s`; pitch `0.0` st; final pitch `0.0` st / `0` cents; Count `0.00s`; Countess `0.00s`; longest pause `0.00s`
+  - Rejection: offline ASR did not confirm the complete canonical line
+- `#2` seed `1821080` / `bid_welcome` — pass=`False`, score=`100.000`
+  - Transcript: Welcome friends and honoured guests to Shato Chantili, and on behalf of the Count and Countess, I bid you welcome.
+  - Rate `0.00` w/s; final clause `0.00` w/s; Chantilly `0.00s`; Chateau `0.00s`; post-Chantilly pause `0.00s`; pitch `0.0` st; final pitch `0.0` st / `0` cents; Count `0.00s`; Countess `0.00s`; longest pause `0.00s`
+  - Rejection: offline ASR did not confirm the complete canonical line
+- `#3` seed `1822089` / `privilege` — pass=`False`, score=`2.187`
+  - Transcript: Welcome friends and honored guests to Shato Chantilly, and on behalf of the Count and Countess, it is my privilege to receive you.
+  - Rate `2.47` w/s; final clause `3.74` w/s; Chantilly `0.94s`; Chateau `0.44s`; post-Chantilly pause `0.20s`; pitch `8.1` st; final pitch `10.0` st / `558` cents; Count `0.24s`; Countess `0.51s`; longest pause `0.33s`
+  - Rejection: Chantilly duration outside 0.35-0.70 sec
+- `#4` seed `1823098` / `pleased` — pass=`False`, score=`2.941`
+  - Transcript: Welcome friends and honoured guests to Shato Chantilly, and on behalf of the Count and Countess, may I say how pleased we are to receive you.
+  - Rate `2.39` w/s; final clause `3.65` w/s; Chantilly `1.18s`; Chateau `0.42s`; post-Chantilly pause `0.20s`; pitch `6.5` st; final pitch `9.0` st / `566` cents; Count `0.24s`; Countess `0.54s`; longest pause `0.55s`
+  - Rejection: Chantilly duration outside 0.35-0.70 sec; overall pitch range below 6.8 semitones; internal pause exceeds 0.48 sec
+- `#5` seed `1824107` / `formal_welcome` — pass=`False`, score=`2.177`
+  - Transcript: welcome friends and honored guests to Shato Chantilly, and on behalf of the Count and Countess, let me extend our warmest welcome.
+  - Rate `2.59` w/s; final clause `3.78` w/s; Chantilly `0.98s`; Chateau `0.32s`; post-Chantilly pause `0.20s`; pitch `9.7` st; final pitch `8.7` st / `363` cents; Count `0.18s`; Countess `0.51s`; longest pause `0.40s`
+  - Rejection: Chantilly duration outside 0.35-0.70 sec; Count duration outside 0.18-0.42 sec
+- `#6` seed `1825116` / `allow_me` — pass=`False`, score=`100.000`
+  - Transcript: Welcome friends and honored guests to Shadow Chantilly, and on behalf of the Count and Countess, allow me to begin.
+  - Rate `0.00` w/s; final clause `0.00` w/s; Chantilly `0.00s`; Chateau `0.00s`; post-Chantilly pause `0.00s`; pitch `0.0` st; final pitch `0.0` st / `0` cents; Count `0.00s`; Countess `0.00s`; longest pause `0.00s`
+  - Rejection: offline ASR did not confirm the complete canonical line
+- `#7` seed `1826125` / `bid_welcome` — pass=`False`, score=`2.175`
+  - Transcript: Welcome friends and honored guests to Shato Chantilly. And on behalf of the Count and Countess, I bid you welcome.
+  - Rate `2.72` w/s; final clause `4.00` w/s; Chantilly `0.96s`; Chateau `0.38s`; post-Chantilly pause `0.20s`; pitch `9.9` st; final pitch `8.6` st / `417` cents; Count `0.08s`; Countess `0.43s`; longest pause `0.40s`
+  - Rejection: final clause cadence outside 2.55-3.95 words/sec; Chantilly duration outside 0.35-0.70 sec; Count duration outside 0.18-0.42 sec
+- `#8` seed `1827134` / `privilege` — pass=`False`, score=`100.000`
+  - Transcript: Welcome friends and honored guests to Shato Chantili and on behalf of the Count and Countess. It is my privilege to receive you.
+  - Rate `0.00` w/s; final clause `0.00` w/s; Chantilly `0.00s`; Chateau `0.00s`; post-Chantilly pause `0.00s`; pitch `0.0` st; final pitch `0.0` st / `0` cents; Count `0.00s`; Countess `0.00s`; longest pause `0.00s`
+  - Rejection: offline ASR did not confirm the complete canonical line
+- `#9` seed `1828143` / `pleased` — pass=`False`, score=`1.425`
+  - Transcript: Welcome friends and honored guests to Shato Chantilly and on behalf of the Count and Countess. May I say how pleased we are to receive you.
+  - Rate `2.74` w/s; final clause `3.91` w/s; Chantilly `0.56s`; Chateau `0.40s`; post-Chantilly pause `0.20s`; pitch `8.0` st; final pitch `8.3` st / `468` cents; Count `0.12s`; Countess `0.53s`; longest pause `0.58s`
+  - Rejection: Count duration outside 0.18-0.42 sec; internal pause exceeds 0.48 sec
+- `#10` seed `1829152` / `formal_welcome` — pass=`True`, score=`1.385`
+  - Transcript: Welcome friends and honored guests to Shato Chantilly and on behalf of the Count and Countess. Let me extend our warmest welcome.
+  - Rate `2.62` w/s; final clause `3.72` w/s; Chantilly `0.66s`; Chateau `0.50s`; post-Chantilly pause `0.20s`; pitch `7.7` st; final pitch `11.5` st / `599` cents; Count `0.24s`; Countess `0.44s`; longest pause `0.19s`
+  - Rejection: none
+- `#11` seed `1830161` / `allow_me` — pass=`False`, score=`100.000`
+  - Transcript: Welcome friends and honoured guest to Shato Chantilly, an on behalf of the Count and Countess, allow me to begin.
+  - Rate `0.00` w/s; final clause `0.00` w/s; Chantilly `0.00s`; Chateau `0.00s`; post-Chantilly pause `0.00s`; pitch `0.0` st; final pitch `0.0` st / `0` cents; Count `0.00s`; Countess `0.00s`; longest pause `0.00s`
+  - Rejection: offline ASR did not confirm the complete canonical line
+- `#12` seed `1831170` / `bid_welcome` — pass=`False`, score=`1.519`
+  - Transcript: Welcome friends and honored guests to Shato Chantilly, and on behalf of the Count and Countess, I bid you welcome.
+  - Rate `2.69` w/s; final clause `3.87` w/s; Chantilly `0.66s`; Chateau `0.36s`; post-Chantilly pause `0.20s`; pitch `7.6` st; final pitch `4.8` st / `328` cents; Count `0.16s`; Countess `0.53s`; longest pause `0.31s`
+  - Rejection: Count duration outside 0.18-0.42 sec
+- `#13` seed `1832179` / `privilege` — pass=`False`, score=`100.000`
+  - Transcript: Welcome friends and honored guests to Shadow Chantilly, and on behalf of the Count and Countess, it is my privilege to receive you.
+  - Rate `0.00` w/s; final clause `0.00` w/s; Chantilly `0.00s`; Chateau `0.00s`; post-Chantilly pause `0.00s`; pitch `0.0` st; final pitch `0.0` st / `0` cents; Count `0.00s`; Countess `0.00s`; longest pause `0.00s`
+  - Rejection: offline ASR did not confirm the complete canonical line
+- `#14` seed `1833188` / `pleased` — pass=`False`, score=`100.000`
+  - Transcript: Welcome friends and honored guests to Chateau Chantili, and on behalf of the Count and Countess. May I say how pleased we are to receive you.
+  - Rate `0.00` w/s; final clause `0.00` w/s; Chantilly `0.00s`; Chateau `0.00s`; post-Chantilly pause `0.00s`; pitch `0.0` st; final pitch `0.0` st / `0` cents; Count `0.00s`; Countess `0.00s`; longest pause `0.00s`
+  - Rejection: offline ASR did not confirm the complete canonical line
+- `#15` seed `1834197` / `formal_welcome` — pass=`False`, score=`3.119`
+  - Transcript: Welcome friends and honored guests to Shato Chantilly, and on behalf of the Count and Countess, let me extend our warmest welcome.
+  - Rate `2.34` w/s; final clause `3.83` w/s; Chantilly `1.20s`; Chateau `0.40s`; post-Chantilly pause `0.20s`; pitch `8.6` st; final pitch `8.0` st / `493` cents; Count `0.20s`; Countess `0.47s`; longest pause `0.59s`
+  - Rejection: overall cadence outside 2.35-3.30 words/sec; Chantilly duration outside 0.35-0.70 sec; internal pause exceeds 0.48 sec
+- `#16` seed `1835206` / `allow_me` — pass=`True`, score=`1.374`
+  - Transcript: Welcome friends and honoured guests to Chateau Chantilly and on behalf of the Count and Countess, allow me to begin.
+  - Rate `2.82` w/s; final clause `3.93` w/s; Chantilly `0.60s`; Chateau `0.40s`; post-Chantilly pause `0.20s`; pitch `11.7` st; final pitch `8.2` st / `525` cents; Count `0.22s`; Countess `0.52s`; longest pause `0.19s`
+  - Rejection: none

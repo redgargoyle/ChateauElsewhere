@@ -105,7 +105,7 @@ LINES = [
     DialogueLine("CH2_G04_SMOKE_PIPE", "A pipe. It gives the hands something to do besides tremble.", 74415),
     DialogueLine("CH2_G04_SMOKE_NONE", "No smoke. I prefer to see what is coming.", 74416),
     DialogueLine("CH2_G04_SPIRITS_REPLY", "Good. I distrust a dinner table without witnesses.", 74417),
-    DialogueLine("CH2_G04_EXIT_TO_DINING", "Very good. I shall present myself in the Dining Room and recover what dignity remains to us.", 74418),
+    DialogueLine("CH2_G04_EXIT_TO_DINING", "I will be in the Dining Room at seven—assuming the house still permits a civilized schedule.", 74418),
     DialogueLine("CH2_G04_CLOCK_REACTION", "The clock sounds pleased with itself. I resent that.", 74419),
     DialogueLine("CH2_G04_DINING_REVEAL", "If the soup screams, I am leaving.", 74420),
 ]

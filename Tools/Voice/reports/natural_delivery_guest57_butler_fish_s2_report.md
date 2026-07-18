@@ -1,0 +1,75 @@
+# Natural Delivery Fish Audio S2 Repair Report
+
+Targeted quality repair for the Butler address and the live Guest 5/7 order-taking lines.
+
+- Started: `20260717_223453`
+- Elapsed seconds: `21.8`
+- Model: `/home/hamzak/ai-tts/fish-speech-s2/fish-speech-src/checkpoints/s2-pro`
+- Device: `NVIDIA GeForce RTX 5090`
+- Candidate policy: varied sampling; reject long-pause or flat takes; pitch-preserving speed correction capped at 1.08x.
+- Guest post-roll: `0.25s`; Butler pre-stinger post-roll: `0.15s`.
+- Staging and backups: `/tmp/chateau_natural_delivery_fish_s2_20260717_221148`
+- Unity `.meta` files changed: `False`
+
+## Installed lines
+
+- `SUB_CH02_BUTLER_ADDRESS_GUESTS_001` — Butler
+  - Text: Welcome, friends and honored guests, to Chateau Chantilly. On behalf of the Count and Countess—
+  - Candidates: #1 seed=982007 rate=2.81w/s pause=0.40s pitch=6.3st score=0.435 pass=False, #2 seed=983016 rate=2.65w/s pause=0.48s pitch=8.0st score=0.794 pass=False, #3 seed=984025 rate=2.71w/s pause=0.47s pitch=8.0st score=0.732 pass=False, #4 seed=985034 rate=2.65w/s pause=0.41s pitch=10.6st score=0.693 pass=True, #5 seed=986043 rate=2.91w/s pause=0.00s pitch=7.7st score=10.011 pass=False, #6 seed=987052 rate=2.74w/s pause=0.50s pitch=8.2st score=0.714 pass=False, #7 seed=988061 rate=2.78w/s pause=0.49s pitch=6.8st score=0.680 pass=False, #8 seed=989070 rate=2.74w/s pause=0.26s pitch=7.0st score=0.311 pass=True
+  - Selected: #8; spoken=5.480s; rate=2.737w/s; internal silence=0.640s; longest pause=0.260s; pitch range=7.00st; tempo=1.059x
+  - Final duration=5.244s; tail=0.15s; peak=0.7079
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Butler/SUB_CH02_BUTLER_ADDRESS_GUESTS_001.wav`
+- `CH2_G05_FOUND_REPLY` — Baron Hector Glass
+  - Text: Proceed. The more ordinary the ritual, the less power we give the extraordinary.
+  - Candidates: #1 seed=975511 rate=2.25w/s pause=0.55s pitch=5.6st score=0.802 pass=False, #2 seed=976520 rate=2.57w/s pause=0.28s pitch=6.4st score=0.286 pass=True, #3 seed=977529 rate=2.35w/s pause=0.32s pitch=6.5st score=0.175 pass=True, #4 seed=978538 rate=2.37w/s pause=0.34s pitch=5.7st score=0.224 pass=True, #5 seed=979547 rate=2.35w/s pause=0.44s pitch=5.5st score=0.410 pass=False
+  - Selected: #3; spoken=5.520s; rate=2.355w/s; internal silence=0.320s; longest pause=0.320s; pitch range=6.53st; tempo=1.000x
+  - Final duration=5.770s; tail=0.25s; peak=0.7079
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest05/CH2_G05_FOUND_REPLY.wav`
+- `CH2_G05_MEAL_PLINK` — Baron Hector Glass
+  - Text: Fresh monte genellion de plink. Something substantial. I dislike fleeing on an empty stomach.
+  - Candidates: #1 seed=975512 rate=2.18w/s pause=0.49s pitch=6.8st score=0.932 pass=False, #2 seed=976521 rate=2.14w/s pause=0.65s pitch=6.4st score=1.249 pass=False, #3 seed=977530 rate=2.15w/s pause=0.51s pitch=6.2st score=0.968 pass=False, #4 seed=978539 rate=2.15w/s pause=0.28s pitch=7.5st score=0.447 pass=True, #5 seed=979548 rate=2.14w/s pause=0.35s pitch=6.4st score=0.711 pass=False, #6 seed=980557 rate=2.22w/s pause=0.33s pitch=7.7st score=0.554 pass=True
+  - Selected: #4; spoken=6.500s; rate=2.154w/s; internal silence=0.730s; longest pause=0.280s; pitch range=7.45st; tempo=1.080x
+  - Final duration=6.269s; tail=0.25s; peak=0.7079
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest05/CH2_G05_MEAL_PLINK.wav`
+- `CH2_G05_SMOKE_CIGAR` — Baron Hector Glass
+  - Text: A cigar. For victory, or for pretending.
+  - Candidates: #1 seed=975514 rate=2.65w/s pause=0.00s pitch=6.9st score=0.245 pass=True, #2 seed=976523 rate=2.47w/s pause=0.22s pitch=7.7st score=0.106 pass=True, #3 seed=977532 rate=2.43w/s pause=0.19s pitch=7.4st score=0.071 pass=True, #4 seed=978541 rate=2.43w/s pause=0.00s pitch=7.0st score=0.070 pass=True, #5 seed=979550 rate=2.61w/s pause=0.00s pitch=6.7st score=0.217 pass=True
+  - Selected: #4; spoken=2.879s; rate=2.431w/s; internal silence=0.000s; longest pause=0.000s; pitch range=7.00st; tempo=1.000x
+  - Final duration=3.129s; tail=0.25s; peak=0.7079
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest05/CH2_G05_SMOKE_CIGAR.wav`
+- `CH2_G05_EXIT_TO_DINING` — Baron Hector Glass
+  - Text: Understood. I shall take my place in the Dining Room and keep watch on the doors.
+  - Candidates: #1 seed=975518 rate=3.22w/s pause=0.43s pitch=6.6st score=1.005 pass=True, #2 seed=976527 rate=3.02w/s pause=0.55s pitch=7.0st score=1.203 pass=False, #3 seed=977536 rate=3.02w/s pause=0.66s pitch=8.4st score=1.348 pass=False, #4 seed=978545 rate=3.19w/s pause=0.41s pitch=6.8st score=0.946 pass=True, #5 seed=979554 rate=3.02w/s pause=0.44s pitch=6.4st score=0.899 pass=True
+  - Selected: #5; spoken=5.294s; rate=3.022w/s; internal silence=0.440s; longest pause=0.440s; pitch range=6.35st; tempo=1.000x
+  - Final duration=5.544s; tail=0.25s; peak=0.7079
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest05/CH2_G05_EXIT_TO_DINING.wav`
+- `CH2_G07_FOUND_REPLY` — Lord Ambrose Veil
+  - Text: Record quickly. The walls have begun pretending not to listen.
+  - Candidates: #1 seed=977711 rate=2.48w/s pause=0.30s pitch=6.0st score=0.523 pass=False, #2 seed=978720 rate=2.56w/s pause=0.20s pitch=5.6st score=0.285 pass=True, #3 seed=979729 rate=2.63w/s pause=0.16s pitch=5.6st score=0.061 pass=True, #4 seed=980738 rate=2.69w/s pause=0.19s pitch=5.0st score=0.219 pass=False, #5 seed=981747 rate=2.45w/s pause=0.36s pitch=6.1st score=0.601 pass=False
+  - Selected: #3; spoken=3.808s; rate=2.626w/s; internal silence=0.320s; longest pause=0.160s; pitch range=5.62st; tempo=1.028x
+  - Final duration=3.875s; tail=0.25s; peak=0.7079
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest07/CH2_G07_FOUND_REPLY.wav`
+- `CH2_G07_MEAL_PLINK` — Lord Ambrose Veil
+  - Text: Fresh monte genellion de plink. It sounds like a spell, and we may need one.
+  - Candidates: #1 seed=977712 rate=2.81w/s pause=0.32s pitch=7.1st score=0.520 pass=True, #2 seed=978721 rate=2.88w/s pause=0.26s pitch=5.6st score=0.499 pass=False, #3 seed=979730 rate=2.86w/s pause=0.37s pitch=5.5st score=0.575 pass=False, #4 seed=980739 rate=2.90w/s pause=0.25s pitch=6.5st score=0.224 pass=True, #5 seed=981748 rate=3.09w/s pause=0.24s pitch=4.7st score=0.515 pass=False
+  - Selected: #4; spoken=5.179s; rate=2.896w/s; internal silence=0.410s; longest pause=0.250s; pitch range=6.54st; tempo=1.000x
+  - Final duration=5.429s; tail=0.25s; peak=0.7079
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest07/CH2_G07_MEAL_PLINK.wav`
+- `CH2_G07_SMOKE_PIPE` — Lord Ambrose Veil
+  - Text: A pipe. Smoke curls like warnings when the air is honest.
+  - Candidates: #1 seed=977715 rate=2.60w/s pause=0.44s pitch=5.0st score=0.633 pass=False, #2 seed=978724 rate=2.53w/s pause=0.31s pitch=6.1st score=0.539 pass=False, #3 seed=979733 rate=2.82w/s pause=0.34s pitch=5.5st score=0.283 pass=True, #4 seed=980742 rate=2.82w/s pause=0.29s pitch=5.3st score=0.221 pass=False, #5 seed=981751 rate=2.66w/s pause=0.44s pitch=5.7st score=0.541 pass=True
+  - Selected: #3; spoken=3.901s; rate=2.820w/s; internal silence=0.340s; longest pause=0.340s; pitch range=5.54st; tempo=1.000x
+  - Final duration=4.151s; tail=0.25s; peak=0.7079
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest07/CH2_G07_SMOKE_PIPE.wav`
+- `CH2_G07_SPIRITS_REPLY` — Lord Ambrose Veil
+  - Text: Then pour generously. The chateau has had enough of my nerves.
+  - Candidates: #1 seed=977717 rate=2.82w/s pause=0.00s pitch=8.1st score=0.095 pass=True, #2 seed=978726 rate=2.60w/s pause=0.20s pitch=6.0st score=0.097 pass=True, #3 seed=979735 rate=2.69w/s pause=0.00s pitch=6.9st score=0.019 pass=True, #4 seed=980744 rate=2.82w/s pause=0.00s pitch=6.8st score=0.087 pass=True, #5 seed=981753 rate=2.73w/s pause=0.00s pitch=6.5st score=0.032 pass=True
+  - Selected: #3; spoken=4.087s; rate=2.692w/s; internal silence=0.000s; longest pause=0.000s; pitch range=6.92st; tempo=1.000x
+  - Final duration=4.337s; tail=0.25s; peak=0.7079
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest07/CH2_G07_SPIRITS_REPLY.wav`
+- `CH2_G07_EXIT_TO_DINING` — Lord Ambrose Veil
+  - Text: I shall meet the others in the Dining Room. Better that none of us make the journey alone.
+  - Candidates: #1 seed=977718 rate=3.73w/s pause=0.39s pitch=6.7st score=0.944 pass=True, #2 seed=978727 rate=3.59w/s pause=0.49s pitch=5.4st score=1.087 pass=False, #3 seed=979736 rate=3.96w/s pause=0.32s pitch=5.6st score=0.933 pass=False, #4 seed=980745 rate=3.69w/s pause=0.42s pitch=5.3st score=1.010 pass=False, #5 seed=981754 rate=3.76w/s pause=0.31s pitch=6.3st score=0.816 pass=True
+  - Selected: #5; spoken=4.783s; rate=3.763w/s; internal silence=0.310s; longest pause=0.310s; pitch range=6.29st; tempo=1.000x
+  - Final duration=5.033s; tail=0.25s; peak=0.7079
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest07/CH2_G07_EXIT_TO_DINING.wav`

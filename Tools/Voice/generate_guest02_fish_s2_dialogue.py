@@ -104,8 +104,8 @@ LINES = [
     DialogueLine("CH2_G02_SMOKE_CIGAR", "A cigar, though I may only hold it for courage.", 72214),
     DialogueLine("CH2_G02_SMOKE_PIPE", "A pipe, if it can be made to smell like a normal evening.", 72215),
     DialogueLine("CH2_G02_SMOKE_NONE", "No smoke at all. I have inhaled enough terror for one night.", 72216),
-    DialogueLine("CH2_G02_SPIRITS_REPLY", "Thank you. I may ask it several questions.", 72217),
-    DialogueLine("CH2_G02_EXIT_TO_DINING", "Very good. I shall present myself in the Dining Room and recover what dignity remains to us.", 72218),
+    DialogueLine("CH2_G02_SPIRITS_REPLY", "No, thank you. I may need every faculty I possess.", 72217),
+    DialogueLine("CH2_G02_EXIT_TO_DINING", "Right. The Dining Room at seven. A chair and an ordinary meal sound remarkably reassuring.", 72218),
     DialogueLine("CH2_G02_CLOCK_REACTION", "Please tell me dinner has windows. No—doors. I meant doors.", 72219),
     DialogueLine("CH2_G02_DINING_REVEAL", "I have never been so grateful for a chair.", 72220),
 ]

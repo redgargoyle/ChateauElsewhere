@@ -28,9 +28,9 @@ Every quoted dialogue line below is copied from the current Unity subtitle/voice
 
 ## Dialogue Coverage Check
 
-- Voice catalog entries: 177.
-- Guest voice/subtitle lines: 160.
-- Butler voice/subtitle lines: 17.
+- Voice catalog entries: 186.
+- Guest voice/subtitle lines: 168.
+- Butler voice/subtitle lines: 18.
 - Every speech WAV under `Assets/Audio/Voice` should have a subtitle entry with the same line ID.
 - Active speech should be cut only by chapter skip, teleport, or leaving the room where the speaker is present.
 - If a speech line is cut by leaving the room, returning to that room should resume after the cut line, not replay the cut line.
@@ -39,8 +39,8 @@ Every quoted dialogue line below is copied from the current Unity subtitle/voice
 
 | Guest ID | Character name |
 | --- | --- |
-| Guest 1 | Ava |
-| Guest 2 | Marcus |
+| Guest 1 | Miss Isolde Wren |
+| Guest 2 | Professor Lucien Vale |
 | Guest 3 | Mister Florian Knell |
 | Guest 4 | Countess Elowen Dusk |
 | Guest 5 | Baron Hector Glass |
@@ -80,7 +80,7 @@ Action: fade from black into the Grand Entrance Hall. Enable player input. Arm t
 
 | Time | Event | Guests |
 | --- | --- | --- |
-| 6:00 PM | Guest group 1 queues outside | Guest 1 Ava; Guest 2 Marcus |
+| 6:00 PM | Guest group 1 queues outside | Guest 1 Miss Isolde Wren; Guest 2 Professor Lucien Vale |
 | 6:01 PM | Guest group 2 queues outside | Guest 3 Mister Florian Knell; Guest 4 Countess Elowen Dusk |
 | 6:02 PM | Guest group 3 queues outside | Guest 5 Baron Hector Glass; Guest 6 Lady Sabine Marrow |
 | 6:03 PM | Guest group 4 queues outside | Guest 7 Lord Ambrose Veil; Guest 8 Madame Coralie Thread |
@@ -129,7 +129,7 @@ Transition: request `chapter_02_pending`, which the Chapter Manager resolves int
 
 ## Chapter 1 Guest Dialogue
 
-### Guest 1 - Ava
+### Guest 1 - Miss Isolde Wren
 
 | Line ID | Status | Moment | Dialogue |
 | --- | --- | --- | --- |
@@ -141,7 +141,7 @@ Transition: request `chapter_02_pending`, which the Chapter Manager resolves int
 | CH1_G01_AMBIENT_02 | Voice/subtitle asset-backed | Drawing Room ambient 2 | "The fire looks arranged rather than lit." |
 | CH1_G01_EMPTY_BELL_REACTION | Voice/subtitle asset-backed | 6:04 empty doorbell reaction | "Then who, precisely, rang?" |
 
-### Guest 2 - Marcus
+### Guest 2 - Professor Lucien Vale
 
 | Line ID | Status | Moment | Dialogue |
 | --- | --- | --- | --- |
@@ -260,8 +260,8 @@ These eight lines are voice/subtitle asset-backed and belong before the Butler s
 
 | Line ID | Speaker | Dialogue |
 | --- | --- | --- |
-| CH2_G01_PRESPEECH_BARK | Ava | "Do begin, Butler. Formality is all that stands between dinner and nonsense." |
-| CH2_G02_PRESPEECH_BARK | Marcus | "Are we all meant to be waiting like this?" |
+| CH2_G01_PRESPEECH_BARK | Miss Isolde Wren | "Do begin, Butler. Formality is all that stands between dinner and nonsense." |
+| CH2_G02_PRESPEECH_BARK | Professor Lucien Vale | "Are we all meant to be waiting like this?" |
 | CH2_G03_PRESPEECH_BARK | Mister Florian Knell | "This is deliciously awkward. I approve, with reservations." |
 | CH2_G04_PRESPEECH_BARK | Countess Elowen Dusk | "It is never a good sign when the servants make speeches." |
 | CH2_G05_PRESPEECH_BARK | Baron Hector Glass | "Let him speak. The hour has turned strange." |
@@ -271,7 +271,7 @@ These eight lines are voice/subtitle asset-backed and belong before the Butler s
 
 ### Beat 4 - Butler Speech
 
-Dialogue - Butler (`SUB_CH02_BUTLER_ADDRESS_GUESTS_001`): "Welcome friends and gentlemen, guests of the evening, Count and Countess of Chantilly—"
+Dialogue - Butler (`SUB_CH02_BUTLER_ADDRESS_GUESTS_001`): "Welcome, friends and honored guests, to Chateau Chantilly. On behalf of the Count and Countess—"
 
 Action: hold the line long enough for the voice clip, then interrupt it. The objective/status changes to `A terrible sound cuts through the room...`.
 
@@ -289,8 +289,8 @@ These eight spoken panic lines are voice/subtitle asset-backed. The current pani
 
 | Line ID | Speaker | Dialogue |
 | --- | --- | --- |
-| CH2_G01_PANIC | Ava | "Do not run! Do not—oh Lord, run!" |
-| CH2_G02_PANIC | Marcus | "It has too many legs!" |
+| CH2_G01_PANIC | Miss Isolde Wren | "Do not run! Do not—oh Lord, run!" |
+| CH2_G02_PANIC | Professor Lucien Vale | "It has too many legs!" |
 | CH2_G03_PANIC | Mister Florian Knell | "That is not a dog. Someone tell me that is not a dog." |
 | CH2_G04_PANIC | Countess Elowen Dusk | "Down! Get down!" |
 | CH2_G05_PANIC | Baron Hector Glass | "Away from the windows!" |
@@ -306,28 +306,26 @@ UI objective: `Find the guests. Tell them dinner will be served at 7:00 PM sharp
 
 ### Beat 8 - Main Guest Search Conversation Loop
 
-Current gameplay path: clicking a visible hidden guest starts a conversation locked to that guest. The Butler found line, meal question, smoke question, and guest final acknowledgement are currently shown with voice/subtitle playback. If the player leaves the room mid-conversation, the current audio/subtitle is cut; returning to that room resumes after the interrupted line rather than replaying it.
+Current gameplay path: clicking a visible hidden guest starts a conversation locked to that guest. The Butler found line, fixed meal and spirits questions, optional fixed smoking question, and unique guest exit are shown with voice/subtitle playback. If the player leaves the room mid-conversation, the current audio/subtitle is cut; returning to that room resumes after the interrupted line rather than replaying it.
 
 Current implemented conversation order:
 
-1. Butler found announcement for that guest.
-2. Choice: `Ask meal preference`.
-3. Butler meal question.
-4. Choice: `fresh monte genellion de plink` or `thyme with Lillums`.
-5. Butler smoke question.
-6. Choice: `Cigar`, `Pipe`, or `No smoke`.
-7. Guest final acknowledgement.
-8. Choice: `Very good`.
-9. Guest is marked found, hidden for Dining Room transfer, and assigned found/favor order.
+1. Butler found announcement and the guest's found reply.
+2. The player may ask the remaining question categories in any order; the guest never chooses from a preference UI.
+3. Butler meal question, followed by that guest's fixed meal answer.
+4. Butler spirits question, followed by that guest's fixed yes/no answer.
+5. For Guests 2, 3, 5, and 7 only: Butler smoking question, followed by that guest's fixed answer.
+6. `Comfort and send to Dining Room`, followed by that guest's unique exit line.
+7. Guest is marked found, hidden for Dining Room transfer, and assigned found/favor order.
 
-Recorded data: selected meal preference; selected smoking preference (`cigar`, `pipe`, or `none, thank you`); spirit bottle set to `[Guest Name]'s bottle of spirits`.
+Recorded data: fixed meal preference by identity; spirits bottle or `none`; fixed smoking preference for Guests 2, 3, 5, and 7, with `not asked` recorded for Guests 1, 4, 6, and 8.
 
 ### Beat 9 - Butler Search Conversation Lines
 
 | Line ID | Status | Applies to | Dialogue |
 | --- | --- | --- | --- |
-| SUB_CH02_BUTLER_FOUND_G01 | Current gameplay path | Ava | "I have found you, Ava. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?" |
-| SUB_CH02_BUTLER_FOUND_G02 | Current gameplay path | Marcus | "I have found you, Marcus. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?" |
+| SUB_CH02_BUTLER_FOUND_G01 | Current gameplay path | Miss Isolde Wren | "I have found you, Miss Isolde Wren. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?" |
+| SUB_CH02_BUTLER_FOUND_G02 | Current gameplay path | Professor Lucien Vale | "I have found you, Professor Lucien Vale. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?" |
 | SUB_CH02_BUTLER_FOUND_G03 | Current gameplay path | Mister Florian Knell | "I have found you, Mister Florian Knell. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?" |
 | SUB_CH02_BUTLER_FOUND_G04 | Current gameplay path | Countess Elowen Dusk | "I have found you, Countess Elowen Dusk. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?" |
 | SUB_CH02_BUTLER_FOUND_G05 | Current gameplay path | Baron Hector Glass | "I have found you, Baron Hector Glass. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?" |
@@ -335,13 +333,14 @@ Recorded data: selected meal preference; selected smoking preference (`cigar`, `
 | SUB_CH02_BUTLER_FOUND_G07 | Current gameplay path | Lord Ambrose Veil | "I have found you, Lord Ambrose Veil. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?" |
 | SUB_CH02_BUTLER_FOUND_G08 | Current gameplay path | Madame Coralie Thread | "I have found you, Madame Coralie Thread. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?" |
 | SUB_CH02_BUTLER_MEAL_ASK_001 | Current gameplay path | All guests | "For supper, shall I put you down for the fresh monte genellion de plink, or thyme with Lillums?" |
-| SUB_CH02_BUTLER_SMOKE_ASK_001 | Current gameplay path | All guests | "After dinner, shall I prepare a cigar, a pipe, or no smoke at all?" |
+| SUB_CH02_BUTLER_SMOKE_ASK_001 | Current gameplay path | Guests 2, 3, 5, and 7 only | "After dinner, shall I prepare a cigar, a pipe, or no smoke at all?" |
+| SUB_CH02_BUTLER_SPIRITS_ASK_001 | Current gameplay path | All guests | "And shall I see that your bottle of spirits is waiting at the table?" |
 
 ### Beat 10 - Full Authored Guest Response Lines For Search/Preference Flow
 
 The lines below are the complete voice/subtitle-backed guest response set. Use them when expanding the current implemented conversation so guest replies, preference acknowledgements, spirits replies, clock reactions, and Dining Room reveal barks do not drift from the approved audio.
 
-#### Guest 1 - Ava
+#### Guest 1 - Miss Isolde Wren
 
 | Line ID | Status | Moment | Dialogue |
 | --- | --- | --- | --- |
@@ -355,11 +354,11 @@ The lines below are the complete voice/subtitle-backed guest response set. Use t
 | CH2_G01_SMOKE_PIPE | Voice/subtitle asset-backed | Smoke choice: pipe | "A pipe. Slower nerves make better decisions." |
 | CH2_G01_SMOKE_NONE | Voice/subtitle asset-backed | Smoke choice: no smoke | "No smoke. I should like my lungs available for any further screaming." |
 | CH2_G01_SPIRITS_REPLY | Voice/subtitle asset-backed | Spirits response | "See that it is not shy." |
-| CH2_G01_EXIT_TO_DINING | Current gameplay path | Leaves for Dining Room | "Very good. I shall present myself in the Dining Room and recover what dignity remains to us." |
+| CH2_G01_EXIT_TO_DINING | Current gameplay path | Leaves for Dining Room | "Then I shall proceed to the Dining Room. Perhaps punctuality can restore what panic has misplaced." |
 | CH2_G01_CLOCK_REACTION | Voice/subtitle asset-backed | Clock strikes seven / Dining Room objective | "Seven o’clock. At least the clock is still obedient." |
 | CH2_G01_DINING_REVEAL | Voice/subtitle asset-backed | Dining Room reveal | "Civilization survives another minute." |
 
-#### Guest 2 - Marcus
+#### Guest 2 - Professor Lucien Vale
 
 | Line ID | Status | Moment | Dialogue |
 | --- | --- | --- | --- |
@@ -372,8 +371,8 @@ The lines below are the complete voice/subtitle-backed guest response set. Use t
 | CH2_G02_SMOKE_CIGAR | Voice/subtitle asset-backed | Smoke choice: cigar | "A cigar, though I may only hold it for courage." |
 | CH2_G02_SMOKE_PIPE | Voice/subtitle asset-backed | Smoke choice: pipe | "A pipe, if it can be made to smell like a normal evening." |
 | CH2_G02_SMOKE_NONE | Voice/subtitle asset-backed | Smoke choice: no smoke | "No smoke at all. I have inhaled enough terror for one night." |
-| CH2_G02_SPIRITS_REPLY | Voice/subtitle asset-backed | Spirits response | "Thank you. I may ask it several questions." |
-| CH2_G02_EXIT_TO_DINING | Current gameplay path | Leaves for Dining Room | "Very good. I shall present myself in the Dining Room and recover what dignity remains to us." |
+| CH2_G02_SPIRITS_REPLY | Voice/subtitle asset-backed | Declines spirits | "No, thank you. I may need every faculty I possess." |
+| CH2_G02_EXIT_TO_DINING | Current gameplay path | Leaves for Dining Room | "Right. The Dining Room at seven. A chair and an ordinary meal sound remarkably reassuring." |
 | CH2_G02_CLOCK_REACTION | Voice/subtitle asset-backed | Clock strikes seven / Dining Room objective | "Please tell me dinner has windows. No—doors. I meant doors." |
 | CH2_G02_DINING_REVEAL | Voice/subtitle asset-backed | Dining Room reveal | "I have never been so grateful for a chair." |
 
@@ -391,7 +390,7 @@ The lines below are the complete voice/subtitle-backed guest response set. Use t
 | CH2_G03_SMOKE_PIPE | Voice/subtitle asset-backed | Smoke choice: pipe | "A pipe. It gives one the illusion of wisdom." |
 | CH2_G03_SMOKE_NONE | Voice/subtitle asset-backed | Smoke choice: no smoke | "No smoke. The monster already supplied quite enough atmosphere." |
 | CH2_G03_SPIRITS_REPLY | Voice/subtitle asset-backed | Spirits response | "Make it visible. I may need to toast survival several times." |
-| CH2_G03_EXIT_TO_DINING | Current gameplay path | Leaves for Dining Room | "Very good. I shall present myself in the Dining Room and recover what dignity remains to us." |
+| CH2_G03_EXIT_TO_DINING | Current gameplay path | Leaves for Dining Room | "To the Dining Room, then. I shall arrive composed, even if I must rehearse it on the way." |
 | CH2_G03_CLOCK_REACTION | Voice/subtitle asset-backed | Clock strikes seven / Dining Room objective | "If anyone asks, I was never frightened. I was arranging my face." |
 | CH2_G03_DINING_REVEAL | Voice/subtitle asset-backed | Dining Room reveal | "Look at us. Pale, terrified, and still punctual." |
 
@@ -409,7 +408,7 @@ The lines below are the complete voice/subtitle-backed guest response set. Use t
 | CH2_G04_SMOKE_PIPE | Voice/subtitle asset-backed | Smoke choice: pipe | "A pipe. It gives the hands something to do besides tremble." |
 | CH2_G04_SMOKE_NONE | Voice/subtitle asset-backed | Smoke choice: no smoke | "No smoke. I prefer to see what is coming." |
 | CH2_G04_SPIRITS_REPLY | Voice/subtitle asset-backed | Spirits response | "Good. I distrust a dinner table without witnesses." |
-| CH2_G04_EXIT_TO_DINING | Current gameplay path | Leaves for Dining Room | "Very good. I shall present myself in the Dining Room and recover what dignity remains to us." |
+| CH2_G04_EXIT_TO_DINING | Current gameplay path | Leaves for Dining Room | "I will be in the Dining Room at seven—assuming the house still permits a civilized schedule." |
 | CH2_G04_CLOCK_REACTION | Voice/subtitle asset-backed | Clock strikes seven / Dining Room objective | "The clock sounds pleased with itself. I resent that." |
 | CH2_G04_DINING_REVEAL | Voice/subtitle asset-backed | Dining Room reveal | "If the soup screams, I am leaving." |
 
@@ -427,7 +426,7 @@ The lines below are the complete voice/subtitle-backed guest response set. Use t
 | CH2_G05_SMOKE_PIPE | Voice/subtitle asset-backed | Smoke choice: pipe | "A pipe. Slow smoke for a slower pulse." |
 | CH2_G05_SMOKE_NONE | Voice/subtitle asset-backed | Smoke choice: no smoke | "No smoke. Keep the air clear and the exits clearer." |
 | CH2_G05_SPIRITS_REPLY | Voice/subtitle asset-backed | Spirits response | "Place it where I can reach it without turning my back." |
-| CH2_G05_EXIT_TO_DINING | Current gameplay path | Leaves for Dining Room | "Very good. I shall present myself in the Dining Room and recover what dignity remains to us." |
+| CH2_G05_EXIT_TO_DINING | Current gameplay path | Leaves for Dining Room | "Understood. I shall take my place in the Dining Room and keep watch on the doors." |
 | CH2_G05_CLOCK_REACTION | Voice/subtitle asset-backed | Clock strikes seven / Dining Room objective | "Dining Room, then. Stay together. Walk, do not scatter." |
 | CH2_G05_DINING_REVEAL | Voice/subtitle asset-backed | Dining Room reveal | "Sit where you can see the doors." |
 
@@ -444,8 +443,8 @@ The lines below are the complete voice/subtitle-backed guest response set. Use t
 | CH2_G06_SMOKE_CIGAR | Voice/subtitle asset-backed | Smoke choice: cigar | "A cigar. I may need to prove I still possess hands." |
 | CH2_G06_SMOKE_PIPE | Voice/subtitle asset-backed | Smoke choice: pipe | "A pipe. Something domestic against the screaming violin." |
 | CH2_G06_SMOKE_NONE | Voice/subtitle asset-backed | Smoke choice: no smoke | "No smoke. The room has already burned itself into my memory." |
-| CH2_G06_SPIRITS_REPLY | Voice/subtitle asset-backed | Spirits response | "Good. Tell it I am counting on its courage." |
-| CH2_G06_EXIT_TO_DINING | Current gameplay path | Leaves for Dining Room | "Very good. I shall present myself in the Dining Room and recover what dignity remains to us." |
+| CH2_G06_SPIRITS_REPLY | Voice/subtitle asset-backed | Declines spirits | "Please leave my bottle put away. I need to know whether that violin starts again." |
+| CH2_G06_EXIT_TO_DINING | Current gameplay path | Leaves for Dining Room | "Thank you. I will make my way to the Dining Room. Please warn me if anything starts playing again." |
 | CH2_G06_CLOCK_REACTION | Voice/subtitle asset-backed | Clock strikes seven / Dining Room objective | "I would like the next room to contain fewer instruments." |
 | CH2_G06_DINING_REVEAL | Voice/subtitle asset-backed | Dining Room reveal | "I can hear the violin even when it is not playing." |
 
@@ -463,7 +462,7 @@ The lines below are the complete voice/subtitle-backed guest response set. Use t
 | CH2_G07_SMOKE_PIPE | Voice/subtitle asset-backed | Smoke choice: pipe | "A pipe. Smoke curls like warnings when the air is honest." |
 | CH2_G07_SMOKE_NONE | Voice/subtitle asset-backed | Smoke choice: no smoke | "No smoke. I want to smell it if that thing returns." |
 | CH2_G07_SPIRITS_REPLY | Voice/subtitle asset-backed | Spirits response | "Then pour generously. The chateau has had enough of my nerves." |
-| CH2_G07_EXIT_TO_DINING | Current gameplay path | Leaves for Dining Room | "Very good. I shall present myself in the Dining Room and recover what dignity remains to us." |
+| CH2_G07_EXIT_TO_DINING | Current gameplay path | Leaves for Dining Room | "I shall meet the others in the Dining Room. Better that none of us make the journey alone." |
 | CH2_G07_CLOCK_REACTION | Voice/subtitle asset-backed | Clock strikes seven / Dining Room objective | "The chateau wanted us separated. Remember that." |
 | CH2_G07_DINING_REVEAL | Voice/subtitle asset-backed | Dining Room reveal | "The house is quieter now. That worries me more." |
 
@@ -480,8 +479,8 @@ The lines below are the complete voice/subtitle-backed guest response set. Use t
 | CH2_G08_SMOKE_CIGAR | Voice/subtitle asset-backed | Smoke choice: cigar | "A cigar. I intend to leave evidence that I remained composed." |
 | CH2_G08_SMOKE_PIPE | Voice/subtitle asset-backed | Smoke choice: pipe | "A pipe. The old rituals have teeth; let us use them." |
 | CH2_G08_SMOKE_NONE | Voice/subtitle asset-backed | Smoke choice: no smoke | "No smoke. I want nothing between myself and the door." |
-| CH2_G08_SPIRITS_REPLY | Voice/subtitle asset-backed | Spirits response | "Good. It may be the most trustworthy guest here." |
-| CH2_G08_EXIT_TO_DINING | Current gameplay path | Leaves for Dining Room | "Very good. I shall present myself in the Dining Room and recover what dignity remains to us." |
+| CH2_G08_SPIRITS_REPLY | Voice/subtitle asset-backed | Declines spirits | "No spirits tonight. I intend to remain the most trustworthy guest at the table." |
+| CH2_G08_EXIT_TO_DINING | Current gameplay path | Leaves for Dining Room | "Then the Dining Room it is. I intend to arrive before the house invents another interruption." |
 | CH2_G08_CLOCK_REACTION | Voice/subtitle asset-backed | Clock strikes seven / Dining Room objective | "Then let us disappoint it by arriving intact." |
 | CH2_G08_DINING_REVEAL | Voice/subtitle asset-backed | Dining Room reveal | "Serve quickly, Butler. The night is not finished with us." |
 
@@ -588,8 +587,9 @@ These aliases matter while debugging because gameplay often calls a `SUB_...` su
 - Butler speech line `SUB_CH02_BUTLER_ADDRESS_GUESTS_001` is interrupted by the monster/violin stinger.
 - Guest search objective is exactly `Find the guests. Tell them dinner will be served at 7:00 PM sharp.`
 - Every found guest uses the guest-specific `SUB_CH02_BUTLER_FOUND_Gxx` line; no `[Guest Name]` placeholder should appear.
-- Meal choices are exactly `fresh monte genellion de plink` and `thyme with Lillums`.
-- Smoke choices are exactly `Cigar`, `Pipe`, and `No smoke`.
+- Meal answers are fixed by guest identity: odd-numbered guests receive `fresh monte genellion de plink`; even-numbered guests receive `thyme with Lillums`.
+- Guests 2, 6, and 8 decline spirits; the remaining guests request their bottle.
+- Smoking is asked only of Guests 2, 3, 5, and 7, with fixed answers of cigar, no smoke, cigar, and pipe respectively.
 - After all guests are found, the clock is set to 7:00 PM, the objective becomes `The clock strikes 7:00. Go to the Dining Room.`, then `Dinner is served.` in the Dining Room reveal.
 - Chapter 2 normal completion requests `chapter_03_dinner_pending`; Chapter 3 gameplay is not implemented yet.
 - Any audible speech must have an on-screen subtitle with the same text at that moment.

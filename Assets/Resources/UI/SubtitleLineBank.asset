@@ -226,7 +226,7 @@ MonoBehaviour:
   - lineId: SUB_CH02_BUTLER_ADDRESS_GUESTS_001
     speakerId: Butler
     speakerDisplayName: Butler
-    text: Welcome friends and gentlemen, guests of the evening, Count and Countess of Chantilly—
+    text: Welcome, friends and honored guests, to Chateau Chantilly. On behalf of the Count and Countess—
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
@@ -310,56 +310,56 @@ MonoBehaviour:
   - lineId: SUB_CH02_G01_FINAL_ACK_001
     speakerId: Guest1
     speakerDisplayName: Guest
-    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    text: Then I shall proceed to the Dining Room. Perhaps punctuality can restore what panic has misplaced.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 1
   - lineId: SUB_CH02_G02_FINAL_ACK_001
     speakerId: Guest2
     speakerDisplayName: Guest
-    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    text: Right. The Dining Room at seven. A chair and an ordinary meal sound remarkably reassuring.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 1
   - lineId: SUB_CH02_G03_FINAL_ACK_001
     speakerId: Guest3
     speakerDisplayName: Guest
-    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    text: To the Dining Room, then. I shall arrive composed, even if I must rehearse it on the way.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 1
   - lineId: SUB_CH02_G04_FINAL_ACK_001
     speakerId: Guest4
     speakerDisplayName: Guest
-    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    text: I will be in the Dining Room at seven—assuming the house still permits a civilized schedule.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 1
   - lineId: SUB_CH02_G05_FINAL_ACK_001
     speakerId: Guest5
     speakerDisplayName: Guest
-    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    text: Understood. I shall take my place in the Dining Room and keep watch on the doors.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 1
   - lineId: SUB_CH02_G06_FINAL_ACK_001
     speakerId: Guest6
     speakerDisplayName: Guest
-    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    text: Thank you. I will make my way to the Dining Room. Please warn me if anything starts playing again.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 1
   - lineId: SUB_CH02_G07_FINAL_ACK_001
     speakerId: Guest7
     speakerDisplayName: Guest
-    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    text: I shall meet the others in the Dining Room. Better that none of us make the journey alone.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 1
   - lineId: SUB_CH02_G08_FINAL_ACK_001
     speakerId: Guest8
     speakerDisplayName: Guest
-    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    text: Then the Dining Room it is. I intend to arrive before the house invents another interruption.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 1
@@ -982,7 +982,7 @@ MonoBehaviour:
   - lineId: CH2_G01_EXIT_TO_DINING
     speakerId: Guest1
     speakerDisplayName: Miss Isolde Wren
-    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    text: Then I shall proceed to the Dining Room. Perhaps punctuality can restore what panic has misplaced.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
@@ -1052,14 +1052,14 @@ MonoBehaviour:
   - lineId: CH2_G02_SPIRITS_REPLY
     speakerId: Guest2
     speakerDisplayName: Professor Lucien Vale
-    text: Thank you. I may ask it several questions.
+    text: No, thank you. I may need every faculty I possess.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G02_EXIT_TO_DINING
     speakerId: Guest2
     speakerDisplayName: Professor Lucien Vale
-    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    text: Right. The Dining Room at seven. A chair and an ordinary meal sound remarkably reassuring.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
@@ -1136,7 +1136,7 @@ MonoBehaviour:
   - lineId: CH2_G03_EXIT_TO_DINING
     speakerId: Guest3
     speakerDisplayName: Mister Florian Knell
-    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    text: To the Dining Room, then. I shall arrive composed, even if I must rehearse it on the way.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
@@ -1213,7 +1213,7 @@ MonoBehaviour:
   - lineId: CH2_G04_EXIT_TO_DINING
     speakerId: Guest4
     speakerDisplayName: Countess Elowen Dusk
-    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    text: I will be in the Dining Room at seven—assuming the house still permits a civilized schedule.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
@@ -1290,7 +1290,7 @@ MonoBehaviour:
   - lineId: CH2_G05_EXIT_TO_DINING
     speakerId: Guest5
     speakerDisplayName: Baron Hector Glass
-    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    text: Understood. I shall take my place in the Dining Room and keep watch on the doors.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
@@ -1360,14 +1360,14 @@ MonoBehaviour:
   - lineId: CH2_G06_SPIRITS_REPLY
     speakerId: Guest6
     speakerDisplayName: Lady Sabine Marrow
-    text: Good. Tell it I am counting on its courage.
+    text: Please leave my bottle put away. I need to know whether that violin starts again.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G06_EXIT_TO_DINING
     speakerId: Guest6
     speakerDisplayName: Lady Sabine Marrow
-    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    text: Thank you. I will make my way to the Dining Room. Please warn me if anything starts playing again.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
@@ -1444,7 +1444,7 @@ MonoBehaviour:
   - lineId: CH2_G07_EXIT_TO_DINING
     speakerId: Guest7
     speakerDisplayName: Lord Ambrose Veil
-    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    text: I shall meet the others in the Dining Room. Better that none of us make the journey alone.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
@@ -1514,14 +1514,14 @@ MonoBehaviour:
   - lineId: CH2_G08_SPIRITS_REPLY
     speakerId: Guest8
     speakerDisplayName: Madame Coralie Thread
-    text: Good. It may be the most trustworthy guest here.
+    text: No spirits tonight. I intend to remain the most trustworthy guest at the table.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0
   - lineId: CH2_G08_EXIT_TO_DINING
     speakerId: Guest8
     speakerDisplayName: Madame Coralie Thread
-    text: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+    text: Then the Dining Room it is. I intend to arrive before the house invents another interruption.
     minDuration: 1.25
     maxDuration: 5
     requireAdvance: 0

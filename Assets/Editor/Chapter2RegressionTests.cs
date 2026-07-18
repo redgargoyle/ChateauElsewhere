@@ -181,7 +181,7 @@ public class Chapter2RegressionTests
     {
         string controllerText = File.ReadAllText(Chapter2ControllerPath);
 
-        Assert.That(controllerText, Does.Contain("Welcome friends and gentlemen, guests of the evening, Count and Countess of Chantilly—"));
+        Assert.That(controllerText, Does.Contain("Welcome, friends and honored guests, to Chateau Chantilly. On behalf of the Count and Countess—"));
         Assert.That(controllerText, Does.Contain("speechLineSeconds = 1.75f"));
         Assert.That(controllerText, Does.Match(@"(?s)\bRunOpeningSpeechRoutine\s*\([^)]*\)\s*\{.*SetPhase\s*\(\s*Chapter2Phase\.MonsterStinger\s*\)"), "Opening speech should advance to the MonsterStinger phase.");
         Assert.That(controllerText, Does.Contain("A terrible sound cuts through the room..."));
@@ -512,7 +512,7 @@ public class Chapter2RegressionTests
         Assert.That(bankText, Does.Contain("SUB_CH01_BUTLER_EMPTY_DOOR_001"));
         Assert.That(bankText, Does.Contain("No one is there."));
         Assert.That(bankText, Does.Contain("SUB_CH02_BUTLER_ADDRESS_GUESTS_001"));
-        Assert.That(bankText, Does.Contain("Welcome friends and gentlemen, guests of the evening, Count and Countess of Chantilly—"));
+        Assert.That(bankText, Does.Contain("Welcome, friends and honored guests, to Chateau Chantilly. On behalf of the Count and Countess—"));
         Assert.That(bankText, Does.Not.Contain("[Guest Name]"), "Subtitle bank text should match spoken audio and must not keep placeholder names.");
         Assert.That(bankText, Does.Contain("Good evening. I trust the house remembers its manners better than the weather does."));
         Assert.That(bankText, Does.Contain("Thank you. The drive was longer in the dark than I care to admit."));
@@ -533,7 +533,7 @@ public class Chapter2RegressionTests
         Assert.That(bankText, Does.Contain("I have found you, Madame Coralie Thread. Dinner shall be served in the Dining Room at seven o'clock precisely. Might I record your wishes for the table?"));
         Assert.That(bankText, Does.Contain("SUB_CH02_BUTLER_SPIRITS_ASK_001"));
         Assert.That(bankText, Does.Contain("And shall I see that your bottle of spirits is waiting at the table?"));
-        Assert.That(Regex.Matches(bankText, @"(?m)^  - lineId: CH[12]_G\d\d_").Count, Is.EqualTo(160), "Every generated guest voice line ID should have a direct subtitle-bank entry with matching script text.");
+        Assert.That(Regex.Matches(bankText, @"(?m)^  - lineId: CH[12]_G\d\d_").Count, Is.EqualTo(168), "Every generated guest voice line ID should have a direct subtitle-bank entry with matching script text.");
         Assert.That(bankText, Does.Contain("CH1_G01_ENTRY"));
         Assert.That(bankText, Does.Contain("CH2_G08_DINING_REVEAL"));
         Assert.That(bankText, Does.Contain("Serve quickly, Butler. The night is not finished with us."));
@@ -720,6 +720,64 @@ public class Chapter2RegressionTests
         Assert.That(speakInPanelBody, Does.Contain("ResolveConversationPresenter()"));
         Assert.That(holdChoicesBody, Does.Contain("ResolveConversationPresenter()"));
         Assert.That(setSpeechLineBody, Does.Contain("ResolveConversationPresenter()?.ShowConversationLine"));
+    }
+
+    [Test]
+    public void Rev6DialogueAndOptionalSmokingRulesStaySynchronized()
+    {
+        string controllerText = File.ReadAllText(Chapter2ControllerPath);
+        string searchText = File.ReadAllText(Chapter2GuestSearchControllerPath);
+        string subtitleBankText = File.ReadAllText(SubtitleLineBankPath);
+        string catalogText = File.ReadAllText(GuestVoiceLineCatalogPath);
+        string preferenceChoicesBody = ExtractMethodBody(searchText, "private void ShowPreferenceChoices");
+        string allPreferencesBody = ExtractMethodBody(searchText, "private static bool AreAllPreferencesRecorded");
+
+        const string butlerAddressId = "SUB_CH02_BUTLER_ADDRESS_GUESTS_001";
+        const string butlerAddressText = "Welcome, friends and honored guests, to Chateau Chantilly. On behalf of the Count and Countess—";
+        Assert.That(controllerText, Does.Contain(butlerAddressText));
+        Assert.That(subtitleBankText, Does.Match(
+            Regex.Escape("lineId: " + butlerAddressId) + @"[\s\S]{0,180}" + Regex.Escape("text: " + butlerAddressText)));
+
+        string[,] guestLines =
+        {
+            { "CH2_G01_EXIT_TO_DINING", "Then I shall proceed to the Dining Room. Perhaps punctuality can restore what panic has misplaced." },
+            { "CH2_G02_SPIRITS_REPLY", "No, thank you. I may need every faculty I possess." },
+            { "CH2_G02_EXIT_TO_DINING", "Right. The Dining Room at seven. A chair and an ordinary meal sound remarkably reassuring." },
+            { "CH2_G03_EXIT_TO_DINING", "To the Dining Room, then. I shall arrive composed, even if I must rehearse it on the way." },
+            { "CH2_G04_EXIT_TO_DINING", "I will be in the Dining Room at seven—assuming the house still permits a civilized schedule." },
+            { "CH2_G05_EXIT_TO_DINING", "Understood. I shall take my place in the Dining Room and keep watch on the doors." },
+            { "CH2_G06_SPIRITS_REPLY", "Please leave my bottle put away. I need to know whether that violin starts again." },
+            { "CH2_G06_EXIT_TO_DINING", "Thank you. I will make my way to the Dining Room. Please warn me if anything starts playing again." },
+            { "CH2_G07_EXIT_TO_DINING", "I shall meet the others in the Dining Room. Better that none of us make the journey alone." },
+            { "CH2_G08_SPIRITS_REPLY", "No spirits tonight. I intend to remain the most trustworthy guest at the table." },
+            { "CH2_G08_EXIT_TO_DINING", "Then the Dining Room it is. I intend to arrive before the house invents another interruption." }
+        };
+
+        for (int i = 0; i < guestLines.GetLength(0); i++)
+        {
+            string lineId = guestLines[i, 0];
+            string lineText = guestLines[i, 1];
+            string guestNumber = lineId.Substring(5, 2);
+            string wavPath = $"Assets/Audio/Voice/Guests/Guest{guestNumber}/{lineId}.wav";
+            string controllerPattern = Regex.Escape("\"" + lineId + "\"") + @"[\s\S]{0,320}" + Regex.Escape("\"" + lineText + "\"");
+            string subtitlePattern = Regex.Escape("lineId: " + lineId) + @"[\s\S]{0,180}" + Regex.Escape("text: " + lineText);
+
+            Assert.That(searchText, Does.Match(controllerPattern), $"Runtime text for {lineId} should match REV6.");
+            Assert.That(subtitleBankText, Does.Match(subtitlePattern), $"Subtitle text for {lineId} should match REV6.");
+            Assert.That(File.Exists(wavPath), Is.True, $"REV6 voice clip is missing for {lineId}.");
+            Assert.That(File.Exists(wavPath + ".meta"), Is.True, $"Unity metadata is missing for {lineId}.");
+            Assert.That(catalogText, Does.Contain("lineId: " + lineId), $"Voice catalog is missing {lineId}.");
+        }
+
+        string butlerWavPath = ButlerVoiceFolderPath + "/" + butlerAddressId + ".wav";
+        Assert.That(File.Exists(butlerWavPath), Is.True);
+        Assert.That(File.Exists(butlerWavPath + ".meta"), Is.True);
+        Assert.That(catalogText, Does.Contain("lineId: " + butlerAddressId));
+
+        Assert.That(CountMatches(searchText, "SmokeNotAskedPreference,"), Is.EqualTo(4), "Exactly Guests 1, 4, 6, and 8 should skip smoking questions.");
+        Assert.That(preferenceChoicesBody, Does.Contain("spec.AskSmokingPreference &&"), "The smoke action should only appear for guests whose REV6 profile requires it.");
+        Assert.That(allPreferencesBody, Does.Contain("!spec.AskSmokingPreference"), "A skipped smoking question must not block completion.");
+        Assert.That(CountMatches(searchText, "NoSpiritsPreference,"), Is.EqualTo(3), "Exactly Guests 2, 6, and 8 should decline spirits.");
     }
 
     [Test]

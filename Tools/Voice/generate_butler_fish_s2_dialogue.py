@@ -107,7 +107,7 @@ LINES = [
     DialogueLine("SUB_CH01_BUTLER_EMPTY_DOOR_001", "No one is there.", 82006),
     DialogueLine(
         "SUB_CH02_BUTLER_ADDRESS_GUESTS_001",
-        "Welcome friends and gentlemen, guests of the evening, Count and Countess of Chantilly—",
+        "Welcome, friends and honored guests, to Chateau Chantilly. On behalf of the Count and Countess—",
         82007,
     ),
     *[

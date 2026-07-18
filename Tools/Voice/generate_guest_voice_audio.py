@@ -159,7 +159,7 @@ CH2_G01_SMOKE_CIGAR,Guest 1,A cigar. Something with authority.
 CH2_G01_SMOKE_PIPE,Guest 1,A pipe. Slower nerves make better decisions.
 CH2_G01_SMOKE_NONE,Guest 1,No smoke. I should like my lungs available for any further screaming.
 CH2_G01_SPIRITS_REPLY,Guest 1,See that it is not shy.
-CH2_G01_EXIT_TO_DINING,Guest 1,Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+CH2_G01_EXIT_TO_DINING,Guest 1,Then I shall proceed to the Dining Room. Perhaps punctuality can restore what panic has misplaced.
 CH2_G01_CLOCK_REACTION,Guest 1,Seven o’clock. At least the clock is still obedient.
 CH2_G01_DINING_REVEAL,Guest 1,Civilization survives another minute.
 CH2_G02_FOUND_START,Guest 2,Please tell me you are real before you come any closer.
@@ -169,8 +169,8 @@ CH2_G02_MEAL_THYME,Guest 2,"Thyme with Lillums, please. Something gentle. Someth
 CH2_G02_SMOKE_CIGAR,Guest 2,"A cigar, though I may only hold it for courage."
 CH2_G02_SMOKE_PIPE,Guest 2,"A pipe, if it can be made to smell like a normal evening."
 CH2_G02_SMOKE_NONE,Guest 2,No smoke at all. I have inhaled enough terror for one night.
-CH2_G02_SPIRITS_REPLY,Guest 2,Thank you. I may ask it several questions.
-CH2_G02_EXIT_TO_DINING,Guest 2,Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+CH2_G02_SPIRITS_REPLY,Guest 2,"No, thank you. I may need every faculty I possess."
+CH2_G02_EXIT_TO_DINING,Guest 2,Right. The Dining Room at seven. A chair and an ordinary meal sound remarkably reassuring.
 CH2_G02_CLOCK_REACTION,Guest 2,Please tell me dinner has windows. No—doors. I meant doors.
 CH2_G02_DINING_REVEAL,Guest 2,I have never been so grateful for a chair.
 CH2_G03_FOUND_START,Guest 3,"If this is a party game, I withdraw my admiration."
@@ -181,7 +181,7 @@ CH2_G03_SMOKE_CIGAR,Guest 3,A cigar. I intend to look magnificent while recoveri
 CH2_G03_SMOKE_PIPE,Guest 3,A pipe. It gives one the illusion of wisdom.
 CH2_G03_SMOKE_NONE,Guest 3,No smoke. The monster already supplied quite enough atmosphere.
 CH2_G03_SPIRITS_REPLY,Guest 3,Make it visible. I may need to toast survival several times.
-CH2_G03_EXIT_TO_DINING,Guest 3,Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+CH2_G03_EXIT_TO_DINING,Guest 3,"To the Dining Room, then. I shall arrive composed, even if I must rehearse it on the way."
 CH2_G03_CLOCK_REACTION,Guest 3,"If anyone asks, I was never frightened. I was arranging my face."
 CH2_G03_DINING_REVEAL,Guest 3,"Look at us. Pale, terrified, and still punctual."
 CH2_G04_FOUND_START,Guest 4,"If you are here to say dinner is canceled, lie more elegantly."
@@ -192,7 +192,7 @@ CH2_G04_SMOKE_CIGAR,Guest 4,"A cigar. If I am to be hunted by architecture, I sh
 CH2_G04_SMOKE_PIPE,Guest 4,A pipe. It gives the hands something to do besides tremble.
 CH2_G04_SMOKE_NONE,Guest 4,No smoke. I prefer to see what is coming.
 CH2_G04_SPIRITS_REPLY,Guest 4,Good. I distrust a dinner table without witnesses.
-CH2_G04_EXIT_TO_DINING,Guest 4,Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+CH2_G04_EXIT_TO_DINING,Guest 4,I will be in the Dining Room at seven—assuming the house still permits a civilized schedule.
 CH2_G04_CLOCK_REACTION,Guest 4,The clock sounds pleased with itself. I resent that.
 CH2_G04_DINING_REVEAL,Guest 4,"If the soup screams, I am leaving."
 CH2_G05_FOUND_START,Guest 5,I was not hiding. I was choosing a defensible position.
@@ -203,7 +203,7 @@ CH2_G05_SMOKE_CIGAR,Guest 5,"A cigar. For victory, or for pretending."
 CH2_G05_SMOKE_PIPE,Guest 5,A pipe. Slow smoke for a slower pulse.
 CH2_G05_SMOKE_NONE,Guest 5,No smoke. Keep the air clear and the exits clearer.
 CH2_G05_SPIRITS_REPLY,Guest 5,Place it where I can reach it without turning my back.
-CH2_G05_EXIT_TO_DINING,Guest 5,Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+CH2_G05_EXIT_TO_DINING,Guest 5,Understood. I shall take my place in the Dining Room and keep watch on the doors.
 CH2_G05_CLOCK_REACTION,Guest 5,"Dining Room, then. Stay together. Walk, do not scatter."
 CH2_G05_DINING_REVEAL,Guest 5,Sit where you can see the doors.
 CH2_G06_FOUND_START,Guest 6,"Is it gone, or has it merely become quiet?"
@@ -213,8 +213,8 @@ CH2_G06_MEAL_THYME,Guest 6,Thyme with Lillums. That sounds almost medicinal. I a
 CH2_G06_SMOKE_CIGAR,Guest 6,A cigar. I may need to prove I still possess hands.
 CH2_G06_SMOKE_PIPE,Guest 6,A pipe. Something domestic against the screaming violin.
 CH2_G06_SMOKE_NONE,Guest 6,No smoke. The room has already burned itself into my memory.
-CH2_G06_SPIRITS_REPLY,Guest 6,Good. Tell it I am counting on its courage.
-CH2_G06_EXIT_TO_DINING,Guest 6,Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+CH2_G06_SPIRITS_REPLY,Guest 6,Please leave my bottle put away. I need to know whether that violin starts again.
+CH2_G06_EXIT_TO_DINING,Guest 6,Thank you. I will make my way to the Dining Room. Please warn me if anything starts playing again.
 CH2_G06_CLOCK_REACTION,Guest 6,I would like the next room to contain fewer instruments.
 CH2_G06_DINING_REVEAL,Guest 6,I can hear the violin even when it is not playing.
 CH2_G07_FOUND_START,Guest 7,I knew the house was awake. I did not know it had pets.
@@ -225,7 +225,7 @@ CH2_G07_SMOKE_CIGAR,Guest 7,"A cigar. Let the smoke mark where I have been, in c
 CH2_G07_SMOKE_PIPE,Guest 7,A pipe. Smoke curls like warnings when the air is honest.
 CH2_G07_SMOKE_NONE,Guest 7,No smoke. I want to smell it if that thing returns.
 CH2_G07_SPIRITS_REPLY,Guest 7,Then pour generously. The chateau has had enough of my nerves.
-CH2_G07_EXIT_TO_DINING,Guest 7,Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+CH2_G07_EXIT_TO_DINING,Guest 7,I shall meet the others in the Dining Room. Better that none of us make the journey alone.
 CH2_G07_CLOCK_REACTION,Guest 7,The chateau wanted us separated. Remember that.
 CH2_G07_DINING_REVEAL,Guest 7,The house is quieter now. That worries me more.
 CH2_G08_FOUND_START,Guest 8,"Speak plainly. Is the room safe, or merely occupied?"
@@ -235,8 +235,8 @@ CH2_G08_MEAL_THYME,Guest 8,"Thyme with Lillums. Quiet, green, and unlikely to an
 CH2_G08_SMOKE_CIGAR,Guest 8,A cigar. I intend to leave evidence that I remained composed.
 CH2_G08_SMOKE_PIPE,Guest 8,A pipe. The old rituals have teeth; let us use them.
 CH2_G08_SMOKE_NONE,Guest 8,No smoke. I want nothing between myself and the door.
-CH2_G08_SPIRITS_REPLY,Guest 8,Good. It may be the most trustworthy guest here.
-CH2_G08_EXIT_TO_DINING,Guest 8,Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+CH2_G08_SPIRITS_REPLY,Guest 8,No spirits tonight. I intend to remain the most trustworthy guest at the table.
+CH2_G08_EXIT_TO_DINING,Guest 8,Then the Dining Room it is. I intend to arrive before the house invents another interruption.
 CH2_G08_CLOCK_REACTION,Guest 8,Then let us disappoint it by arriving intact.
 CH2_G08_DINING_REVEAL,Guest 8,"Serve quickly, Butler. The night is not finished with us."
 """
