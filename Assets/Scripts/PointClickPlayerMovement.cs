@@ -533,6 +533,9 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (!TryGetPrimaryPointerDown(out screenPosition))
 			return false;
 
+		if (Chapter1PointerPriority.IsPointerOverAction(screenPosition))
+			return false;
+
 		if (Chapter2GuestFindAction.IsPointerOverAvailableGuestAction(screenPosition))
 			return false;
 
@@ -1365,6 +1368,12 @@ public class PointClickPlayerMovement : MonoBehaviour
 		}
 
 		if (!TryGetPrimaryPointerPosition(out Vector2 screenPosition))
+		{
+			NavigationCursorController.ClearWalkHover(this);
+			return;
+		}
+
+		if (Chapter1PointerPriority.IsPointerOverAction(screenPosition))
 		{
 			NavigationCursorController.ClearWalkHover(this);
 			return;

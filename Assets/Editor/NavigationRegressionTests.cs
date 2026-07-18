@@ -809,6 +809,22 @@ public class NavigationRegressionTests
     }
 
     [Test]
+    public void Chapter1ActionsBeatDoorsAndFloorMovement()
+    {
+        string movementText = File.ReadAllText(PointClickPlayerMovementPath);
+        string doorText = File.ReadAllText(DoorTriggerNavigationPath);
+
+        Assert.That(movementText, Does.Match(
+            @"TryGetFloorClick[\s\S]*Chapter1PointerPriority\.IsPointerOverAction\(screenPosition\)[\s\S]*return false"));
+        Assert.That(movementText, Does.Match(
+            @"UpdateWalkCursor[\s\S]*Chapter1PointerPriority\.IsPointerOverAction\(screenPosition\)[\s\S]*ClearWalkHover"));
+        Assert.That(doorText, Does.Match(
+            @"UpdateFallbackPointerHoverAndClick[\s\S]*Chapter1PointerPriority\.IsPointerOverAction\(screenPosition\)[\s\S]*ClearActiveDoorHover"));
+        Assert.That(doorText, Does.Match(
+            @"OnPointerClick[\s\S]*Chapter1PointerPriority\.IsPointerOverAction\(eventData\.position\)[\s\S]*return"));
+    }
+
+    [Test]
     public void MainMenuLayoutScalesToShortGameViews()
     {
         Scene mainMenuScene = EditorSceneManager.OpenScene(MainMenuScenePath, OpenSceneMode.Single);
