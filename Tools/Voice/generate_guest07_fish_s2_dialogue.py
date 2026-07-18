@@ -105,7 +105,7 @@ LINES = [
     DialogueLine("CH2_G07_SMOKE_PIPE", "A pipe. Smoke curls like warnings when the air is honest.", 77715),
     DialogueLine("CH2_G07_SMOKE_NONE", "No smoke. I want to smell it if that thing returns.", 77716),
     DialogueLine("CH2_G07_SPIRITS_REPLY", "Then pour generously. The chateau has had enough of my nerves.", 77717),
-    DialogueLine("CH2_G07_EXIT_TO_DINING", "Very good. I shall present myself in the Dining Room and recover what dignity remains to us.", 77718),
+    DialogueLine("CH2_G07_EXIT_TO_DINING", "I shall meet the others in the Dining Room. Better that none of us make the journey alone.", 77718),
     DialogueLine("CH2_G07_CLOCK_REACTION", "The chateau wanted us separated. Remember that.", 77719),
     DialogueLine("CH2_G07_DINING_REVEAL", "The house is quieter now. That worries me more.", 77720),
 ]

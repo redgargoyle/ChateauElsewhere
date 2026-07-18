@@ -48,6 +48,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
         public readonly string SmokeReplyLineId;
         public readonly string SmokeReplyText;
         public readonly string FixedSmokingPreference;
+        public readonly bool AskSmokingPreference;
         public readonly string SpiritsReplyLineId;
         public readonly string SpiritsReplyText;
         public readonly string FixedSpiritBottle;
@@ -70,6 +71,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
             string smokeReplyLineId,
             string smokeReplyText,
             string fixedSmokingPreference,
+            bool askSmokingPreference,
             string spiritsReplyLineId,
             string spiritsReplyText,
             string fixedSpiritBottle,
@@ -91,6 +93,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
             SmokeReplyLineId = smokeReplyLineId;
             SmokeReplyText = smokeReplyText;
             FixedSmokingPreference = fixedSmokingPreference;
+            AskSmokingPreference = askSmokingPreference;
             SpiritsReplyLineId = spiritsReplyLineId;
             SpiritsReplyText = spiritsReplyText;
             FixedSpiritBottle = fixedSpiritBottle;
@@ -130,6 +133,8 @@ public class Chapter2GuestSearchController : MonoBehaviour
     private const string SmokeCigarPreference = "cigar";
     private const string SmokePipePreference = "pipe";
     private const string SmokeNonePreference = "none, thank you";
+    private const string SmokeNotAskedPreference = "not asked";
+    private const string NoSpiritsPreference = "none";
     private const string ButlerMealAskLineId = "SUB_CH02_BUTLER_MEAL_ASK_001";
     private const string ButlerMealAskText = "For supper, shall I put you down for the fresh monte genellion de plink, or thyme with Lillums?";
     private const string ButlerSmokeAskLineId = "SUB_CH02_BUTLER_SMOKE_ASK_001";
@@ -154,12 +159,13 @@ public class Chapter2GuestSearchController : MonoBehaviour
             MealPlinkPreference,
             "CH2_G01_SMOKE_PIPE",
             "A pipe. Slower nerves make better decisions.",
-            SmokePipePreference,
+            SmokeNotAskedPreference,
+            false,
             "CH2_G01_SPIRITS_REPLY",
             "See that it is not shy.",
             "Miss Isolde Wren's bottle of spirits",
             "CH2_G01_EXIT_TO_DINING",
-            "Very good. I shall present myself in the Dining Room and recover what dignity remains to us."),
+            "Then I shall proceed to the Dining Room. Perhaps punctuality can restore what panic has misplaced."),
         new HiddenGuestConversationSpec(
             2,
             "Professor Lucien Vale",
@@ -176,11 +182,12 @@ public class Chapter2GuestSearchController : MonoBehaviour
             "CH2_G02_SMOKE_CIGAR",
             "A cigar, though I may only hold it for courage.",
             SmokeCigarPreference,
+            true,
             "CH2_G02_SPIRITS_REPLY",
-            "Thank you. I may ask it several questions.",
-            "Professor Lucien Vale's bottle of spirits",
+            "No, thank you. I may need every faculty I possess.",
+            NoSpiritsPreference,
             "CH2_G02_EXIT_TO_DINING",
-            "Very good. I shall present myself in the Dining Room and recover what dignity remains to us."),
+            "Right. The Dining Room at seven. A chair and an ordinary meal sound remarkably reassuring."),
         new HiddenGuestConversationSpec(
             3,
             "Mister Florian Knell",
@@ -197,11 +204,12 @@ public class Chapter2GuestSearchController : MonoBehaviour
             "CH2_G03_SMOKE_NONE",
             "No smoke. The monster already supplied quite enough atmosphere.",
             SmokeNonePreference,
+            true,
             "CH2_G03_SPIRITS_REPLY",
             "Make it visible. I may need to toast survival several times.",
             "Mister Florian Knell's bottle of spirits",
             "CH2_G03_EXIT_TO_DINING",
-            "Very good. I shall present myself in the Dining Room and recover what dignity remains to us."),
+            "To the Dining Room, then. I shall arrive composed, even if I must rehearse it on the way."),
         new HiddenGuestConversationSpec(
             4,
             "Countess Elowen Dusk",
@@ -217,12 +225,13 @@ public class Chapter2GuestSearchController : MonoBehaviour
             MealThymePreference,
             "CH2_G04_SMOKE_PIPE",
             "A pipe. It gives the hands something to do besides tremble.",
-            SmokePipePreference,
+            SmokeNotAskedPreference,
+            false,
             "CH2_G04_SPIRITS_REPLY",
             "Good. I distrust a dinner table without witnesses.",
             "Countess Elowen Dusk's bottle of spirits",
             "CH2_G04_EXIT_TO_DINING",
-            "Very good. I shall present myself in the Dining Room and recover what dignity remains to us."),
+            "I will be in the Dining Room at seven—assuming the house still permits a civilized schedule."),
         new HiddenGuestConversationSpec(
             5,
             "Baron Hector Glass",
@@ -239,11 +248,12 @@ public class Chapter2GuestSearchController : MonoBehaviour
             "CH2_G05_SMOKE_CIGAR",
             "A cigar. For victory, or for pretending.",
             SmokeCigarPreference,
+            true,
             "CH2_G05_SPIRITS_REPLY",
             "Place it where I can reach it without turning my back.",
             "Baron Hector Glass's bottle of spirits",
             "CH2_G05_EXIT_TO_DINING",
-            "Very good. I shall present myself in the Dining Room and recover what dignity remains to us."),
+            "Understood. I shall take my place in the Dining Room and keep watch on the doors."),
         new HiddenGuestConversationSpec(
             6,
             "Lady Sabine Marrow",
@@ -259,12 +269,13 @@ public class Chapter2GuestSearchController : MonoBehaviour
             MealThymePreference,
             "CH2_G06_SMOKE_NONE",
             "No smoke. The room has already burned itself into my memory.",
-            SmokeNonePreference,
+            SmokeNotAskedPreference,
+            false,
             "CH2_G06_SPIRITS_REPLY",
-            "Good. Tell it I am counting on its courage.",
-            "Lady Sabine Marrow's bottle of spirits",
+            "Please leave my bottle put away. I need to know whether that violin starts again.",
+            NoSpiritsPreference,
             "CH2_G06_EXIT_TO_DINING",
-            "Very good. I shall present myself in the Dining Room and recover what dignity remains to us."),
+            "Thank you. I will make my way to the Dining Room. Please warn me if anything starts playing again."),
         new HiddenGuestConversationSpec(
             7,
             "Lord Ambrose Veil",
@@ -281,11 +292,12 @@ public class Chapter2GuestSearchController : MonoBehaviour
             "CH2_G07_SMOKE_PIPE",
             "A pipe. Smoke curls like warnings when the air is honest.",
             SmokePipePreference,
+            true,
             "CH2_G07_SPIRITS_REPLY",
             "Then pour generously. The chateau has had enough of my nerves.",
             "Lord Ambrose Veil's bottle of spirits",
             "CH2_G07_EXIT_TO_DINING",
-            "Very good. I shall present myself in the Dining Room and recover what dignity remains to us."),
+            "I shall meet the others in the Dining Room. Better that none of us make the journey alone."),
         new HiddenGuestConversationSpec(
             8,
             "Madame Coralie Thread",
@@ -301,12 +313,13 @@ public class Chapter2GuestSearchController : MonoBehaviour
             MealThymePreference,
             "CH2_G08_SMOKE_CIGAR",
             "A cigar. I intend to leave evidence that I remained composed.",
-            SmokeCigarPreference,
+            SmokeNotAskedPreference,
+            false,
             "CH2_G08_SPIRITS_REPLY",
-            "Good. It may be the most trustworthy guest here.",
-            "Madame Coralie Thread's bottle of spirits",
+            "No spirits tonight. I intend to remain the most trustworthy guest at the table.",
+            NoSpiritsPreference,
             "CH2_G08_EXIT_TO_DINING",
-            "Very good. I shall present myself in the Dining Room and recover what dignity remains to us."),
+            "Then the Dining Room it is. I intend to arrive before the house invents another interruption."),
     };
 
     private Chapter2Controller chapter2Controller;
@@ -1901,7 +1914,9 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
     private void ShowPreferenceChoices(GuestSearchEntry guest)
     {
-        if (!IsActiveConversationGuest(guest) || chapter2Controller == null)
+        if (!IsActiveConversationGuest(guest) ||
+            chapter2Controller == null ||
+            !TryGetConversationSpec(guest, out HiddenGuestConversationSpec spec))
         {
             return;
         }
@@ -1935,7 +1950,7 @@ public class Chapter2GuestSearchController : MonoBehaviour
             choiceCallbacks.Add(() => ShowButlerSpiritsAsk(guest));
         }
 
-        if (string.IsNullOrWhiteSpace(guest.smokingPreference))
+        if (spec.AskSmokingPreference && string.IsNullOrWhiteSpace(guest.smokingPreference))
         {
             choiceLabels.Add("Ask smoke preference");
             choiceCallbacks.Add(() => ShowButlerSmokeAsk(guest));
@@ -1954,10 +1969,18 @@ public class Chapter2GuestSearchController : MonoBehaviour
 
     private static bool AreAllPreferencesRecorded(GuestSearchEntry guest)
     {
-        return guest != null &&
-            !string.IsNullOrWhiteSpace(guest.mealPreference) &&
-            !string.IsNullOrWhiteSpace(guest.spiritBottle) &&
+        if (guest == null)
+        {
+            return false;
+        }
+
+        HiddenGuestConversationSpec spec = GetConversationSpec(guest);
+        bool smokingPreferenceComplete = (spec != null && !spec.AskSmokingPreference) ||
             !string.IsNullOrWhiteSpace(guest.smokingPreference);
+
+        return !string.IsNullOrWhiteSpace(guest.mealPreference) &&
+            !string.IsNullOrWhiteSpace(guest.spiritBottle) &&
+            smokingPreferenceComplete;
     }
 
     private void FinishGuestConversation(GuestSearchEntry guest)

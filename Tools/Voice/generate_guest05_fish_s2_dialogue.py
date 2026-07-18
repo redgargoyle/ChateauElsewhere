@@ -105,7 +105,7 @@ LINES = [
     DialogueLine("CH2_G05_SMOKE_PIPE", "A pipe. Slow smoke for a slower pulse.", 75515),
     DialogueLine("CH2_G05_SMOKE_NONE", "No smoke. Keep the air clear and the exits clearer.", 75516),
     DialogueLine("CH2_G05_SPIRITS_REPLY", "Place it where I can reach it without turning my back.", 75517),
-    DialogueLine("CH2_G05_EXIT_TO_DINING", "Very good. I shall present myself in the Dining Room and recover what dignity remains to us.", 75518),
+    DialogueLine("CH2_G05_EXIT_TO_DINING", "Understood. I shall take my place in the Dining Room and keep watch on the doors.", 75518),
     DialogueLine("CH2_G05_CLOCK_REACTION", "Dining Room, then. Stay together. Walk, do not scatter.", 75519),
     DialogueLine("CH2_G05_DINING_REVEAL", "Sit where you can see the doors.", 75520),
 ]

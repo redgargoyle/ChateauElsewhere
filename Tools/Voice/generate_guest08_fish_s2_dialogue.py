@@ -104,8 +104,8 @@ LINES = [
     DialogueLine("CH2_G08_SMOKE_CIGAR", "A cigar. I intend to leave evidence that I remained composed.", 78814),
     DialogueLine("CH2_G08_SMOKE_PIPE", "A pipe. The old rituals have teeth; let us use them.", 78815),
     DialogueLine("CH2_G08_SMOKE_NONE", "No smoke. I want nothing between myself and the door.", 78816),
-    DialogueLine("CH2_G08_SPIRITS_REPLY", "Good. It may be the most trustworthy guest here.", 78817),
-    DialogueLine("CH2_G08_EXIT_TO_DINING", "Very good. I shall present myself in the Dining Room and recover what dignity remains to us.", 78818),
+    DialogueLine("CH2_G08_SPIRITS_REPLY", "No spirits tonight. I intend to remain the most trustworthy guest at the table.", 78817),
+    DialogueLine("CH2_G08_EXIT_TO_DINING", "Then the Dining Room it is. I intend to arrive before the house invents another interruption.", 78818),
     DialogueLine("CH2_G08_CLOCK_REACTION", "Then let us disappoint it by arriving intact.", 78819),
     DialogueLine("CH2_G08_DINING_REVEAL", "Serve quickly, Butler. The night is not finished with us.", 78820),
 ]

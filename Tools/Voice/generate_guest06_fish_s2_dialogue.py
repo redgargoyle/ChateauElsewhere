@@ -104,8 +104,8 @@ LINES = [
     DialogueLine("CH2_G06_SMOKE_CIGAR", "A cigar. I may need to prove I still possess hands.", 76614),
     DialogueLine("CH2_G06_SMOKE_PIPE", "A pipe. Something domestic against the screaming violin.", 76615),
     DialogueLine("CH2_G06_SMOKE_NONE", "No smoke. The room has already burned itself into my memory.", 76616),
-    DialogueLine("CH2_G06_SPIRITS_REPLY", "Good. Tell it I am counting on its courage.", 76617),
-    DialogueLine("CH2_G06_EXIT_TO_DINING", "Very good. I shall present myself in the Dining Room and recover what dignity remains to us.", 76618),
+    DialogueLine("CH2_G06_SPIRITS_REPLY", "Please leave my bottle put away. I need to know whether that violin starts again.", 76617),
+    DialogueLine("CH2_G06_EXIT_TO_DINING", "Thank you. I will make my way to the Dining Room. Please warn me if anything starts playing again.", 76618),
     DialogueLine("CH2_G06_CLOCK_REACTION", "I would like the next room to contain fewer instruments.", 76619),
     DialogueLine("CH2_G06_DINING_REVEAL", "I can hear the violin even when it is not playing.", 76620),
 ]

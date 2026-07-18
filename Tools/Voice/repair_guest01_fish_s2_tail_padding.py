@@ -61,7 +61,8 @@ LINES = [
     DialogueLine("CH2_G01_SMOKE_PIPE", "A pipe. Slower nerves make better decisions."),
     DialogueLine("CH2_G01_SMOKE_NONE", "No smoke. I should like my lungs available for any further screaming."),
     DialogueLine("CH2_G01_SPIRITS_REPLY", "See that it is not shy."),
-    DialogueLine("CH2_G01_EXIT_TO_DINING", "Very good. I shall present myself in the Dining Room and recover what dignity remains to us."),
+    # CH2_G01_EXIT_TO_DINING is intentionally excluded: REV6 replaced its dialogue,
+    # so remastering the legacy raw file would restore obsolete speech.
     DialogueLine("CH2_G01_CLOCK_REACTION", "Seven o’clock. At least the clock is still obedient."),
     DialogueLine("CH2_G01_DINING_REVEAL", "Civilization survives another minute."),
 ]

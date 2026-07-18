@@ -1,0 +1,129 @@
+# Chateau Chantilly REV6 Fish Audio S2 Generation Report
+
+Generated only the dialogue explicitly required by the REV6 final-audio checklist.
+
+- Started: `20260717_203142`
+- Elapsed seconds: `600.8`
+- Fish source: `/home/hamzak/ai-tts/fish-speech-s2/fish-speech-src`
+- Fish source commit: `e5e2926`
+- Checkpoint: `/home/hamzak/ai-tts/fish-speech-s2/fish-speech-src/checkpoints/s2-pro`
+- Device: `NVIDIA GeForce RTX 5090`
+- Sampling: temperature=0.72, top_p=0.82, top_k=30
+- Candidates per line: `3`
+- Output: 44100 Hz mono PCM-16, about -3 dBFS, pitch-preserving cadence fit, quiet post-roll.
+- Staging/backup directory: `/tmp/chateau_rev6_fish_s2_20260717_203142`
+- Unity `.meta` files changed: `False`
+
+## Voice references
+
+- Butler: 3.043 active words/sec, median centroid 1733 Hz
+  - `SUB_CH02_BUTLER_FOUND_G01`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Butler/SUB_CH02_BUTLER_FOUND_G01.wav`
+  - `SUB_CH02_BUTLER_FOUND_G02`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Butler/SUB_CH02_BUTLER_FOUND_G02.wav`
+  - `SUB_CH02_BUTLER_SPIRITS_ASK_001`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Butler/SUB_CH02_BUTLER_SPIRITS_ASK_001.wav`
+- Miss Isolde Wren: 2.562 active words/sec, median centroid 1681 Hz
+  - `CH2_G01_MEAL_PLINK`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest01/CH2_G01_MEAL_PLINK.wav`
+  - `CH2_G01_SPIRITS_REPLY`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest01/CH2_G01_SPIRITS_REPLY.wav`
+  - `CH2_G01_SMOKE_PIPE`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest01/CH2_G01_SMOKE_PIPE.wav`
+- Professor Lucien Vale: 2.487 active words/sec, median centroid 2510 Hz
+  - `CH2_G02_MEAL_THYME`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest02/CH2_G02_MEAL_THYME.wav`
+  - `CH2_G02_SMOKE_CIGAR`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest02/CH2_G02_SMOKE_CIGAR.wav`
+  - `CH2_G02_FOUND_REPLY`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest02/CH2_G02_FOUND_REPLY.wav`
+- Mister Florian Knell: 2.577 active words/sec, median centroid 2702 Hz
+  - `CH2_G03_MEAL_PLINK`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH2_G03_MEAL_PLINK.wav`
+  - `CH2_G03_SMOKE_NONE`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH2_G03_SMOKE_NONE.wav`
+  - `CH2_G03_SPIRITS_REPLY`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH2_G03_SPIRITS_REPLY.wav`
+- Countess Elowen Dusk: 2.370 active words/sec, median centroid 1647 Hz
+  - `CH2_G04_MEAL_THYME`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest04/CH2_G04_MEAL_THYME.wav`
+  - `CH2_G04_SPIRITS_REPLY`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest04/CH2_G04_SPIRITS_REPLY.wav`
+  - `CH2_G04_SMOKE_PIPE`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest04/CH2_G04_SMOKE_PIPE.wav`
+- Baron Hector Glass: 2.318 active words/sec, median centroid 2377 Hz
+  - `CH2_G05_MEAL_PLINK`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest05/CH2_G05_MEAL_PLINK.wav`
+  - `CH2_G05_SMOKE_CIGAR`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest05/CH2_G05_SMOKE_CIGAR.wav`
+  - `CH2_G05_SPIRITS_REPLY`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest05/CH2_G05_SPIRITS_REPLY.wav`
+- Lady Sabine Marrow: 2.886 active words/sec, median centroid 2078 Hz
+  - `CH2_G06_MEAL_THYME`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest06/CH2_G06_MEAL_THYME.wav`
+  - `CH2_G06_SMOKE_NONE`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest06/CH2_G06_SMOKE_NONE.wav`
+  - `CH2_G06_FOUND_REPLY`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest06/CH2_G06_FOUND_REPLY.wav`
+- Lord Ambrose Veil: 2.812 active words/sec, median centroid 1451 Hz
+  - `CH2_G07_MEAL_PLINK`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest07/CH2_G07_MEAL_PLINK.wav`
+  - `CH2_G07_SMOKE_PIPE`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest07/CH2_G07_SMOKE_PIPE.wav`
+  - `CH2_G07_SPIRITS_REPLY`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest07/CH2_G07_SPIRITS_REPLY.wav`
+- Madame Coralie Thread: 2.651 active words/sec, median centroid 1071 Hz
+  - `CH2_G08_MEAL_THYME`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest08/CH2_G08_MEAL_THYME.wav`
+  - `CH2_G08_SMOKE_CIGAR`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest08/CH2_G08_SMOKE_CIGAR.wav`
+  - `CH2_G08_FOUND_REPLY`: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest08/CH2_G08_FOUND_REPLY.wav`
+
+## Generated files
+
+- `SUB_CH02_BUTLER_ADDRESS_GUESTS_001` — Butler
+  - Text: Welcome, friends and honored guests, to Chateau Chantilly. On behalf of the Count and Countess—
+  - Candidates: #1 seed=82007 active=6.827s score=0.3341, #2 seed=83016 active=7.324s score=0.3997, #3 seed=84025 active=7.056s score=0.3674
+  - Selected: #1; target active=4.930s; final active=5.811s; tempo=1.1600
+  - Final duration=6.661s; tail=0.85s; peak=0.7079; elapsed=62.9s
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Butler/SUB_CH02_BUTLER_ADDRESS_GUESTS_001.wav`
+- `CH2_G01_EXIT_TO_DINING` — Miss Isolde Wren
+  - Text: Then I shall proceed to the Dining Room. Perhaps punctuality can restore what panic has misplaced.
+  - Candidates: #1 seed=71118 active=5.898s score=0.0671, #2 seed=72127 active=6.312s score=0.0107, #3 seed=73136 active=6.177s score=0.0263
+  - Selected: #2; target active=6.246s; final active=6.312s; tempo=1.0000
+  - Final duration=7.162s; tail=0.85s; peak=0.7079; elapsed=55.3s
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest01/CH2_G01_EXIT_TO_DINING.wav`
+- `CH2_G02_SPIRITS_REPLY` — Professor Lucien Vale
+  - Text: No, thank you. I may need every faculty I possess.
+  - Candidates: #1 seed=72217 active=3.334s score=0.2399, #2 seed=73226 active=3.395s score=0.2091, #3 seed=74235 active=3.527s score=0.1775
+  - Selected: #3; target active=4.020s; final active=4.013s; tempo=0.8774
+  - Final duration=4.863s; tail=0.85s; peak=0.7079; elapsed=32.1s
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest02/CH2_G02_SPIRITS_REPLY.wav`
+- `CH2_G02_EXIT_TO_DINING` — Professor Lucien Vale
+  - Text: Right. The Dining Room at seven. A chair and an ordinary meal sound remarkably reassuring.
+  - Candidates: #1 seed=72218 active=6.136s score=0.0409, #2 seed=73227 active=5.944s score=0.0371, #3 seed=74236 active=6.305s score=0.0703
+  - Selected: #2; target active=6.030s; final active=5.944s; tempo=1.0000
+  - Final duration=6.794s; tail=0.85s; peak=0.7079; elapsed=56.3s
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest02/CH2_G02_EXIT_TO_DINING.wav`
+- `CH2_G03_EXIT_TO_DINING` — Mister Florian Knell
+  - Text: To the Dining Room, then. I shall arrive composed, even if I must rehearse it on the way.
+  - Candidates: #1 seed=73318 active=5.084s score=0.3488, #2 seed=74327 active=5.237s score=0.3197, #3 seed=75336 active=5.064s score=0.3477
+  - Selected: #2; target active=6.986s; final active=6.089s; tempo=0.8600
+  - Final duration=6.939s; tail=0.85s; peak=0.7079; elapsed=47.6s
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest03/CH2_G03_EXIT_TO_DINING.wav`
+- `CH2_G04_EXIT_TO_DINING` — Countess Elowen Dusk
+  - Text: I will be in the Dining Room at seven—assuming the house still permits a civilized schedule.
+  - Candidates: #1 seed=74418 active=5.387s score=0.2916, #2 seed=75427 active=5.341s score=0.2951, #3 seed=76436 active=5.387s score=0.2879
+  - Selected: #3; target active=7.173s; final active=6.168s; tempo=0.8600
+  - Final duration=7.018s; tail=0.85s; peak=0.7079; elapsed=48.6s
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest04/CH2_G04_EXIT_TO_DINING.wav`
+- `CH2_G05_EXIT_TO_DINING` — Baron Hector Glass
+  - Text: Understood. I shall take my place in the Dining Room and keep watch on the doors.
+  - Candidates: #1 seed=75518 active=5.418s score=0.2588, #2 seed=76527 active=5.357s score=0.2701, #3 seed=77536 active=5.248s score=0.2933
+  - Selected: #1; target active=6.902s; final active=6.282s; tempo=0.8600
+  - Final duration=7.132s; tail=0.85s; peak=0.7079; elapsed=49.3s
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest05/CH2_G05_EXIT_TO_DINING.wav`
+- `CH2_G06_SPIRITS_REPLY` — Lady Sabine Marrow
+  - Text: Please leave my bottle put away. I need to know whether that violin starts again.
+  - Candidates: #1 seed=76617 active=4.226s score=0.2326, #2 seed=77626 active=4.226s score=0.2269, #3 seed=78635 active=4.226s score=0.2276
+  - Selected: #2; target active=5.198s; final active=4.817s; tempo=0.8600
+  - Final duration=5.667s; tail=0.85s; peak=0.7079; elapsed=38.4s
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest06/CH2_G06_SPIRITS_REPLY.wav`
+- `CH2_G06_EXIT_TO_DINING` — Lady Sabine Marrow
+  - Text: Thank you. I will make my way to the Dining Room. Please warn me if anything starts playing again.
+  - Candidates: #1 seed=76618 active=5.016s score=0.2914, #2 seed=77627 active=4.830s score=0.3299, #3 seed=78636 active=5.340s score=0.2263
+  - Selected: #3; target active=6.585s; final active=6.185s; tempo=0.8600
+  - Final duration=7.035s; tail=0.85s; peak=0.7079; elapsed=45.9s
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest06/CH2_G06_EXIT_TO_DINING.wav`
+- `CH2_G07_EXIT_TO_DINING` — Lord Ambrose Veil
+  - Text: I shall meet the others in the Dining Room. Better that none of us make the journey alone.
+  - Candidates: #1 seed=77718 active=5.075s score=0.2438, #2 seed=78727 active=4.872s score=0.2861, #3 seed=79736 active=5.116s score=0.2368
+  - Selected: #3; target active=6.402s; final active=5.925s; tempo=0.8600
+  - Final duration=6.775s; tail=0.85s; peak=0.7079; elapsed=46.9s
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest07/CH2_G07_EXIT_TO_DINING.wav`
+- `CH2_G08_SPIRITS_REPLY` — Madame Coralie Thread
+  - Text: No spirits tonight. I intend to remain the most trustworthy guest at the table.
+  - Candidates: #1 seed=78817 active=4.847s score=0.0941, #2 seed=79826 active=4.852s score=0.0868, #3 seed=80835 active=4.879s score=0.0798
+  - Selected: #3; target active=5.281s; final active=5.276s; tempo=0.9237
+  - Final duration=6.126s; tail=0.85s; peak=0.7079; elapsed=45.4s
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest08/CH2_G08_SPIRITS_REPLY.wav`
+- `CH2_G08_EXIT_TO_DINING` — Madame Coralie Thread
+  - Text: Then the Dining Room it is. I intend to arrive before the house invents another interruption.
+  - Candidates: #1 seed=78818 active=5.358s score=0.1230, #2 seed=79827 active=5.456s score=0.1030, #3 seed=80836 active=5.173s score=0.1558
+  - Selected: #2; target active=6.036s; final active=6.019s; tempo=0.9039
+  - Final duration=6.869s; tail=0.85s; peak=0.7079; elapsed=49.7s
+  - Asset: `/home/hamzak/Desktop/ChataeuChantilly/Assets/Audio/Voice/Guests/Guest08/CH2_G08_EXIT_TO_DINING.wav`

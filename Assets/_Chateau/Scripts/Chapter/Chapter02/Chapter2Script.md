@@ -24,7 +24,7 @@ Show a simple prompt or interaction affordance for the player:
 
 When the player addresses the guests, the Butler says:
 
-“Welcome friends and gentlemen, guests of the evening, Count and Countess of Chantilly—”
+“Welcome, friends and honored guests, to Chateau Chantilly. On behalf of the Count and Countess—”
 
 ### Beat 05 — High-pitched screaming violin begins
 
