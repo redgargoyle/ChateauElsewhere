@@ -15,6 +15,15 @@ public class CharacterScaleArchitectureTests
     private const string PlayerPrefabPath = "Assets/Prefabs/Player.prefab";
     private const string CatalogSourcePath = "Assets/Scripts/Characters/CharacterScaleCatalog.cs";
     private const string TestRoomName = "Test Room";
+    private static readonly string[] LordAmbroseLocomotionClipPaths =
+    {
+        "Assets/Animation/LordAmbroseVeil/LordAmbroseVeil_StandingIdle.anim",
+        "Assets/Animation/LordAmbroseVeil/LordAmbroseVeil_Idle.anim",
+        "Assets/Animation/LordAmbroseVeil/LordAmbroseVeil_Walk_Down.anim",
+        "Assets/Animation/LordAmbroseVeil/LordAmbroseVeil_Walk_Left.anim",
+        "Assets/Animation/LordAmbroseVeil/LordAmbroseVeil_Walk_Right.anim",
+        "Assets/Animation/LordAmbroseVeil/LordAmbroseVeil_Walk_Up.anim"
+    };
 
     [TestCase(-400f, -400f, 2f, -100f, 1f, 2f)]
     [TestCase(-250f, -400f, 2f, -100f, 1f, 1.5f)]
@@ -260,6 +269,75 @@ public class CharacterScaleArchitectureTests
             {
                 UnityEngine.Object.DestroyImmediate(sprite);
                 UnityEngine.Object.DestroyImmediate(texture);
+                UnityEngine.Object.DestroyImmediate(actor);
+            }
+        }
+    }
+
+    [Test]
+    public void LordAmbroseLocomotionSpritesShareNormalizedBottomCenterBaseline()
+    {
+        Sprite[] locomotionSprites = LoadLordAmbroseLocomotionSprites();
+
+        Assert.That(locomotionSprites, Has.Length.EqualTo(17), "Lord Ambrose should retain four idle and thirteen directional walk sprites.");
+
+        foreach (Sprite sprite in locomotionSprites)
+        {
+            string spritePath = AssetDatabase.GetAssetPath(sprite);
+            string frame = $"{spritePath}/{sprite.name}";
+            float normalizedPivotX = sprite.pivot.x / sprite.rect.width;
+            float normalizedPivotY = sprite.pivot.y / sprite.rect.height;
+
+            Assert.That(normalizedPivotX, Is.EqualTo(0.5f).Within(0.001f), $"{frame} must keep its foot pivot horizontally centered.");
+            Assert.That(normalizedPivotY, Is.EqualTo(0f).Within(0.001f), $"{frame} must keep its foot pivot bottom-aligned.");
+            Assert.That(sprite.bounds.min.y, Is.EqualTo(0f).Within(0.001f), $"{frame} must keep its floor baseline at local Y zero.");
+            Assert.That(sprite.bounds.size.y, Is.EqualTo(2.8728f).Within(0.002f), $"{frame} world height drifted.");
+        }
+    }
+
+    [Test]
+    public void LordAmbroseIdleAndWalkSpriteSwapsKeepVisibleFeetOnCanonicalFloor()
+    {
+        Sprite[] locomotionSprites = LoadLordAmbroseLocomotionSprites();
+
+        Assert.That(locomotionSprites, Has.Length.EqualTo(17), "Lord Ambrose should retain four idle and thirteen directional walk sprites.");
+
+        Sprite idleFrame = locomotionSprites.Single(
+            sprite => sprite.name == "GuestPair02Man_standing_idle_01_0");
+
+        foreach (float displayScale in new[] { 0.732f, 1f, 1.704f })
+        {
+            GameObject actor = new GameObject($"LordAmbroseFloorProbe_{displayScale}");
+            GameObject visual = new GameObject("AnimationDisplay", typeof(SpriteRenderer));
+            visual.transform.SetParent(actor.transform, false);
+            visual.transform.localScale = new Vector3(displayScale, displayScale, 1f);
+            actor.transform.position = new Vector3(12f, -40f, 0f);
+
+            try
+            {
+                SpriteRenderer renderer = visual.GetComponent<SpriteRenderer>();
+                renderer.sprite = idleFrame;
+                CharacterFloorReference floorReference = CharacterFloorReference.EnsureForActor(actor, renderer);
+                Vector3 canonicalFloor = floorReference.WorldPoint;
+                Vector3 rootPosition = actor.transform.position;
+
+                foreach (Sprite sprite in locomotionSprites)
+                {
+                    renderer.sprite = sprite;
+                    string spritePath = AssetDatabase.GetAssetPath(sprite);
+
+                    Assert.That(
+                        renderer.bounds.min.y,
+                        Is.EqualTo(canonicalFloor.y).Within(0.001f),
+                        $"{spritePath}/{sprite.name} lifted Lord Ambrose's feet away from the canonical floor at display scale {displayScale}.");
+                    Assert.That(
+                        actor.transform.position,
+                        Is.EqualTo(rootPosition),
+                        $"Swapping to {sprite.name} should not move the actor root.");
+                }
+            }
+            finally
+            {
                 UnityEngine.Object.DestroyImmediate(actor);
             }
         }
@@ -665,6 +743,30 @@ public class CharacterScaleArchitectureTests
             $"Missing canonical catalog asset at {CharacterScaleTool.DefaultCatalogAssetPath}.");
         Assert.That(CharacterScaleCatalog.LoadDefault(), Is.SameAs(catalog));
         return catalog;
+    }
+
+    private static Sprite[] LoadLordAmbroseLocomotionSprites()
+    {
+        return LordAmbroseLocomotionClipPaths
+            .SelectMany(clipPath =>
+            {
+                AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(clipPath);
+                Assert.That(clip, Is.Not.Null, $"Missing Lord Ambrose locomotion clip at {clipPath}.");
+
+                EditorCurveBinding[] spriteBindings = AnimationUtility
+                    .GetObjectReferenceCurveBindings(clip)
+                    .Where(binding => binding.type == typeof(SpriteRenderer) && binding.propertyName == "m_Sprite")
+                    .ToArray();
+
+                Assert.That(spriteBindings, Has.Length.EqualTo(1), $"{clipPath} should have exactly one SpriteRenderer sprite curve.");
+
+                return spriteBindings
+                    .SelectMany(binding => AnimationUtility.GetObjectReferenceCurve(clip, binding))
+                    .Select(keyframe => keyframe.value)
+                    .OfType<Sprite>();
+            })
+            .Distinct()
+            .ToArray();
     }
 
     private static GameObject CreateActor(
