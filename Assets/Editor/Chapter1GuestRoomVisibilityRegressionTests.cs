@@ -142,6 +142,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string sceneText = File.ReadAllText(GameplayScenePath);
         string admitBody = ExtractDeclaredMethodBody(controllerText, "AdmitGuestToEntranceHall");
+        string moveToCoatSpotBody = ExtractDeclaredMethodBody(controllerText, "MoveGuestFromFrontAnchorToCoatSpot");
         string placeDoorBody = ExtractDeclaredMethodBody(controllerText, "PlaceGuestAtDoorArrival");
         string placeFeetBody = ExtractDeclaredMethodBody(controllerText, "PlaceGuestFeetAtPosition");
         string doorArrivalBaseBody = ExtractDeclaredMethodBody(controllerText, "GetWorldDoorArrivalBasePosition");
@@ -157,7 +158,8 @@ public class Chapter1GuestRoomVisibilityRegressionTests
 
         Assert.That(controllerText, Does.Contain("FrontDoorGuestSpawnAnchorId"), "Front-door guest spawning should have a named anchor separate from drawing-room door targets.");
         Assert.That(admitBody, Does.Contain("PrepareGuestAtDoorArrival(guest)"), "The initial door spawn should use the shared feet-aware placement path.");
-        Assert.That(admitBody, Does.Contain("GetEntranceHallGuestSpot(guest)"), "The walk inward should target the guest's authored physical anchor.");
+        Assert.That(admitBody, Does.Contain("GetFrontEntranceGuestAnchor(guest)"), "The first walk inward should target the guest's authored speaking anchor.");
+        Assert.That(moveToCoatSpotBody, Does.Contain("GetEntranceHallGuestSpot(guest)"), "The post-dialogue walk should target the guest's authored coat spot.");
         Assert.That(admitBody, Does.Not.Contain("PlaceGuestAt(guest, arrivalPoint"), "UI guests should not bypass feet-aware door spawning by placing their transform directly on the front-door anchor.");
         Assert.That(admitBody, Does.Not.Contain("CreateRuntimeAnchor"), "Entrance waiting should not calculate a replacement runtime target.");
         Assert.That(placeDoorBody, Does.Contain("PlaceGuestFeetAtPosition"), "Door arrival should use the shared room-anchor placement path.");
@@ -238,21 +240,30 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     }
 
     [Test]
-    public void EntranceHallWaitingUsesEightAuthoredCameraStableAnchors()
+    public void EntranceHallArrivalUsesSeparateAuthoredSpeechAndCoatAnchorSets()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string sceneText = File.ReadAllText(GameplayScenePath);
         string admitMethodBody = ExtractDeclaredMethodBody(controllerText, "AdmitGuestToEntranceHall");
-        string lookupMethodBody = ExtractDeclaredMethodBody(controllerText, "GetEntranceHallGuestSpot");
+        string frontLookupMethodBody = ExtractDeclaredMethodBody(controllerText, "GetFrontEntranceGuestAnchor");
+        string coatLookupMethodBody = ExtractDeclaredMethodBody(controllerText, "GetEntranceHallGuestSpot");
 
         Assert.That(controllerText, Does.Contain("private const int EntranceHallGuestSpotCount = 8"), "The authored Entrance Hall formation should have one stable spot per guest.");
+        Assert.That(controllerText, Does.Contain("private Transform[] frontEntranceGuestAnchors"), "Each guest should have a separately serialized front-door speaking anchor.");
         Assert.That(controllerText, Does.Contain("private Transform[] entranceHallGuestSpots"), "The eight physical spots should be serialized and directly editable.");
-        Assert.That(admitMethodBody, Does.Contain("Transform waitSpot = GetEntranceHallGuestSpot(guest)"), "Arrival movement should target the guest's authored physical spot.");
+        Assert.That(admitMethodBody, Does.Contain("GetFrontEntranceGuestAnchor(guest)"), "The first arrival leg should target the guest's front-door speaking anchor.");
+        Assert.That(admitMethodBody, Does.Not.Contain("GetEntranceHallGuestSpot(guest)"), "The first arrival leg must not skip dialogue staging and walk straight to the coat spot.");
         Assert.That(admitMethodBody, Does.Not.Contain("CreateRuntimeAnchor"), "Entrance waiting should not recreate calculated runtime targets.");
-        Assert.That(lookupMethodBody, Does.Contain("guestState.GuestIndex"), "A guest's stable roster index should select its authored spot.");
-        Assert.That(lookupMethodBody, Does.Contain("entranceHallGuestSpots[guestIndex]"), "Each guest should map directly to one serialized anchor.");
-        Assert.That(lookupMethodBody, Does.Not.Contain("FindAnchor"), "Entrance waiting must not repair or replace a manually authored spot at runtime.");
-        Assert.That(lookupMethodBody, Does.Not.Contain("FindSceneObjectByExactName"), "Entrance waiting must not substitute a name-based scene object for a manually authored spot.");
+        Assert.That(frontLookupMethodBody, Does.Contain("guestState.GuestIndex"), "A guest's stable roster index should select its speaking anchor.");
+        Assert.That(frontLookupMethodBody, Does.Contain("frontEntranceGuestAnchors[guestIndex]"), "Speaking anchors should map directly by GuestIndex, not hierarchy order.");
+        Assert.That(frontLookupMethodBody, Does.Not.Contain("GetSiblingIndex"), "Hierarchy sibling order must not decide which speaking anchor a guest receives.");
+        Assert.That(frontLookupMethodBody, Does.Not.Contain("FindAnchor"), "Runtime code must not replace a manually assigned speaking anchor.");
+        Assert.That(frontLookupMethodBody, Does.Not.Contain("FindSceneObjectByExactName"), "Runtime code must not silently substitute a name-matched speaking anchor.");
+        Assert.That(coatLookupMethodBody, Does.Contain("guestState.GuestIndex"), "A guest's stable roster index should also select its coat spot.");
+        Assert.That(coatLookupMethodBody, Does.Contain("entranceHallGuestSpots[guestIndex]"), "Each guest should map directly to one serialized coat spot.");
+        Assert.That(coatLookupMethodBody, Does.Not.Contain("GetSiblingIndex"), "Hierarchy sibling order must not decide which coat spot a guest receives.");
+        Assert.That(coatLookupMethodBody, Does.Not.Contain("FindAnchor"), "Entrance waiting must not repair or replace a manually authored spot at runtime.");
+        Assert.That(coatLookupMethodBody, Does.Not.Contain("FindSceneObjectByExactName"), "Entrance waiting must not substitute a name-based scene object for a manually authored spot.");
         Assert.That(controllerText, Does.Not.Contain("ResolveEntranceHallGuestSpots"), "Runtime code must not rewrite the serialized entrance spot array.");
         Assert.That(controllerText, Does.Not.Contain("EntranceHallGuestSpotPrefix"), "Runtime code must not retain a name-based entrance spot repair path.");
 
@@ -273,21 +284,49 @@ public class Chapter1GuestRoomVisibilityRegressionTests
             Assert.That(controllerText, Does.Not.Contain(legacyNames[i]), $"Legacy entrance formation path '{legacyNames[i]}' should be removed.");
         }
 
+        string[] expectedFrontAnchorNames = new string[8];
+        string[] expectedCoatSpotNames = new string[8];
+
+        for (int i = 0; i < 8; i++)
+        {
+            expectedFrontAnchorNames[i] = $"Front_Entrance_Anchor_{i + 1}";
+            expectedCoatSpotNames[i] = $"EntranceGuestSpot_{i + 1:00}";
+        }
+
+        string[] serializedFrontAnchorNames = ResolveSerializedTransformNames(sceneText, "frontEntranceGuestAnchors");
+        string[] serializedCoatSpotNames = ResolveSerializedTransformNames(sceneText, "entranceHallGuestSpots");
+        CollectionAssert.AreEqual(
+            expectedFrontAnchorNames,
+            serializedFrontAnchorNames,
+            "The serialized front-anchor array must follow GuestIndex order even when the objects have a different hierarchy order.");
+        CollectionAssert.AreEqual(
+            expectedCoatSpotNames,
+            serializedCoatSpotNames,
+            "The existing coat-waiting spots must remain a separate GuestIndex-ordered array.");
+
+        for (int i = 1; i <= 8; i++)
+        {
+            string anchorName = $"Front_Entrance_Anchor_{i}";
+            string anchorBlock = ExtractObjectBlock(sceneText, anchorName);
+            Match anchorGameObjectId = Regex.Match(anchorBlock, @"--- !u!1 &(?<id>\d+)");
+            Assert.That(anchorGameObjectId.Success, Is.True, $"{anchorName} should have a scene GameObject document.");
+            string anchorGameObjectFileId = anchorGameObjectId.Groups["id"].Value;
+            string roomAnchorBlock = ExtractYamlDocumentContaining(
+                sceneText,
+                $"  anchorId: {anchorName}");
+
+            Assert.That(
+                roomAnchorBlock,
+                Does.Contain($"m_GameObject: {{fileID: {anchorGameObjectFileId}}}"),
+                $"{anchorName}'s RoomAnchor component must belong to the named scene object.");
+            Assert.That(roomAnchorBlock, Does.Contain($"anchorId: {anchorName}"), $"{anchorName} should be an authored RoomAnchor.");
+            Assert.That(roomAnchorBlock, Does.Contain("roomId: Grand Entrance Hall"), $"{anchorName} should remain on the Entrance Hall stage.");
+            Assert.That(roomAnchorBlock, Does.Contain("showSceneGizmo: 1"), $"{anchorName} should remain visible and draggable in the Scene view.");
+            Assert.That(anchorBlock, Does.Match(@"SpriteRenderer:[\s\S]*?m_Enabled: 0"), $"{anchorName}'s placement marker must not render during gameplay.");
+        }
+
         MatchCollection sceneSpotNames = Regex.Matches(sceneText, @"m_Name: EntranceGuestSpot_(\d{2})");
         Assert.That(sceneSpotNames.Count, Is.EqualTo(8), "Gameplay should contain exactly eight Entrance Hall guest spot objects.");
-        Assert.That(
-            sceneText,
-            Does.Contain(
-                "entranceHallGuestSpots:\n" +
-                "  - {fileID: 3501000031}\n" +
-                "  - {fileID: 3501000034}\n" +
-                "  - {fileID: 3501000037}\n" +
-                "  - {fileID: 3501000040}\n" +
-                "  - {fileID: 3501000043}\n" +
-                "  - {fileID: 3501000046}\n" +
-                "  - {fileID: 3501000049}\n" +
-                "  - {fileID: 3501000052}"),
-            "Guest roster order must keep its direct serialized reference to each hand-authored spot.");
 
         float[,] expectedPositions =
         {
@@ -700,6 +739,61 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         return blockEnd >= 0
             ? assetText.Substring(blockStart, blockEnd - blockStart)
             : assetText.Substring(blockStart);
+    }
+
+    private static string[] ResolveSerializedTransformNames(string sceneText, string fieldName)
+    {
+        Match arrayMatch = Regex.Match(
+            sceneText,
+            $@"(?m)^  {Regex.Escape(fieldName)}:\r?\n(?<items>(?:  - \{{fileID: \d+\}}\r?\n)+)");
+        Assert.That(arrayMatch.Success, Is.True, $"Gameplay should serialize '{fieldName}'.");
+
+        MatchCollection referenceMatches = Regex.Matches(
+            arrayMatch.Groups["items"].Value,
+            @"\{fileID: (?<id>\d+)\}");
+        string[] names = new string[referenceMatches.Count];
+
+        for (int i = 0; i < referenceMatches.Count; i++)
+        {
+            string transformId = referenceMatches[i].Groups["id"].Value;
+            string transformBlock = ExtractYamlDocument(sceneText, $"--- !u!4 &{transformId}");
+            Match gameObjectReference = Regex.Match(
+                transformBlock,
+                @"(?m)^  m_GameObject: \{fileID: (?<id>\d+)\}$");
+            Assert.That(gameObjectReference.Success, Is.True, $"Transform {transformId} should reference a scene GameObject.");
+
+            string gameObjectId = gameObjectReference.Groups["id"].Value;
+            string gameObjectBlock = ExtractYamlDocument(sceneText, $"--- !u!1 &{gameObjectId}");
+            Match nameMatch = Regex.Match(gameObjectBlock, @"(?m)^  m_Name: (?<name>.+)$");
+            Assert.That(nameMatch.Success, Is.True, $"GameObject {gameObjectId} should have a serialized name.");
+            names[i] = nameMatch.Groups["name"].Value.Trim();
+        }
+
+        return names;
+    }
+
+    private static string ExtractYamlDocument(string sceneText, string header)
+    {
+        int startIndex = sceneText.IndexOf(header, StringComparison.Ordinal);
+        Assert.That(startIndex, Is.GreaterThanOrEqualTo(0), $"Could not find YAML document '{header}'.");
+
+        int endIndex = sceneText.IndexOf("\n--- !u!", startIndex + header.Length, StringComparison.Ordinal);
+        return endIndex >= 0
+            ? sceneText.Substring(startIndex, endIndex - startIndex)
+            : sceneText.Substring(startIndex);
+    }
+
+    private static string ExtractYamlDocumentContaining(string sceneText, string marker)
+    {
+        int markerIndex = sceneText.IndexOf(marker, StringComparison.Ordinal);
+        Assert.That(markerIndex, Is.GreaterThanOrEqualTo(0), $"Could not find YAML marker '{marker}'.");
+
+        int precedingHeader = sceneText.LastIndexOf("\n--- !u!", markerIndex, StringComparison.Ordinal);
+        int startIndex = precedingHeader >= 0 ? precedingHeader + 1 : 0;
+        int endIndex = sceneText.IndexOf("\n--- !u!", markerIndex + marker.Length, StringComparison.Ordinal);
+        return endIndex >= 0
+            ? sceneText.Substring(startIndex, endIndex - startIndex)
+            : sceneText.Substring(startIndex);
     }
 
     private static string ExtractDeclaredMethodBody(string sourceText, string methodName)

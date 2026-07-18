@@ -12,6 +12,13 @@ public sealed class DialogueSpeechService : MonoBehaviour
         public bool Released;
     }
 
+    private sealed class SpeechCompletionLease
+    {
+        public Action OnComplete;
+        public bool CountedAsPendingNormalSpeech;
+        public bool Completed;
+    }
+
     private const string ServiceObjectName = "DialogueSpeechService";
     private const float CharactersPerSecond = 24f;
     private const float MinimumReadSeconds = 1.25f;
@@ -40,6 +47,7 @@ public sealed class DialogueSpeechService : MonoBehaviour
     private RoomNavigationManager navigationManager;
     private bool subscribedToRoomChanges;
     private readonly List<GuestMovementPauseLease> guestMovementPauseLeases = new List<GuestMovementPauseLease>();
+    private readonly List<SpeechCompletionLease> speechCompletionLeases = new List<SpeechCompletionLease>();
 
     public bool IsNormalSpeechActive => normalSpeechActive;
     public bool IsSpeechInterruptionActive => speechInterruptionActive;
@@ -154,6 +162,7 @@ public sealed class DialogueSpeechService : MonoBehaviour
         speakingIndicator?.Hide();
         SpeakingCharacterIndicator.HideAnyCurrent();
         ClearActiveSpeechInfo();
+        CompleteAllPendingSpeech();
 
         return interruption;
     }
@@ -237,6 +246,9 @@ public sealed class DialogueSpeechService : MonoBehaviour
         int queueToken = speechQueueToken;
         bool countedAsPendingNormalSpeech = !allowOverlap;
         GuestMovementPauseLease guestMovementPauseLease = null;
+        SpeechCompletionLease completionLease = RegisterSpeechCompletion(
+            countedAsPendingNormalSpeech,
+            onComplete);
 
         if (countedAsPendingNormalSpeech)
         {
@@ -245,7 +257,7 @@ public sealed class DialogueSpeechService : MonoBehaviour
 
         if (subtitleService == null)
         {
-            CompleteSpeechRoutine(countedAsPendingNormalSpeech, onComplete, guestMovementPauseLease);
+            CompleteSpeechRoutine(completionLease, guestMovementPauseLease);
             yield break;
         }
 
@@ -258,7 +270,7 @@ public sealed class DialogueSpeechService : MonoBehaviour
         {
             if (queueToken != speechQueueToken)
             {
-                CompleteSpeechRoutine(countedAsPendingNormalSpeech, onComplete, guestMovementPauseLease);
+                CompleteSpeechRoutine(completionLease, guestMovementPauseLease);
                 yield break;
             }
 
@@ -267,7 +279,7 @@ public sealed class DialogueSpeechService : MonoBehaviour
 
         if (!allowOverlap && queueToken != speechQueueToken)
         {
-            CompleteSpeechRoutine(countedAsPendingNormalSpeech, onComplete, guestMovementPauseLease);
+            CompleteSpeechRoutine(completionLease, guestMovementPauseLease);
             yield break;
         }
 
@@ -281,7 +293,7 @@ public sealed class DialogueSpeechService : MonoBehaviour
                 out float maxDuration))
         {
             Debug.LogWarning($"[DialogueSpeech] Missing subtitle text for '{FormatLineId(lineId)}'.", this);
-            CompleteSpeechRoutine(countedAsPendingNormalSpeech, onComplete, guestMovementPauseLease);
+            CompleteSpeechRoutine(completionLease, guestMovementPauseLease);
             yield break;
         }
 
@@ -386,7 +398,7 @@ public sealed class DialogueSpeechService : MonoBehaviour
             skipRequested = false;
         }
 
-        CompleteSpeechRoutine(countedAsPendingNormalSpeech, onComplete, guestMovementPauseLease);
+        CompleteSpeechRoutine(completionLease, guestMovementPauseLease);
     }
 
     private IEnumerator InterruptionSpeechRoutine(
@@ -681,18 +693,54 @@ public sealed class DialogueSpeechService : MonoBehaviour
         guestMovementPauseLeases.Clear();
     }
 
-    private void CompleteSpeechRoutine(
+    private SpeechCompletionLease RegisterSpeechCompletion(
         bool countedAsPendingNormalSpeech,
-        Action onComplete,
+        Action onComplete)
+    {
+        SpeechCompletionLease lease = new SpeechCompletionLease
+        {
+            OnComplete = onComplete,
+            CountedAsPendingNormalSpeech = countedAsPendingNormalSpeech
+        };
+        speechCompletionLeases.Add(lease);
+        return lease;
+    }
+
+    private void CompleteAllPendingSpeech()
+    {
+        SpeechCompletionLease[] pendingLeases = speechCompletionLeases.ToArray();
+
+        for (int i = 0; i < pendingLeases.Length; i++)
+        {
+            CompleteSpeech(pendingLeases[i]);
+        }
+    }
+
+    private void CompleteSpeechRoutine(
+        SpeechCompletionLease completionLease,
         GuestMovementPauseLease guestMovementPauseLease)
     {
         ReleaseGuestMovementPause(guestMovementPauseLease);
+        CompleteSpeech(completionLease);
+    }
 
-        if (countedAsPendingNormalSpeech)
+    private void CompleteSpeech(SpeechCompletionLease completionLease)
+    {
+        if (completionLease == null || completionLease.Completed)
+        {
+            return;
+        }
+
+        completionLease.Completed = true;
+        speechCompletionLeases.Remove(completionLease);
+
+        if (completionLease.CountedAsPendingNormalSpeech)
         {
             pendingNormalSpeechCount = Mathf.Max(0, pendingNormalSpeechCount - 1);
         }
 
+        Action onComplete = completionLease.OnComplete;
+        completionLease.OnComplete = null;
         onComplete?.Invoke();
     }
 

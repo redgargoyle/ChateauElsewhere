@@ -217,6 +217,55 @@ public class CharacterScaleArchitectureTests
     }
 
     [Test]
+    public void AnimationDisplayScalePreservesCanonicalFloorPointInTheSameFrame()
+    {
+        using (ScaleRig rig = ScaleRig.Create())
+        {
+            GameObject actor = CreateActor("StableFloorScaleGuest", rig.Catalog, out CharacterAnimationDisplay display);
+            Texture2D texture = new Texture2D(20, 100);
+            Sprite sprite = Sprite.Create(
+                texture,
+                new Rect(0f, 0f, texture.width, texture.height),
+                new Vector2(0.5f, 0.5f),
+                100f);
+
+            try
+            {
+                SpriteRenderer bodyRenderer = display.AnimationDisplay.GetComponent<SpriteRenderer>();
+                bodyRenderer.sprite = sprite;
+                actor.transform.position = rig.GetWorldPoint(-250f);
+                CharacterFloorReference floorReference = CharacterFloorReference.EnsureForActor(actor, bodyRenderer);
+                Assert.That(floorReference, Is.Not.Null);
+                Assert.That(floorReference.ReferenceTransform, Is.SameAs(display.AnimationDisplay));
+                Vector3 floorPointBeforeScale = floorReference.WorldPoint;
+                Vector3 rootPositionBeforeScale = actor.transform.position;
+
+                Assert.That(display.TryApplyScaleForRoom(TestRoomName), Is.True);
+
+                Assert.That(display.AnimationDisplay.localScale, Is.Not.EqualTo(Vector3.one));
+                Assert.That(
+                    Vector3.Distance(floorReference.WorldPoint, floorPointBeforeScale),
+                    Is.LessThan(0.0001f),
+                    "A scale write must not move sorting/movement depth even for one LateUpdate frame.");
+                Assert.That(
+                    bodyRenderer.bounds.min.y,
+                    Is.EqualTo(floorReference.WorldPoint.y).Within(0.0001f),
+                    "The root correction should keep the scaled character's visible contact point on the canonical floor point.");
+                Assert.That(
+                    actor.transform.position,
+                    Is.Not.EqualTo(rootPositionBeforeScale),
+                    "The unscaled movement root should translate to compensate for visual-child scaling.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(sprite);
+                UnityEngine.Object.DestroyImmediate(texture);
+                UnityEngine.Object.DestroyImmediate(actor);
+            }
+        }
+    }
+
+    [Test]
     public void ButlerAndGuestUseTheSameRoomAndYResultIncludingSitting()
     {
         using (ScaleRig rig = ScaleRig.Create())

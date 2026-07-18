@@ -7,6 +7,10 @@ using UnityEngine;
 [AddComponentMenu("Dreadforge/Characters/World Y Sort Sprite Renderer")]
 public sealed class WorldYSortSpriteRenderer : MonoBehaviour
 {
+    private const float ActorTieYThreshold = 0.001f;
+    private static readonly HashSet<WorldYSortSpriteRenderer> ActiveSorters = new HashSet<WorldYSortSpriteRenderer>();
+    private static readonly List<WorldYSortSpriteRenderer> ActorTieCandidates = new List<WorldYSortSpriteRenderer>();
+
     [SerializeField] private string sortingLayerName = "People";
     [SerializeField] private int sortingOrderBase = 1000;
     [SerializeField] private float sortingOrderPerYUnit = 100f;
@@ -23,10 +27,15 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
     private PointClickPlayerMovement player;
     private PointClickPlayerMovement actorSortingSource;
     private SpriteRenderer actorFootRenderer;
+    private CharacterFloorReference actorFloorReference;
     private readonly Dictionary<SpriteRenderer, int> actorRendererOffsets = new Dictionary<SpriteRenderer, int>();
 
     public bool IsConfiguredForActor => actorSortingSource != null;
     public SpriteRenderer ActorFootRenderer => actorFootRenderer;
+    public CharacterFloorReference ActorFloorReference => actorFloorReference;
+    public float CurrentActorSortingY { get; private set; }
+    public int CurrentBaseSortingOrder { get; private set; }
+    public int CurrentTieBreakOffset { get; private set; }
 
     private void Reset()
     {
@@ -38,9 +47,20 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
 
     private void OnEnable()
     {
+        ActiveSorters.Add(this);
         RefreshRenderers();
         ResolveOptionalReferences();
         ApplySorting();
+    }
+
+    private void OnDisable()
+    {
+        ActiveSorters.Remove(this);
+    }
+
+    private void OnDestroy()
+    {
+        ActiveSorters.Remove(this);
     }
 
     private void OnValidate()
@@ -84,6 +104,13 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
         int sortingOrder = sortActorFromVisibleFeet
             ? actorSortingSource.GetSortingOrderForFootY(sortingY) + sortingOrderOffset
             : sortingOrderBase - Mathf.RoundToInt(sortingY * sortingOrderPerYUnit) + sortingOrderOffset;
+
+        CurrentActorSortingY = sortActorFromVisibleFeet ? sortingY : 0f;
+        CurrentBaseSortingOrder = sortingOrder;
+        CurrentTieBreakOffset = sortActorFromVisibleFeet
+            ? ResolveActorTieBreakOffset(sortingY, sortingOrder, layerName)
+            : 0;
+        sortingOrder += CurrentTieBreakOffset;
         sortingOrder = ResolveOcclusionSafeSortingOrder(sortingOrder);
 
         for (int i = 0; i < spriteRenderers.Length; i++)
@@ -109,6 +136,7 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
     {
         actorSortingSource = sortingSource;
         actorFootRenderer = footRenderer;
+        actorFloorReference = CharacterFloorReference.EnsureForActor(gameObject, actorFootRenderer);
         RefreshActorSortingTargets();
         ApplySorting();
     }
@@ -150,6 +178,17 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
 
     private float GetActorFootY()
     {
+        if (actorFloorReference == null || !actorFloorReference.IsInitialized)
+        {
+            actorFloorReference = CharacterFloorReference.EnsureForActor(gameObject, actorFootRenderer);
+        }
+
+        if (actorFloorReference != null &&
+            actorFloorReference.TryGetWorldPoint(out Vector3 stableFloorWorldPoint))
+        {
+            return stableFloorWorldPoint.y;
+        }
+
         if (actorFootRenderer != null && actorFootRenderer.sprite != null)
         {
             return actorFootRenderer.bounds.min.y;
@@ -171,6 +210,109 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
         return float.IsPositiveInfinity(lowestVisibleY) ? reference.position.y : lowestVisibleY;
     }
 
+    private int ResolveActorTieBreakOffset(float sortingY, int baseSortingOrder, string layerName)
+    {
+        ActorTieCandidates.Clear();
+
+        foreach (WorldYSortSpriteRenderer candidate in ActiveSorters)
+        {
+            if (candidate == null ||
+                !candidate.isActiveAndEnabled ||
+                candidate.actorSortingSource != actorSortingSource ||
+                !candidate.HasEnabledActorRenderer())
+            {
+                continue;
+            }
+
+            string candidateLayerName = candidate.actorSortingSource.CurrentSortingLayerName;
+            float candidateY = candidate.GetActorFootY();
+            int candidateBaseOrder = candidate.actorSortingSource.GetSortingOrderForFootY(candidateY) +
+                candidate.sortingOrderOffset;
+
+            if (candidateBaseOrder == baseSortingOrder &&
+                Mathf.Abs(candidateY - sortingY) <= ActorTieYThreshold &&
+                string.Equals(candidateLayerName, layerName, System.StringComparison.Ordinal))
+            {
+                ActorTieCandidates.Add(candidate);
+            }
+        }
+
+        if (ActorTieCandidates.Count <= 1)
+        {
+            return 0;
+        }
+
+        ActorTieCandidates.Sort(CompareActorTieKeys);
+        return Mathf.Max(0, ActorTieCandidates.IndexOf(this));
+    }
+
+    private bool HasEnabledActorRenderer()
+    {
+        if (spriteRenderers == null || spriteRenderers.Length == 0)
+        {
+            RefreshRenderers();
+        }
+
+        for (int i = 0; i < spriteRenderers.Length; i++)
+        {
+            SpriteRenderer spriteRenderer = spriteRenderers[i];
+
+            if (spriteRenderer != null &&
+                spriteRenderer.enabled &&
+                spriteRenderer.gameObject.activeInHierarchy &&
+                spriteRenderer.sprite != null)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static int CompareActorTieKeys(
+        WorldYSortSpriteRenderer left,
+        WorldYSortSpriteRenderer right)
+    {
+        if (ReferenceEquals(left, right))
+        {
+            return 0;
+        }
+
+        if (left == null)
+        {
+            return -1;
+        }
+
+        if (right == null)
+        {
+            return 1;
+        }
+
+        int keyComparison = string.CompareOrdinal(left.GetActorTieKey(), right.GetActorTieKey());
+
+        if (keyComparison != 0)
+        {
+            return keyComparison;
+        }
+
+        // Actor ids/names are expected to be unique. The object hash is only a
+        // last-resort, per-session stable fallback for misconfigured duplicates.
+        return left.GetHashCode().CompareTo(right.GetHashCode());
+    }
+
+    private string GetActorTieKey()
+    {
+        ActorRoomState actorRoomState = GetComponent<ActorRoomState>();
+        string actorId = actorRoomState != null ? actorRoomState.ActorId : string.Empty;
+
+        if (!string.IsNullOrWhiteSpace(actorId))
+        {
+            return actorId.Trim();
+        }
+
+        return gameObject.name;
+    }
+
     private int GetActorRendererOffset(SpriteRenderer spriteRenderer)
     {
         return actorSortingSource != null &&
@@ -190,6 +332,11 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
         if (player == null)
         {
             player = FindAnyObjectByType<PointClickPlayerMovement>();
+        }
+
+        if (actorFloorReference == null)
+        {
+            actorFloorReference = GetComponent<CharacterFloorReference>();
         }
     }
 

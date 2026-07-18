@@ -16,6 +16,7 @@ public class NPCWaypointMover : MonoBehaviour
     [SerializeField] private CharacterAnimationPresenter animationPresenter;
     [SerializeField] private Animator animator;
     [SerializeField] private GuestFootstepAudio footstepAudio;
+    [SerializeField] private CharacterFloorReference floorReference;
 
     private Coroutine moveRoutine;
     private bool isMoving;
@@ -38,6 +39,7 @@ public class NPCWaypointMover : MonoBehaviour
 
     public bool IsMoving => isMoving;
     public bool LastMoveFailed => lastMoveFailed;
+    public CharacterFloorReference FloorReference => floorReference;
     public bool IsSpeechPaused => speechPauseCount > 0;
     public bool IsMovementPaused => IsSpeechPaused ||
         (movementPausePartner != null && movementPausePartner.IsSpeechPaused);
@@ -408,8 +410,7 @@ public class NPCWaypointMover : MonoBehaviour
     {
         Vector3 targetPosition = target.position;
 
-        if (alignVisibleFeetToWaypoints &&
-            CharacterFootPositionUtility.TryGetWorldPoint(gameObject, true, false, out Vector3 feetWorldPoint))
+        if (alignVisibleFeetToWaypoints && TryGetCanonicalFloorWorldPoint(out Vector3 feetWorldPoint))
         {
             Vector3 feetOffset = feetWorldPoint - transform.position;
             targetPosition.x -= feetOffset.x;
@@ -602,11 +603,7 @@ public class NPCWaypointMover : MonoBehaviour
 
     private Vector2 GetCurrentFloorWorldPoint()
     {
-        if (CharacterFootPositionUtility.TryGetWorldPoint(
-                gameObject,
-                true,
-                false,
-                out Vector3 feetWorldPoint))
+        if (TryGetCanonicalFloorWorldPoint(out Vector3 feetWorldPoint))
         {
             return feetWorldPoint;
         }
@@ -616,6 +613,12 @@ public class NPCWaypointMover : MonoBehaviour
 
     private void ApplyFloorWorldPoint(Vector2 floorWorldPoint)
     {
+        if (TryResolveFloorReference(out CharacterFloorReference stableFloorReference))
+        {
+            stableFloorReference.AlignActorToWorldPoint(floorWorldPoint);
+            return;
+        }
+
         Vector2 currentFloorWorldPoint = GetCurrentFloorWorldPoint();
         Vector2 floorOffset = currentFloorWorldPoint - (Vector2)transform.position;
         float targetZ = transform.position.z;
@@ -623,6 +626,36 @@ public class NPCWaypointMover : MonoBehaviour
             floorWorldPoint.x - floorOffset.x,
             floorWorldPoint.y - floorOffset.y,
             targetZ);
+    }
+
+    private bool TryGetCanonicalFloorWorldPoint(out Vector3 floorWorldPoint)
+    {
+        if (TryResolveFloorReference(out CharacterFloorReference stableFloorReference) &&
+            stableFloorReference.TryGetWorldPoint(out floorWorldPoint))
+        {
+            return true;
+        }
+
+        return CharacterFootPositionUtility.TryGetVisibleWorldPoint(
+            gameObject,
+            true,
+            false,
+            out floorWorldPoint);
+    }
+
+    private bool TryResolveFloorReference(out CharacterFloorReference resolvedReference)
+    {
+        if (floorReference == null)
+        {
+            floorReference = CharacterFloorReference.EnsureForActor(gameObject);
+        }
+        else if (!floorReference.IsInitialized)
+        {
+            floorReference.TryCaptureVisibleFeet(gameObject);
+        }
+
+        resolvedReference = floorReference;
+        return resolvedReference != null && resolvedReference.IsInitialized;
     }
 
     private void WarnFloorRouteFailure(Transform target)
@@ -685,6 +718,11 @@ public class NPCWaypointMover : MonoBehaviour
         if (footstepAudio == null)
         {
             footstepAudio = GetComponentInChildren<GuestFootstepAudio>(true);
+        }
+
+        if (floorReference == null)
+        {
+            floorReference = GetComponent<CharacterFloorReference>();
         }
 
         animatorParameters = CharacterAnimatorDriver.ParameterCache.FromAnimator(animator);

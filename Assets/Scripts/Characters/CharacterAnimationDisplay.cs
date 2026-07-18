@@ -14,6 +14,7 @@ public sealed class CharacterAnimationDisplay : MonoBehaviour
     [SerializeField] private ActorRoomState actorRoomState;
     [SerializeField] private PointClickPlayerMovement pointClickMovement;
     [SerializeField] private RoomNavigationManager navigationManager;
+    [SerializeField] private CharacterFloorReference floorReference;
 
     private string lastConfigurationWarning;
     private CharacterScaleRoom resolvedScaleRoom;
@@ -88,9 +89,25 @@ public sealed class CharacterAnimationDisplay : MonoBehaviour
 
         if (animationDisplay.localScale != requestedScale)
         {
+            Vector3 stableFloorPointBeforeScale = default;
+            bool preserveStableFloorPoint =
+                floorReference != null &&
+                floorReference.ReferenceTransform != null &&
+                (floorReference.ReferenceTransform == animationDisplay ||
+                    floorReference.ReferenceTransform.IsChildOf(animationDisplay)) &&
+                floorReference.TryGetWorldPoint(out stableFloorPointBeforeScale);
+
             // This is the sole Butler/guest body-size write in runtime code.
             // animationDisplay is a visual-only child, never the movement root.
             animationDisplay.localScale = requestedScale;
+
+            // Scaling a visual child also scales its canonical local foot anchor.
+            // Translate the unscaled actor root in the same frame so movement and
+            // LateUpdate sorting continue to observe the exact same floor point.
+            if (preserveStableFloorPoint)
+            {
+                floorReference.AlignActorToWorldPoint(stableFloorPointBeforeScale);
+            }
         }
 
         lastConfigurationWarning = string.Empty;
@@ -177,6 +194,11 @@ public sealed class CharacterAnimationDisplay : MonoBehaviour
             return new Vector3(logicalFootWorldPoint.x, logicalFootWorldPoint.y, transform.position.z);
         }
 
+        if (floorReference != null && floorReference.TryGetWorldPoint(out Vector3 stableFloorWorldPoint))
+        {
+            return stableFloorWorldPoint;
+        }
+
         if (animationDisplay != null &&
             CharacterFootPositionUtility.TryGetWorldPoint(
                 animationDisplay.gameObject,
@@ -253,6 +275,11 @@ public sealed class CharacterAnimationDisplay : MonoBehaviour
         if (navigationManager == null)
         {
             navigationManager = FindAnyObjectByType<RoomNavigationManager>(FindObjectsInactive.Include);
+        }
+
+        if (floorReference == null)
+        {
+            floorReference = GetComponent<CharacterFloorReference>();
         }
 
         if (catalog == null)

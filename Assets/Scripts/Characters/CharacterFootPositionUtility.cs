@@ -17,6 +17,39 @@ public static class CharacterFootPositionUtility
             return false;
         }
 
+        CharacterFloorReference floorReference = root.GetComponent<CharacterFloorReference>();
+
+        if (floorReference != null && floorReference.TryGetWorldPoint(out feetWorldPoint))
+        {
+            return true;
+        }
+
+        return TryGetVisibleWorldPoint(
+            root,
+            ignoreCoatRenderers,
+            includeInactiveRenderers,
+            out feetWorldPoint);
+    }
+
+    /// <summary>
+    /// Measures the current rendered character bounds directly. Most gameplay callers
+    /// should use <see cref="TryGetWorldPoint"/>, which returns an actor's canonical
+    /// floor reference when one is available. This method exists for the one-time
+    /// capture of that reference and for diagnostics that explicitly need visual bounds.
+    /// </summary>
+    public static bool TryGetVisibleWorldPoint(
+        GameObject root,
+        bool ignoreCoatRenderers,
+        bool includeInactiveRenderers,
+        out Vector3 feetWorldPoint)
+    {
+        feetWorldPoint = Vector3.zero;
+
+        if (root == null)
+        {
+            return false;
+        }
+
         Bounds combinedBounds = default;
         bool hasBounds = false;
         AccumulateRendererBounds(

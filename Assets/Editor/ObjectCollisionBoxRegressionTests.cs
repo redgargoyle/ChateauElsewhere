@@ -143,12 +143,13 @@ public class ObjectCollisionBoxRegressionTests
     }
 
     [Test]
-    public void ActorYSorterTracksVisibleFeetAndPreservesRendererOffsets()
+    public void ActorYSorterTracksStableFloorReferenceAcrossSpriteFrameChanges()
     {
         GameObject sortingSourceObject = null;
         GameObject actorObject = null;
         Texture2D texture = null;
-        Sprite sprite = null;
+        Sprite firstFrame = null;
+        Sprite differentlyCroppedFrame = null;
 
         try
         {
@@ -156,30 +157,71 @@ public class ObjectCollisionBoxRegressionTests
             PointClickPlayerMovement sortingSource = sortingSourceObject.AddComponent<PointClickPlayerMovement>();
 
             actorObject = new GameObject("Guest");
-            SpriteRenderer bodyRenderer = actorObject.AddComponent<SpriteRenderer>();
+            GameObject visualObject = new GameObject("AnimationDisplay");
+            visualObject.transform.SetParent(actorObject.transform, false);
+            SpriteRenderer bodyRenderer = visualObject.AddComponent<SpriteRenderer>();
             GameObject coatObject = new GameObject("GuestCoat");
             coatObject.transform.SetParent(actorObject.transform, false);
             SpriteRenderer coatRenderer = coatObject.AddComponent<SpriteRenderer>();
-            texture = new Texture2D(8, 8);
-            sprite = Sprite.Create(texture, new Rect(0f, 0f, 8f, 8f), new Vector2(0.5f, 0.5f), 8f);
-            bodyRenderer.sprite = sprite;
-            coatRenderer.sprite = sprite;
+            texture = new Texture2D(16, 16);
+            firstFrame = Sprite.Create(
+                texture,
+                new Rect(0f, 0f, 8f, 8f),
+                new Vector2(0.5f, 0.5f),
+                8f);
+            differentlyCroppedFrame = Sprite.Create(
+                texture,
+                new Rect(0f, 0f, 16f, 16f),
+                new Vector2(0.5f, 1f),
+                4f);
+            bodyRenderer.sprite = firstFrame;
+            coatRenderer.sprite = firstFrame;
 
             WorldYSortSpriteRenderer sorter = actorObject.AddComponent<WorldYSortSpriteRenderer>();
             bodyRenderer.sortingOrder = 120;
             coatRenderer.sortingOrder = 123;
             sorter.ConfigureForActor(sortingSource, bodyRenderer);
 
-            int firstExpectedOrder = sortingSource.GetSortingOrderForFootY(bodyRenderer.bounds.min.y);
+            Assert.That(sorter.ActorFloorReference, Is.Not.Null);
+            Assert.That(sorter.ActorFloorReference.IsInitialized, Is.True);
+            Assert.That(sorter.ActorFloorReference.ReferenceTransform, Is.SameAs(visualObject.transform));
+            float stableFloorY = sorter.CurrentActorSortingY;
+            int firstExpectedOrder = sortingSource.GetSortingOrderForFootY(stableFloorY);
             Assert.That(bodyRenderer.sortingOrder, Is.EqualTo(firstExpectedOrder));
             Assert.That(coatRenderer.sortingOrder, Is.EqualTo(firstExpectedOrder + 3), "Coat/body layering should survive continuous depth updates.");
+
+            visualObject.transform.localScale = new Vector3(2f, 2f, 1f);
+            sorter.ApplySorting();
+            float scaledStableFloorY = sorter.CurrentActorSortingY;
+            Assert.That(
+                scaledStableFloorY,
+                Is.EqualTo(stableFloorY * 2f).Within(0.0001f),
+                "The canonical foot should follow AnimationDisplay scale without remeasuring an animation frame.");
+            Assert.That(
+                scaledStableFloorY,
+                Is.EqualTo(bodyRenderer.bounds.min.y).Within(0.0001f),
+                "Scaling the originally captured frame should keep its canonical contact point on the visible feet.");
+            int scaledExpectedOrder = sortingSource.GetSortingOrderForFootY(scaledStableFloorY);
+            Assert.That(bodyRenderer.sortingOrder, Is.EqualTo(scaledExpectedOrder));
+            float scaledVisibleBoundsY = bodyRenderer.bounds.min.y;
+
+            bodyRenderer.sprite = differentlyCroppedFrame;
+            Assert.That(
+                Mathf.Abs(bodyRenderer.bounds.min.y - scaledVisibleBoundsY),
+                Is.GreaterThan(0.001f),
+                "The alternate frame should exercise a genuinely different visible lower bound.");
+            sorter.ApplySorting();
+
+            Assert.That(sorter.CurrentActorSortingY, Is.EqualTo(scaledStableFloorY).Within(0.0001f));
+            Assert.That(bodyRenderer.sortingOrder, Is.EqualTo(scaledExpectedOrder), "Animation frame bounds must not move an actor between depth bands.");
+            Assert.That(coatRenderer.sortingOrder, Is.EqualTo(scaledExpectedOrder + 3));
 
             actorObject.transform.position = new Vector3(0f, 2f, 0f);
             sorter.ApplySorting();
 
-            int movedExpectedOrder = sortingSource.GetSortingOrderForFootY(bodyRenderer.bounds.min.y);
+            int movedExpectedOrder = sortingSource.GetSortingOrderForFootY(scaledStableFloorY + 2f);
             Assert.That(bodyRenderer.sortingOrder, Is.EqualTo(movedExpectedOrder));
-            Assert.That(bodyRenderer.sortingOrder, Is.Not.EqualTo(firstExpectedOrder));
+            Assert.That(bodyRenderer.sortingOrder, Is.Not.EqualTo(scaledExpectedOrder));
             Assert.That(coatRenderer.sortingOrder, Is.EqualTo(movedExpectedOrder + 3));
         }
         finally
@@ -194,9 +236,14 @@ public class ObjectCollisionBoxRegressionTests
                 Object.DestroyImmediate(sortingSourceObject);
             }
 
-            if (sprite != null)
+            if (firstFrame != null)
             {
-                Object.DestroyImmediate(sprite);
+                Object.DestroyImmediate(firstFrame);
+            }
+
+            if (differentlyCroppedFrame != null)
+            {
+                Object.DestroyImmediate(differentlyCroppedFrame);
             }
 
             if (texture != null)
@@ -204,6 +251,111 @@ public class ObjectCollisionBoxRegressionTests
                 Object.DestroyImmediate(texture);
             }
 
+        }
+    }
+
+    [Test]
+    public void EqualYActorsKeepDeterministicOrderWhenTheirAnimationFramesSwap()
+    {
+        GameObject sortingSourceObject = null;
+        GameObject firstActorObject = null;
+        GameObject secondActorObject = null;
+        Texture2D texture = null;
+        Sprite bottomPivotFrame = null;
+        Sprite topPivotFrame = null;
+
+        try
+        {
+            sortingSourceObject = new GameObject("SharedButlerSortingSource");
+            PointClickPlayerMovement sortingSource = sortingSourceObject.AddComponent<PointClickPlayerMovement>();
+
+            firstActorObject = new GameObject("Guest01");
+            ActorRoomState firstActorState = firstActorObject.AddComponent<ActorRoomState>();
+            firstActorState.SetActorId("Guest01");
+            SpriteRenderer firstRenderer = firstActorObject.AddComponent<SpriteRenderer>();
+
+            secondActorObject = new GameObject("Guest02");
+            ActorRoomState secondActorState = secondActorObject.AddComponent<ActorRoomState>();
+            secondActorState.SetActorId("Guest02");
+            SpriteRenderer secondRenderer = secondActorObject.AddComponent<SpriteRenderer>();
+
+            texture = new Texture2D(16, 16);
+            bottomPivotFrame = Sprite.Create(
+                texture,
+                new Rect(0f, 0f, 8f, 8f),
+                new Vector2(0.5f, 0f),
+                8f);
+            topPivotFrame = Sprite.Create(
+                texture,
+                new Rect(0f, 0f, 16f, 16f),
+                new Vector2(0.5f, 1f),
+                4f);
+            firstRenderer.sprite = bottomPivotFrame;
+            secondRenderer.sprite = topPivotFrame;
+
+            WorldYSortSpriteRenderer firstSorter = firstActorObject.AddComponent<WorldYSortSpriteRenderer>();
+            WorldYSortSpriteRenderer secondSorter = secondActorObject.AddComponent<WorldYSortSpriteRenderer>();
+            firstSorter.ConfigureForActor(sortingSource, firstRenderer);
+            secondSorter.ConfigureForActor(sortingSource, secondRenderer);
+            firstSorter.ActorFloorReference.CaptureWorldPoint(Vector3.zero);
+            secondSorter.ActorFloorReference.CaptureWorldPoint(Vector3.zero);
+            firstSorter.ApplySorting();
+            secondSorter.ApplySorting();
+
+            Assert.That(firstSorter.CurrentBaseSortingOrder, Is.EqualTo(secondSorter.CurrentBaseSortingOrder));
+            Assert.That(firstSorter.CurrentActorSortingY, Is.EqualTo(secondSorter.CurrentActorSortingY).Within(0.0001f));
+            Assert.That(firstSorter.CurrentTieBreakOffset, Is.Not.EqualTo(secondSorter.CurrentTieBreakOffset));
+            int firstStableOrder = firstRenderer.sortingOrder;
+            int secondStableOrder = secondRenderer.sortingOrder;
+            Assert.That(firstStableOrder, Is.Not.EqualTo(secondStableOrder), "Equal-Y guests need a deterministic render order instead of an engine tie.");
+
+            for (int frame = 0; frame < 4; frame++)
+            {
+                firstRenderer.sprite = frame % 2 == 0 ? topPivotFrame : bottomPivotFrame;
+                secondRenderer.sprite = frame % 2 == 0 ? bottomPivotFrame : topPivotFrame;
+
+                // Intentionally reverse the update order to prove the result is not
+                // decided by whichever guest happened to sort last this frame.
+                secondSorter.ApplySorting();
+                firstSorter.ApplySorting();
+
+                Assert.That(firstSorter.CurrentActorSortingY, Is.EqualTo(0f).Within(0.0001f));
+                Assert.That(secondSorter.CurrentActorSortingY, Is.EqualTo(0f).Within(0.0001f));
+                Assert.That(firstRenderer.sortingOrder, Is.EqualTo(firstStableOrder));
+                Assert.That(secondRenderer.sortingOrder, Is.EqualTo(secondStableOrder));
+            }
+        }
+        finally
+        {
+            if (firstActorObject != null)
+            {
+                Object.DestroyImmediate(firstActorObject);
+            }
+
+            if (secondActorObject != null)
+            {
+                Object.DestroyImmediate(secondActorObject);
+            }
+
+            if (sortingSourceObject != null)
+            {
+                Object.DestroyImmediate(sortingSourceObject);
+            }
+
+            if (bottomPivotFrame != null)
+            {
+                Object.DestroyImmediate(bottomPivotFrame);
+            }
+
+            if (topPivotFrame != null)
+            {
+                Object.DestroyImmediate(topPivotFrame);
+            }
+
+            if (texture != null)
+            {
+                Object.DestroyImmediate(texture);
+            }
         }
     }
 
@@ -832,13 +984,13 @@ public class ObjectCollisionBoxRegressionTests
                     standingProbeSorter ??= sorter;
                     Assert.That(
                         characterRenderer.sortingOrder,
-                        Is.EqualTo(playerMovement.GetSortingOrderForFootY(characterRenderer.bounds.min.y)),
-                        $"{guest.ActorId} should continuously sort from visible feet at pan {verticalPans[panIndex]}.");
+                        Is.EqualTo(sorter.CurrentBaseSortingOrder + sorter.CurrentTieBreakOffset),
+                        $"{guest.ActorId} should continuously sort from its stable floor reference at pan {verticalPans[panIndex]}.");
 
-                    if (characterRenderer.bounds.min.y > tableBlocker.bounds.min.y)
+                    if (sorter.CurrentActorSortingY > tableBlocker.bounds.min.y)
                     {
                         Assert.That(characterRenderer.sortingOrder, Is.LessThan(tableRenderer.sortingOrder),
-                            $"{guest.ActorId} should render behind the tea table when its feet are above the table edge.");
+                            $"{guest.ActorId} should render behind the tea table when its stable floor point is above the table edge.");
                     }
                 }
             }
@@ -848,31 +1000,36 @@ public class ObjectCollisionBoxRegressionTests
             Assert.That(standingProbe, Is.Not.Null);
             Assert.That(standingProbeRenderer, Is.Not.Null);
             Assert.That(standingProbeSorter, Is.Not.Null);
+            Assert.That(standingProbeSorter.ActorFloorReference, Is.Not.Null);
 
             Vector3 originalProbePosition = standingProbe.transform.position;
             float behindTableFootY = tableBlocker.bounds.min.y + 0.5f;
-            standingProbe.transform.position += Vector3.up * (behindTableFootY - standingProbeRenderer.bounds.min.y);
+            standingProbeSorter.ActorFloorReference.AlignActorToWorldPoint(
+                new Vector2(standingProbeSorter.ActorFloorReference.WorldPoint.x, behindTableFootY));
             yield return null;
             yield return null;
-            standingProbe.transform.position += Vector3.up * (behindTableFootY - standingProbeRenderer.bounds.min.y);
+            standingProbeSorter.ActorFloorReference.AlignActorToWorldPoint(
+                new Vector2(standingProbeSorter.ActorFloorReference.WorldPoint.x, behindTableFootY));
             standingProbeSorter.ApplySorting();
 
             Assert.That(
                 standingProbeRenderer.sortingOrder,
-                Is.EqualTo(playerMovement.GetSortingOrderForFootY(standingProbeRenderer.bounds.min.y)));
+                Is.EqualTo(standingProbeSorter.CurrentBaseSortingOrder + standingProbeSorter.CurrentTieBreakOffset));
             Assert.That(standingProbeRenderer.sortingOrder, Is.LessThan(tableRenderer.sortingOrder),
                 $"A real standing guest must render behind the table above its front edge at pan {verticalPans[panIndex]}.");
 
             float inFrontOfTableFootY = tableBlocker.bounds.min.y - 0.5f;
-            standingProbe.transform.position += Vector3.up * (inFrontOfTableFootY - standingProbeRenderer.bounds.min.y);
+            standingProbeSorter.ActorFloorReference.AlignActorToWorldPoint(
+                new Vector2(standingProbeSorter.ActorFloorReference.WorldPoint.x, inFrontOfTableFootY));
             yield return null;
             yield return null;
-            standingProbe.transform.position += Vector3.up * (inFrontOfTableFootY - standingProbeRenderer.bounds.min.y);
+            standingProbeSorter.ActorFloorReference.AlignActorToWorldPoint(
+                new Vector2(standingProbeSorter.ActorFloorReference.WorldPoint.x, inFrontOfTableFootY));
             standingProbeSorter.ApplySorting();
 
             Assert.That(
                 standingProbeRenderer.sortingOrder,
-                Is.EqualTo(playerMovement.GetSortingOrderForFootY(standingProbeRenderer.bounds.min.y)));
+                Is.EqualTo(standingProbeSorter.CurrentBaseSortingOrder + standingProbeSorter.CurrentTieBreakOffset));
             Assert.That(standingProbeRenderer.sortingOrder, Is.GreaterThan(tableRenderer.sortingOrder),
                 $"A real standing guest must render in front of the table below its front edge at pan {verticalPans[panIndex]}.");
 
@@ -881,19 +1038,23 @@ public class ObjectCollisionBoxRegressionTests
             yield return null;
 
             float behindGreenChairFootY = greenChair.position.y + 0.5f;
-            standingProbe.transform.position += Vector3.up * (behindGreenChairFootY - standingProbeRenderer.bounds.min.y);
+            standingProbeSorter.ActorFloorReference.AlignActorToWorldPoint(
+                new Vector2(standingProbeSorter.ActorFloorReference.WorldPoint.x, behindGreenChairFootY));
             yield return null;
             yield return null;
-            standingProbe.transform.position += Vector3.up * (behindGreenChairFootY - standingProbeRenderer.bounds.min.y);
+            standingProbeSorter.ActorFloorReference.AlignActorToWorldPoint(
+                new Vector2(standingProbeSorter.ActorFloorReference.WorldPoint.x, behindGreenChairFootY));
             standingProbeSorter.ApplySorting();
             Assert.That(standingProbeRenderer.sortingOrder, Is.LessThan(greenChairRenderer.sortingOrder),
                 $"A real standing guest must render behind the green chair above its Y edge at pan {verticalPans[panIndex]}.");
 
             float inFrontOfGreenChairFootY = greenChair.position.y - 0.5f;
-            standingProbe.transform.position += Vector3.up * (inFrontOfGreenChairFootY - standingProbeRenderer.bounds.min.y);
+            standingProbeSorter.ActorFloorReference.AlignActorToWorldPoint(
+                new Vector2(standingProbeSorter.ActorFloorReference.WorldPoint.x, inFrontOfGreenChairFootY));
             yield return null;
             yield return null;
-            standingProbe.transform.position += Vector3.up * (inFrontOfGreenChairFootY - standingProbeRenderer.bounds.min.y);
+            standingProbeSorter.ActorFloorReference.AlignActorToWorldPoint(
+                new Vector2(standingProbeSorter.ActorFloorReference.WorldPoint.x, inFrontOfGreenChairFootY));
             standingProbeSorter.ApplySorting();
             Assert.That(standingProbeRenderer.sortingOrder, Is.GreaterThan(greenChairRenderer.sortingOrder),
                 $"A real standing guest must render in front of the green chair below its Y edge at pan {verticalPans[panIndex]}.");

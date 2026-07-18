@@ -146,8 +146,12 @@ public sealed class CharacterAnimationArchitectureTests
 
         Assert.That(
             chapter1Text,
+            Does.Contain("GetEntranceApproachAnimationDirection(guest, frontAnchor)"),
+            "The door-to-speaking-anchor animation direction must be selected once from the authored start and target.");
+        Assert.That(
+            chapter1Text,
             Does.Contain("GetEntranceApproachAnimationDirection(guest, waitSpot)"),
-            "The door-to-anchor animation direction must be selected once from the authored start and target.");
+            "The speaking-anchor-to-coat-spot direction must be calculated independently for the second leg.");
         Assert.That(
             chapter1Text,
             Does.Contain("CharacterWalkDirection.Left);"),
@@ -160,6 +164,53 @@ public sealed class CharacterAnimationArchitectureTests
             waypointMoverText,
             Does.Contain("hasAnimationDirectionOverride"),
             "The mover must retain the Chapter 1 direction for the complete movement and dialogue-pause lifecycle.");
+    }
+
+    [Test]
+    public void EntranceApproachDirectionUsesSignedHorizontalDeltaAndVerticalFallback()
+    {
+        GameObject guestObject = new GameObject("Signed Direction Guest");
+        GameObject targetObject = new GameObject("Signed Direction Target");
+
+        try
+        {
+            Type controllerType = typeof(Chapter1ArrivalController);
+            Type guestType = controllerType.GetNestedType("GuestRuntimeState", BindingFlags.NonPublic);
+            MethodInfo directionMethod = controllerType.GetMethod(
+                "GetEntranceApproachAnimationDirection",
+                BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.That(guestType, Is.Not.Null);
+            Assert.That(directionMethod, Is.Not.Null);
+
+            object guestState = Activator.CreateInstance(guestType, true);
+            FieldInfo guestObjectField = guestType.GetField("GuestObject", BindingFlags.Instance | BindingFlags.Public);
+            Assert.That(guestObjectField, Is.Not.Null);
+            guestObjectField.SetValue(guestState, guestObject);
+            guestObject.transform.position = Vector3.zero;
+
+            targetObject.transform.position = new Vector3(-5f, -1f, 0f);
+            Assert.That(
+                directionMethod.Invoke(null, new object[] { guestState, targetObject.transform }),
+                Is.EqualTo(CharacterWalkDirection.Left),
+                "A horizontal-dominant route to the left must not display walk-right.");
+
+            targetObject.transform.position = new Vector3(5f, -1f, 0f);
+            Assert.That(
+                directionMethod.Invoke(null, new object[] { guestState, targetObject.transform }),
+                Is.EqualTo(CharacterWalkDirection.Right),
+                "A horizontal-dominant route to the right should display walk-right.");
+
+            targetObject.transform.position = new Vector3(1f, -5f, 0f);
+            Assert.That(
+                directionMethod.Invoke(null, new object[] { guestState, targetObject.transform }),
+                Is.EqualTo(CharacterWalkDirection.Down),
+                "A vertical-dominant entrance route should retain the authored walk-down presentation.");
+        }
+        finally
+        {
+            Object.DestroyImmediate(targetObject);
+            Object.DestroyImmediate(guestObject);
+        }
     }
 
     [Test]
