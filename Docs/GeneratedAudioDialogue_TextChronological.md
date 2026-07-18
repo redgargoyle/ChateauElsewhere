@@ -97,7 +97,7 @@ Lord Ambrose Veil: That sound in the walls—did anyone else hear it before the 
 Madame Coralie Thread: Say what you came to say, Butler. The room is holding its breath.
 
 ### Butler Address
-Butler: Welcome friends and gentlemen, guests of the evening, Count and Countess of Chantilly—
+Butler: Welcome, friends and honored guests, to Chateau Chantilly. On behalf of the Count and Countess—
 
 ### Monster Panic
 Miss Isolde Wren: Do not run! Do not—oh Lord, run!
@@ -111,7 +111,8 @@ Madame Coralie Thread: No one touch it! No one breathe at it!
 
 ### Shared Butler Search Questions
 Butler: For supper, shall I put you down for the fresh monte genellion de plink, or thyme with Lillums?
-Butler: After dinner, shall I prepare a cigar, a pipe, or no smoke at all?
+Butler: And shall I see that your bottle of spirits is waiting at the table?
+Butler, for Guests 2, 3, 5, and 7 only: After dinner, shall I prepare a cigar, a pipe, or no smoke at all?
 
 ### Guest Search and Dining Lines
 
@@ -125,7 +126,7 @@ Miss Isolde Wren: A cigar. Something with authority.
 Miss Isolde Wren: A pipe. Slower nerves make better decisions.
 Miss Isolde Wren: No smoke. I should like my lungs available for any further screaming.
 Miss Isolde Wren: See that it is not shy.
-Miss Isolde Wren: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+Miss Isolde Wren: Then I shall proceed to the Dining Room. Perhaps punctuality can restore what panic has misplaced.
 Miss Isolde Wren: Seven o’clock. At least the clock is still obedient.
 Miss Isolde Wren: Civilization survives another minute.
 
@@ -138,8 +139,8 @@ Professor Lucien Vale: Thyme with Lillums, please. Something gentle. Something w
 Professor Lucien Vale: A cigar, though I may only hold it for courage.
 Professor Lucien Vale: A pipe, if it can be made to smell like a normal evening.
 Professor Lucien Vale: No smoke at all. I have inhaled enough terror for one night.
-Professor Lucien Vale: Thank you. I may ask it several questions.
-Professor Lucien Vale: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+Professor Lucien Vale: No, thank you. I may need every faculty I possess.
+Professor Lucien Vale: Right. The Dining Room at seven. A chair and an ordinary meal sound remarkably reassuring.
 Professor Lucien Vale: Please tell me dinner has windows. No—doors. I meant doors.
 Professor Lucien Vale: I have never been so grateful for a chair.
 
@@ -153,7 +154,7 @@ Mister Florian Knell: A cigar. I intend to look magnificent while recovering.
 Mister Florian Knell: A pipe. It gives one the illusion of wisdom.
 Mister Florian Knell: No smoke. The monster already supplied quite enough atmosphere.
 Mister Florian Knell: Make it visible. I may need to toast survival several times.
-Mister Florian Knell: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+Mister Florian Knell: To the Dining Room, then. I shall arrive composed, even if I must rehearse it on the way.
 Mister Florian Knell: If anyone asks, I was never frightened. I was arranging my face.
 Mister Florian Knell: Look at us. Pale, terrified, and still punctual.
 
@@ -167,7 +168,7 @@ Countess Elowen Dusk: A cigar. If I am to be hunted by architecture, I shall sme
 Countess Elowen Dusk: A pipe. It gives the hands something to do besides tremble.
 Countess Elowen Dusk: No smoke. I prefer to see what is coming.
 Countess Elowen Dusk: Good. I distrust a dinner table without witnesses.
-Countess Elowen Dusk: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+Countess Elowen Dusk: I will be in the Dining Room at seven—assuming the house still permits a civilized schedule.
 Countess Elowen Dusk: The clock sounds pleased with itself. I resent that.
 Countess Elowen Dusk: If the soup screams, I am leaving.
 
@@ -181,7 +182,7 @@ Baron Hector Glass: A cigar. For victory, or for pretending.
 Baron Hector Glass: A pipe. Slow smoke for a slower pulse.
 Baron Hector Glass: No smoke. Keep the air clear and the exits clearer.
 Baron Hector Glass: Place it where I can reach it without turning my back.
-Baron Hector Glass: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+Baron Hector Glass: Understood. I shall take my place in the Dining Room and keep watch on the doors.
 Baron Hector Glass: Dining Room, then. Stay together. Walk, do not scatter.
 Baron Hector Glass: Sit where you can see the doors.
 
@@ -194,8 +195,8 @@ Lady Sabine Marrow: Thyme with Lillums. That sounds almost medicinal. I accept.
 Lady Sabine Marrow: A cigar. I may need to prove I still possess hands.
 Lady Sabine Marrow: A pipe. Something domestic against the screaming violin.
 Lady Sabine Marrow: No smoke. The room has already burned itself into my memory.
-Lady Sabine Marrow: Good. Tell it I am counting on its courage.
-Lady Sabine Marrow: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+Lady Sabine Marrow: Please leave my bottle put away. I need to know whether that violin starts again.
+Lady Sabine Marrow: Thank you. I will make my way to the Dining Room. Please warn me if anything starts playing again.
 Lady Sabine Marrow: I would like the next room to contain fewer instruments.
 Lady Sabine Marrow: I can hear the violin even when it is not playing.
 
@@ -209,7 +210,7 @@ Lord Ambrose Veil: A cigar. Let the smoke mark where I have been, in case I vani
 Lord Ambrose Veil: A pipe. Smoke curls like warnings when the air is honest.
 Lord Ambrose Veil: No smoke. I want to smell it if that thing returns.
 Lord Ambrose Veil: Then pour generously. The chateau has had enough of my nerves.
-Lord Ambrose Veil: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+Lord Ambrose Veil: I shall meet the others in the Dining Room. Better that none of us make the journey alone.
 Lord Ambrose Veil: The chateau wanted us separated. Remember that.
 Lord Ambrose Veil: The house is quieter now. That worries me more.
 
@@ -222,7 +223,7 @@ Madame Coralie Thread: Thyme with Lillums. Quiet, green, and unlikely to announc
 Madame Coralie Thread: A cigar. I intend to leave evidence that I remained composed.
 Madame Coralie Thread: A pipe. The old rituals have teeth; let us use them.
 Madame Coralie Thread: No smoke. I want nothing between myself and the door.
-Madame Coralie Thread: Good. It may be the most trustworthy guest here.
-Madame Coralie Thread: Very good. I shall present myself in the Dining Room and recover what dignity remains to us.
+Madame Coralie Thread: No spirits tonight. I intend to remain the most trustworthy guest at the table.
+Madame Coralie Thread: Then the Dining Room it is. I intend to arrive before the house invents another interruption.
 Madame Coralie Thread: Then let us disappoint it by arriving intact.
 Madame Coralie Thread: Serve quickly, Butler. The night is not finished with us.
