@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -251,6 +252,225 @@ public class ObjectCollisionBoxRegressionTests
                 Object.DestroyImmediate(texture);
             }
 
+        }
+    }
+
+    [Test]
+    public void ActorYSorterStopsWritingCoatAfterItLeavesActorHierarchy()
+    {
+        GameObject sortingSourceObject = null;
+        GameObject actorObject = null;
+        GameObject carrierObject = null;
+        Texture2D texture = null;
+        Sprite sprite = null;
+
+        try
+        {
+            sortingSourceObject = new GameObject("ButlerSortingSource");
+            PointClickPlayerMovement sortingSource = sortingSourceObject.AddComponent<PointClickPlayerMovement>();
+
+            actorObject = new GameObject("Guest07");
+            GameObject visualObject = new GameObject("AnimationDisplay");
+            visualObject.transform.SetParent(actorObject.transform, false);
+            SpriteRenderer bodyRenderer = visualObject.AddComponent<SpriteRenderer>();
+
+            // The arrival controller nests a worn coat beneath AnimationDisplay.
+            // Removing that grandchild does not change the guest root's direct
+            // child list, so stale renderer caches must be rejected explicitly.
+            GameObject coatObject = new GameObject("Guest07Coat");
+            coatObject.transform.SetParent(visualObject.transform, false);
+            SpriteRenderer coatRenderer = coatObject.AddComponent<SpriteRenderer>();
+
+            texture = new Texture2D(8, 8);
+            sprite = Sprite.Create(
+                texture,
+                new Rect(0f, 0f, 8f, 8f),
+                new Vector2(0.5f, 0f),
+                8f);
+            bodyRenderer.sprite = sprite;
+            coatRenderer.sprite = sprite;
+
+            WorldYSortSpriteRenderer guestSorter = actorObject.AddComponent<WorldYSortSpriteRenderer>();
+            bodyRenderer.sortingOrder = 120;
+            coatRenderer.sortingOrder = 121;
+            guestSorter.ConfigureForActor(sortingSource, bodyRenderer);
+            Assert.That(
+                coatRenderer.sortingOrder,
+                Is.EqualTo(bodyRenderer.sortingOrder + 1),
+                "The coat should initially participate in the guest's shared Y-sort group.");
+            int guestOrderBeforeMove = bodyRenderer.sortingOrder;
+
+            carrierObject = new GameObject("ButlerCoatCarryAnchor");
+            coatObject.transform.SetParent(carrierObject.transform, true);
+            Assert.That(coatObject.transform.IsChildOf(actorObject.transform), Is.False);
+
+            int carrierOwnedOrder = guestSorter.CurrentBaseSortingOrder + 257;
+            coatRenderer.sortingOrder = carrierOwnedOrder;
+
+            actorObject.transform.position = new Vector3(0f, 3f, 0f);
+            guestSorter.ApplySorting();
+
+            Assert.That(
+                coatRenderer.sortingOrder,
+                Is.EqualTo(carrierOwnedOrder),
+                "Once the coat leaves the guest hierarchy, only its new sorting owner may write it.");
+            Assert.That(
+                bodyRenderer.sortingOrder,
+                Is.Not.EqualTo(guestOrderBeforeMove),
+                "The guest sorter should still update its remaining body renderer.");
+        }
+        finally
+        {
+            if (actorObject != null)
+            {
+                Object.DestroyImmediate(actorObject);
+            }
+
+            if (carrierObject != null)
+            {
+                Object.DestroyImmediate(carrierObject);
+            }
+
+            if (sortingSourceObject != null)
+            {
+                Object.DestroyImmediate(sortingSourceObject);
+            }
+
+            if (sprite != null)
+            {
+                Object.DestroyImmediate(sprite);
+            }
+
+            if (texture != null)
+            {
+                Object.DestroyImmediate(texture);
+            }
+        }
+    }
+
+    [Test]
+    public void ButlerSortingAccessoryFollowsBodyAndTransfersCleanlyBetweenCoats()
+    {
+        GameObject butlerObject = null;
+        Texture2D texture = null;
+        Sprite sprite = null;
+
+        try
+        {
+            butlerObject = new GameObject("Butler");
+            SpriteRenderer bodyRenderer = butlerObject.AddComponent<SpriteRenderer>();
+            texture = new Texture2D(8, 8);
+            sprite = Sprite.Create(
+                texture,
+                new Rect(0f, 0f, 8f, 8f),
+                new Vector2(0.5f, 0f),
+                8f);
+            bodyRenderer.sprite = sprite;
+            bodyRenderer.sortingOrder = 42;
+
+            PointClickPlayerMovement movement = butlerObject.AddComponent<PointClickPlayerMovement>();
+            movement.SetPlayerSortingEnabled(true);
+
+            // Carried coats are attached after the Butler has cached its body
+            // renderers. Place this coat well below the visible feet so the test
+            // detects any accidental use of accessory bounds for body depth.
+            GameObject firstCoatObject = new GameObject("Guest07Coat");
+            firstCoatObject.transform.SetParent(butlerObject.transform, false);
+            firstCoatObject.transform.localPosition = new Vector3(0f, -5f, 0f);
+            SpriteRenderer firstCoatRenderer = firstCoatObject.AddComponent<SpriteRenderer>();
+            firstCoatRenderer.sprite = sprite;
+            firstCoatRenderer.sortingOrder = 500;
+
+            GameObject firstCoatTrimObject = new GameObject("Guest07CoatTrim");
+            firstCoatTrimObject.transform.SetParent(firstCoatObject.transform, false);
+            SpriteRenderer firstCoatTrimRenderer = firstCoatTrimObject.AddComponent<SpriteRenderer>();
+            firstCoatTrimRenderer.sprite = sprite;
+            firstCoatTrimRenderer.sortingOrder = 503;
+
+            MethodInfo applyPlayerSorting = typeof(PointClickPlayerMovement).GetMethod(
+                "ApplyPlayerSorting",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(applyPlayerSorting, Is.Not.Null);
+
+            movement.RegisterSortingAccessory(firstCoatObject, 1);
+
+            int expectedInitialBodyOrder = movement.GetSortingOrderForFootY(bodyRenderer.bounds.min.y);
+            Assert.That(movement.CurrentSortingOrder, Is.EqualTo(expectedInitialBodyOrder));
+            Assert.That(bodyRenderer.sortingOrder, Is.EqualTo(expectedInitialBodyOrder));
+            Assert.That(firstCoatRenderer.sortingOrder, Is.EqualTo(expectedInitialBodyOrder + 1));
+            Assert.That(
+                firstCoatTrimRenderer.sortingOrder,
+                Is.EqualTo(expectedInitialBodyOrder + 4),
+                "Accessory registration should preserve the coat hierarchy's internal +3 renderer spacing.");
+
+            butlerObject.transform.position = new Vector3(0f, 2f, 0f);
+            applyPlayerSorting.Invoke(movement, null);
+
+            int movedBodyOrder = movement.GetSortingOrderForFootY(bodyRenderer.bounds.min.y);
+            Assert.That(movement.CurrentSortingOrder, Is.EqualTo(movedBodyOrder));
+            Assert.That(bodyRenderer.sortingOrder, Is.EqualTo(movedBodyOrder));
+            Assert.That(firstCoatRenderer.sortingOrder, Is.EqualTo(movedBodyOrder + 1));
+            Assert.That(firstCoatTrimRenderer.sortingOrder, Is.EqualTo(movedBodyOrder + 4));
+            Assert.That(
+                movedBodyOrder,
+                Is.Not.EqualTo(movement.GetSortingOrderForFootY(firstCoatRenderer.bounds.min.y)),
+                "The coat's lower bounds must not pull the Butler into the coat's Y-depth band.");
+
+            int firstCoatOrderBeforeAuthoredRestore = firstCoatRenderer.sortingOrder;
+            int firstTrimOrderBeforeAuthoredRestore = firstCoatTrimRenderer.sortingOrder;
+            movement.SetPlayerSortingEnabled(false, true);
+
+            Assert.That(bodyRenderer.sortingOrder, Is.EqualTo(42), "Disabling dynamic sorting should restore the authored Butler order.");
+            Assert.That(
+                firstCoatRenderer.sortingOrder,
+                Is.EqualTo(firstCoatOrderBeforeAuthoredRestore),
+                "Restoring authored body sorting must not rewrite a registered accessory.");
+            Assert.That(firstCoatTrimRenderer.sortingOrder, Is.EqualTo(firstTrimOrderBeforeAuthoredRestore));
+
+            movement.SetPlayerSortingEnabled(true);
+            applyPlayerSorting.Invoke(movement, null);
+            movement.UnregisterSortingAccessory(firstCoatObject);
+            const int releasedCoatOrder = 22000;
+            const int releasedTrimOrder = 22003;
+            firstCoatRenderer.sortingOrder = releasedCoatOrder;
+            firstCoatTrimRenderer.sortingOrder = releasedTrimOrder;
+
+            GameObject secondCoatObject = new GameObject("Guest08Coat");
+            secondCoatObject.transform.SetParent(butlerObject.transform, false);
+            SpriteRenderer secondCoatRenderer = secondCoatObject.AddComponent<SpriteRenderer>();
+            secondCoatRenderer.sprite = sprite;
+            secondCoatRenderer.sortingOrder = -300;
+            movement.RegisterSortingAccessory(secondCoatObject, 1);
+
+            butlerObject.transform.position = new Vector3(0f, -2f, 0f);
+            applyPlayerSorting.Invoke(movement, null);
+
+            int secondMoveBodyOrder = movement.GetSortingOrderForFootY(bodyRenderer.bounds.min.y);
+            Assert.That(movement.CurrentSortingOrder, Is.EqualTo(secondMoveBodyOrder));
+            Assert.That(bodyRenderer.sortingOrder, Is.EqualTo(secondMoveBodyOrder));
+            Assert.That(secondCoatRenderer.sortingOrder, Is.EqualTo(secondMoveBodyOrder + 1));
+            Assert.That(
+                firstCoatRenderer.sortingOrder,
+                Is.EqualTo(releasedCoatOrder),
+                "After release, the previous coat must stop receiving Butler sorting writes.");
+            Assert.That(firstCoatTrimRenderer.sortingOrder, Is.EqualTo(releasedTrimOrder));
+        }
+        finally
+        {
+            if (butlerObject != null)
+            {
+                Object.DestroyImmediate(butlerObject);
+            }
+
+            if (sprite != null)
+            {
+                Object.DestroyImmediate(sprite);
+            }
+
+            if (texture != null)
+            {
+                Object.DestroyImmediate(texture);
+            }
         }
     }
 

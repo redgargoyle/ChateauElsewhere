@@ -629,6 +629,49 @@ public class Chapter1GuestRoomVisibilityRegressionTests
     }
 
     [Test]
+    public void GuestCoatSortingOwnershipFollowsWornCarriedAndReleasedLifecycle()
+    {
+        string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
+        string transferBody = ExtractDeclaredMethodBody(controllerText, "TransferCoatVisualToButler");
+        string configureCarriedBody = ExtractDeclaredMethodBody(controllerText, "ConfigureCarriedCoatSorting");
+        string releaseCarriedBody = ExtractDeclaredMethodBody(controllerText, "ReleaseCarriedCoatSorting");
+        string configureWornBody = ExtractDeclaredMethodBody(controllerText, "ConfigureAssignedCoatSorting");
+        string storeBody = ExtractDeclaredMethodBody(controllerText, "StoreCarriedCoatInCloset");
+        string resetBody = ExtractDeclaredMethodBody(controllerText, "ResetChapterRuntime");
+        string skipBody = ExtractDeclaredMethodBody(controllerText, "PrepareGuestsForChapter2Skip");
+
+        Assert.That(
+            transferBody,
+            Does.Match(@"AttachCoatToCharacterDisplay\(coatObject, butlerTransform\)[\s\S]*guestState\.YSorter\?\.RefreshActorSortingTargets\(\)[\s\S]*guestState\.YSorter\?\.ApplySorting\(\)[\s\S]*ConfigureCarriedCoatSorting\(coatObject, butlerTransform\)"),
+            "Transferring a coat must release the former guest sorter's cached renderer ownership before the Butler claims it.");
+        Assert.That(
+            configureCarriedBody,
+            Does.Contain("playerMovement.RegisterSortingAccessory(coatObject, 1)"),
+            "A Butler-carried coat must be registered for continuous body-relative sorting instead of receiving a one-shot order.");
+        Assert.That(
+            releaseCarriedBody,
+            Does.Contain("playerMovement.UnregisterSortingAccessory(coatObject)"),
+            "The Chapter 1 controller must have one explicit release path for Butler sorting ownership.");
+        Assert.That(
+            configureWornBody,
+            Does.Match(@"relativeSortingOffset\s*=\s*1[\s\S]*RegisterActorRenderer\(currentCoatRenderer, relativeSortingOffset\)"),
+            "Every worn coat renderer must be explicitly registered with its guest's sorter at a body-relative offset.");
+
+        Assert.That(
+            storeBody,
+            Does.Match(@"ReleaseCarriedCoatSorting\(carriedCoatVisual\)[\s\S]*carriedCoatVisual\.SetActive\(false\)[\s\S]*carriedCoatVisual\s*=\s*null"),
+            "Normal closet storage must release continuous Butler sorting before hiding and forgetting the coat.");
+        Assert.That(
+            resetBody,
+            Does.Match(@"ReleaseCarriedCoatSorting\(carriedCoatVisual\)[\s\S]*carriedCoatVisual\.SetActive\(false\)[\s\S]*carriedCoatVisual\s*=\s*null"),
+            "Chapter resets must not leave a hidden coat registered to the Butler.");
+        Assert.That(
+            skipBody,
+            Does.Match(@"ReleaseCarriedCoatSorting\(carriedCoatVisual\)[\s\S]*carriedCoatVisual\.SetActive\(false\)[\s\S]*carriedCoatVisual\s*=\s*null"),
+            "Chapter skips must release the carried coat before rebuilding guest state.");
+    }
+
+    [Test]
     public void DrawingRoomUsesContinuousYSortingWithOnlySeatedOverrides()
     {
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
