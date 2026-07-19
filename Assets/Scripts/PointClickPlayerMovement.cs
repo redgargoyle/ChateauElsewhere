@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -335,18 +336,27 @@ public class PointClickPlayerMovement : MonoBehaviour
 		CacheReferences();
 		CaptureAuthoredRendererSortingIfNeeded();
 		CacheAnimatorParameters();
-		InitializeVisualStateFromTransform();
 	}
 
-	private void Start()
+	private IEnumerator Start()
 	{
+		// A Screen Space Camera Canvas does not have its final world scale until the
+		// first layout pass. Standalone players can therefore see a temporary scale
+		// during Awake even when Editor Play Mode does not. Wait for that layout,
+		// then establish the room-stage reference used by every movement conversion.
+		yield return null;
+		Canvas.ForceUpdateCanvases();
+		CacheReferences();
+		ResetRoomStageVisualReference();
+		InitializeVisualStateFromTransform();
+
 		FindWalkableFloor();
 		RefreshWalkableFloorForCurrentRoom();
 
 		if (walkableFloor == null && !allowMovementWithoutWalkableFloor)
 		{
 			enabled = false;
-			return;
+			yield break;
 		}
 
 		ConfigurePointAndClickMovement();
@@ -550,6 +560,14 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (!TryFindPlayerBoundaryForRoom(currentRoom, out Collider2D roomBoundary))
 			return;
 
+		// The navigation manager and active room stage can finish initializing after
+		// this movement component. Preserve the visible foot point before changing
+		// coordinate frames so a temporary Canvas scale cannot leave the Butler's
+		// logical position outside the newly selected room boundary.
+		Vector2 visibleWorldPointBeforeRebase = isReady
+			? GetCurrentVisibleMovementWorldPoint()
+			: Vector2.zero;
+
 		RefreshWalkableBlockersForCurrentRoom(currentRoom, roomBoundary);
 		walkableFloor = roomBoundary;
 		currentWalkableBoundaryRoom = cleanRoom;
@@ -559,7 +577,9 @@ public class PointClickPlayerMovement : MonoBehaviour
 		if (!isReady)
 			return;
 
-		logicalPosition = ClampToWalkableArea(logicalPosition);
+		UpdateVisualOffset(Camera.main);
+		Vector2 rebasedLogicalPosition = WalkableWorldToLogicalPoint(visibleWorldPointBeforeRebase);
+		logicalPosition = ClampToWalkableArea(rebasedLogicalPosition, rebasedLogicalPosition);
 		destination = logicalPosition;
 		finalDestination = logicalPosition;
 		movementPath.Clear();
@@ -1629,8 +1649,10 @@ public class PointClickPlayerMovement : MonoBehaviour
 			return;
 		}
 
+		UpdateVisualOffset(Camera.main);
 		Vector2 currentPosition = logicalPosition;
-		Vector2 nextPosition = MoveLogicalPositionToward(currentPosition, destination, moveSpeed * Time.fixedDeltaTime);
+		float logicalStepDistance = ConvertWorldDistanceToLogicalDistance(moveSpeed * Time.fixedDeltaTime);
+		Vector2 nextPosition = MoveLogicalPositionToward(currentPosition, destination, logicalStepDistance);
 		Vector2 movement = nextPosition - currentPosition;
 
 		logicalPosition = nextPosition;
@@ -1661,6 +1683,23 @@ public class PointClickPlayerMovement : MonoBehaviour
 		{
 			isWalking = true;
 		}
+	}
+
+	private float ConvertWorldDistanceToLogicalDistance(float worldDistance)
+	{
+		float safeWorldDistance = Mathf.Max(0f, worldDistance);
+
+		if (!hasRoomStageVisualReference)
+			return safeWorldDistance;
+
+		float scaleRatio = Mathf.Abs(currentRoomStageScaleRatio);
+		if (float.IsNaN(scaleRatio) || float.IsInfinity(scaleRatio))
+			return safeWorldDistance;
+
+		// Logical coordinates track the room stage while the authored movement speed
+		// is expressed in world units. Convert through the same scale used by
+		// LogicalToWalkableWorldPoint so zoom and resolution cannot alter visible speed.
+		return safeWorldDistance / Mathf.Max(0.0001f, scaleRatio);
 	}
 
 	private bool TryAdvancePathWaypoint()
