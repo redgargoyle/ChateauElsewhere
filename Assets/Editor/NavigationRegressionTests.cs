@@ -21,6 +21,9 @@ public class NavigationRegressionTests
     private const string GameplayScenePath = "Assets/Scenes/Gameplay.unity";
     private const string MainMenuScenePath = "Assets/Scenes/MainMenu.unity";
     private const string MainMenuBlankButtonSpritePath = "Assets/Art/MainMenuRedesign/MainMenu_ButtonBlank.png";
+    private const string MainMenuFontAssetPath = "Assets/Art/UI/Fonts/NotoSerifDisplay-Medium SDF.asset";
+    private const string MainMenuFontSourcePath = "Assets/Art/UI/Fonts/NotoSerifDisplay-Medium.ttf";
+    private const string TmpSettingsPath = "Assets/TextMesh Pro/Resources/TMP Settings.asset";
     private const string NavigationManagerPath = "Assets/Scripts/Navigation/RoomNavigationManager.cs";
     private const string NavigationBootstrapPath = "Assets/Scripts/Navigation/RoomNavigationBootstrap.cs";
     private const string DoorTriggerNavigationPath = "Assets/Scripts/Navigation/DoorTriggerNavigation.cs";
@@ -321,6 +324,40 @@ public class NavigationRegressionTests
         Assert.That(chapter1HudText, Does.Not.Contain("BuildShortHudState(chapterClock.CurrentTimeLabel)"), "Chapter 1 status should not render a second clock label.");
         Assert.That(chapter2HudText, Does.Not.Contain("chapterClock.CurrentTimeLabel"), "Chapter 2 status should not render a second clock label.");
         Assert.That(chapter2HudText, Does.Not.Contain("$\"{timeLabel}\\n{phaseLabel}\""), "Chapter 2 status should not combine time and phase in the top-left HUD.");
+    }
+
+    [Test]
+    public void GameplayHudUsesMainMenuTypographyBelowSettingsButton()
+    {
+        const string mainMenuFontGuid = "504ed30e71b6ae0fcb04344068a1ff4e";
+        const string legacyFontGuid = "8f586378b4e144a9851e7b34d9b748ee";
+        const float settingsButtonTopInset = 12f;
+        const float settingsButtonHeight = 34f;
+        const float statusTopInset = 58f;
+
+        TMP_FontAsset mainMenuFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(MainMenuFontAssetPath);
+        Font mainMenuSourceFont = AssetDatabase.LoadAssetAtPath<Font>(MainMenuFontSourcePath);
+        string tmpSettingsText = File.ReadAllText(TmpSettingsPath);
+        string mainMenuSceneText = File.ReadAllText(MainMenuScenePath);
+        string runtimeSettingsText = File.ReadAllText(RuntimeSettingsMenuPath);
+        string chapter1HudText = File.ReadAllText(Chapter1InteractionHUDPath);
+        string chapter2HudText = File.ReadAllText(Chapter2InteractionHUDPath);
+
+        Assert.That(mainMenuFont, Is.Not.Null, "The main-menu TMP font asset should exist.");
+        Assert.That(mainMenuFont.sourceFontFile, Is.SameAs(mainMenuSourceFont), "The TMP asset should use the exact Noto Serif Display source font from the main menu.");
+        Assert.That(AssetDatabase.GetAssetPath(TMP_Settings.defaultFontAsset), Is.EqualTo(MainMenuFontAssetPath), "Runtime-created TMP text should inherit the main-menu font globally.");
+        Assert.That(tmpSettingsText, Does.Contain($"m_defaultFontAsset: {{fileID: 11400000, guid: {mainMenuFontGuid}, type: 2}}"));
+        Assert.That(mainMenuSceneText, Does.Not.Contain(legacyFontGuid), "Every serialized main-menu TMP label should use the same Noto Serif font.");
+
+        Assert.That(runtimeSettingsText, Does.Contain("private const float ButtonHeight = 34f"));
+        Assert.That(runtimeSettingsText, Does.Contain("buttonRect.anchoredPosition = new Vector2(12f, -12f)"));
+        Assert.That(statusTopInset - (settingsButtonTopInset + settingsButtonHeight), Is.EqualTo(12f), "Chapter status should keep a 12-pixel gap below Settings.");
+        Assert.That(chapter1HudText, Does.Contain("private const float StatusTopInset = 58f"));
+        Assert.That(chapter1HudText, Does.Contain("new Vector2(18f, -StatusTopInset)"));
+        Assert.That(chapter1HudText, Does.Contain("TextAlignmentOptions.TopLeft"));
+        Assert.That(chapter2HudText, Does.Contain("private const float StatusTopInset = 58f"));
+        Assert.That(chapter2HudText, Does.Contain("new Vector2(18f, -StatusTopInset)"));
+        Assert.That(chapter2HudText, Does.Contain("TextAlignmentOptions.TopLeft"));
     }
 
     [Test]
