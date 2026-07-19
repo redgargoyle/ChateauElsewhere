@@ -13,7 +13,7 @@
 ## Constraints
 
 - Do not edit or stage `Assets/Scenes/Gameplay.unity` or `.vscode/settings.json`; both contain pre-existing user work.
-- Do not replace or rewrite the existing `NewGame()`, `ToggleAudioSettingsPanel()`, `ExitGame()`, cursor chooser, soundscape, or scene-loading flows.
+- Keep the existing `NewGame()`, `ToggleAudioSettingsPanel()`, `ExitGame()`, soundscape, and scene-loading ownership in `MainMenuController`.
 - Keep `ContinueGame()` available in code but make `Button_Continue` inactive and non-navigable.
 - Keep all visible menu copy in TMP, never baked into the generated sprites.
 - Use one reusable blank button sprite for all three actions; do not create duplicate button pathways.
@@ -42,7 +42,7 @@ Update `MainMenuLayoutScalesToShortGameViews()` so it checks the new implementat
 
 **Step 3: Preserve behavior coverage**
 
-Retain `NewGameShowsCursorStyleChooserBeforeGameplay` and the existing settings/audio tests unchanged. Add or retain a scene wiring assertion that the Start Game, Settings, and Exit objects resolve to the existing controller actions rather than new handlers.
+Retain the direct Start Game, settings/audio, and Exit behavior tests. Add or retain a scene wiring assertion that the Start Game, Settings, and Exit objects resolve to the existing controller actions rather than new handlers.
 
 **Step 4: Run the focused tests and confirm RED**
 
@@ -267,4 +267,3 @@ Confirm the two user-owned dirty files remain untouched and unstaged, no generat
 **Step 5: Commit any verification-driven corrections**
 
 If visual inspection reveals containment or spacing defects, first add or tighten a regression assertion, reproduce RED, correct the controller/builder, rerun focused and full suites, then commit only those corrections.
-

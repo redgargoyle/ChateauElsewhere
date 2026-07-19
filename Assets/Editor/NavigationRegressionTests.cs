@@ -557,22 +557,20 @@ public class NavigationRegressionTests
     }
 
     [Test]
-    public void NewGameShowsCursorStyleChooserBeforeGameplay()
+    public void NewGameStartsChapter1Directly()
     {
         string mainMenuText = File.ReadAllText(MainMenuControllerPath);
         string mainMenuSceneText = File.ReadAllText(MainMenuScenePath);
+        string gameplaySceneText = File.ReadAllText(GameplayScenePath);
         string newGameBody = ExtractMethodBody(mainMenuText, "public void NewGame");
         string continueBody = ExtractMethodBody(mainMenuText, "public void ContinueGame");
-        string selectStyleBody = ExtractMethodBody(mainMenuText, "private void SelectCursorStyleAndStart");
 
         Assert.That(mainMenuSceneText, Does.Contain("m_MethodName: NewGame"), "The authored New Game button should still call MainMenuController.NewGame.");
-        Assert.That(newGameBody, Does.Contain("ShowCursorStyleChooser"), "New Game should open the cursor chooser before gameplay starts.");
-        Assert.That(newGameBody, Does.Not.Contain("LoadGameScene"), "New Game should not bypass the cursor chooser.");
+        Assert.That(mainMenuSceneText, Does.Contain("newGameSceneName: Gameplay"), "Start Game should target the authored Gameplay scene.");
+        Assert.That(newGameBody, Does.Contain("LoadGameScene(\"New Game\")"), "Start Game should load Gameplay immediately.");
+        Assert.That(gameplaySceneText, Does.Contain("autoStartChapter1: 1"), "Gameplay should immediately start Chapter 1 after Start Game loads it.");
         Assert.That(continueBody, Does.Contain("LoadGameScene(\"Continue\")"), "Continue should keep the existing direct continue flow.");
-        Assert.That(selectStyleBody, Does.Contain("NavigationCursorController.SetCursorStyle(styleIndex)"), "Selecting a style should persist it through the cursor controller.");
-        Assert.That(selectStyleBody, Does.Contain("LoadGameScene(\"New Game\")"), "After selection, the original New Game scene-load path should run.");
-        Assert.That(mainMenuText, Does.Contain("CursorStyleCatalog.ChooserPreviewActions"), "Each style card should preview the gameplay action icons.");
-        Assert.That(mainMenuText, Does.Contain("GridLayoutGroup.Constraint.FixedColumnCount"), "The chooser should show all ten styles at once in a fixed grid.");
+        Assert.That(mainMenuText, Does.Not.Contain("Cursor" + "Style"), "The removed cursor-selection UI should leave no runtime menu code behind.");
     }
 
     [Test]
@@ -671,6 +669,8 @@ public class NavigationRegressionTests
         Assert.That(File.Exists(CursorPreviewSheetPath), Is.True, "The extraction script should generate a contact-sheet preview.");
 
         string catalogText = File.ReadAllText(CursorStyleCatalogPath);
+        string cameraManagerText = File.ReadAllText(CameraManagerPath);
+        string mainMenuText = File.ReadAllText(MainMenuControllerPath);
         string importText = File.ReadAllText(CursorIconImportPostprocessorPath);
         string scriptText = File.ReadAllText(CursorExtractionScriptPath);
         string[] actions =
@@ -690,10 +690,20 @@ public class NavigationRegressionTests
             "not_available_disabled"
         };
 
-        Assert.That(catalogText, Does.Contain("PlayerPrefsKey = \"Dreadforge.CursorStyle\""), "Cursor style should persist with the project's PlayerPrefs naming pattern.");
-        Assert.That(catalogText, Does.Contain("SanitizeStyleIndex"), "Invalid style indices should safely fall back to style 1.");
+        Assert.That(CursorStyleCatalog.DefaultStyleIndex, Is.EqualTo(9), "Style 9 should be the fixed gameplay cursor set.");
+        Assert.That(
+            CursorStyleCatalog.GetCursorIconPath(CursorStyleCatalog.CursorAction.WalkMove),
+            Is.EqualTo("UI/Cursors/styles/style_09/walk_move"));
+        Assert.That(CursorStyleCatalog.LoadTexture(CursorStyleCatalog.CursorAction.WalkMove), Is.Not.Null, "The fixed Style 9 walk cursor should load from Resources.");
+        Assert.That(catalogText, Does.Not.Contain("Player" + "Prefs"), "A saved historical choice must not override Style 9.");
+        Assert.That(catalogText, Does.Not.Contain("styleIndex"), "The runtime catalog should not retain arbitrary-style selection APIs.");
+        Assert.That(mainMenuText, Does.Not.Contain("Cursor" + "Style"), "The main menu should not retain cursor-selection UI code.");
+        Assert.That(cameraManagerText, Does.Not.Contain("GetAvailable" + "CursorStyles"));
+        Assert.That(cameraManagerText, Does.Not.Contain("GetSelected" + "CursorStyle"));
+        Assert.That(cameraManagerText, Does.Not.Contain("Set" + "CursorStyle"));
+        Assert.That(cameraManagerText, Does.Not.Contain("Load" + "CursorStylePreview"));
         Assert.That(catalogText, Does.Contain("CursorAction.UseInteract"), "Unknown cursor actions should fall back to use_interact.");
-        Assert.That(catalogText, Does.Contain("Resources.Load<Texture2D>"), "Gameplay cursors should load the selected sliced PNGs from Resources.");
+        Assert.That(catalogText, Does.Contain("Resources.Load<Texture2D>"), "Gameplay cursors should load the fixed sliced PNGs from Resources.");
         Assert.That(importText, Does.Contain("TextureImporterType.Cursor"), "Generated runtime PNGs should import as cursor textures.");
         Assert.That(scriptText, Does.Contain("9: 10"), "The current source sheet is missing column 9; style_09 should be explicitly documented as a column 10 duplicate.");
 
@@ -724,7 +734,7 @@ public class NavigationRegressionTests
         string pickupObjectText = File.ReadAllText(PickupObjectPath);
         string playerText = File.ReadAllText(PointClickPlayerMovementPath);
 
-        Assert.That(cameraManagerText, Does.Contain("CursorStyleCatalog.LoadSelectedTexture"), "The existing cursor controller should consume selected style assets.");
+        Assert.That(cameraManagerText, Does.Contain("CursorStyleCatalog.LoadTexture(action)"), "The existing cursor controller should consume the fixed Style 9 assets.");
         Assert.That(cameraManagerText, Does.Contain("CursorAction.WalkMove"), "Walkable floor hover should use walk_move.");
         Assert.That(cameraManagerText, Does.Contain("CursorAction.NotAvailableDisabled"), "Blocked floor hover should use not_available_disabled.");
         Assert.That(cameraManagerText, Does.Contain("CursorAction.OpenDoor"), "Door hover should use open_door.");

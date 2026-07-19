@@ -30,11 +30,11 @@ Replace the current top-left kitchen menu with a high-resolution, full-screen ma
 - Keep `ContinueGame()` in code for save-flow compatibility, but remove `Button_Continue` from the visible layout.
 - Add serialized references for the title plaque, developer credit, and reusable blank button frame where needed.
 - Replace the current top-left positioning with a responsive right-side menu rail calculated from the canvas reference size.
-- Preserve the existing cursor chooser, audio settings, soundscape, UI cursor, and scene-load safeguards.
+- Preserve the fixed gameplay cursor catalog, audio settings, soundscape, UI cursor, and scene-load safeguards.
 
 ## Interaction Behavior
 
-- Start Game calls the existing `NewGame()` method and therefore opens the cursor-style chooser before loading Gameplay.
+- Start Game calls the existing `NewGame()` method and loads Gameplay directly; Gameplay then starts Chapter 1 automatically.
 - Settings calls the existing settings toggle and opens the audio settings panel above the menu.
 - Exit calls the existing `ExitGame()` implementation.
 - Hover and selected states add a restrained warm-gold highlight without obscuring the frame art.
@@ -67,7 +67,7 @@ Replace the current top-left kitchen menu with a high-resolution, full-screen ma
 ## Verification
 
 - Add EditMode regression coverage for the three visible labels, Kadabra Games credit, hidden Continue button, and retained button method wiring.
-- Verify Start Game still opens the cursor chooser, Settings still opens audio controls, and Exit retains its existing action.
+- Verify Start Game loads Gameplay and starts Chapter 1, Settings still opens audio controls, and Exit retains its existing action.
 - Run the focused main-menu/navigation tests and the complete EditMode suite against the existing baseline.
 - Capture rendered menu screenshots at the target resolutions and inspect background coverage, frame proportions, text containment, ordering, modal layering, and overlap.
 
@@ -75,5 +75,5 @@ Replace the current top-left kitchen menu with a high-resolution, full-screen ma
 
 - Save-game/Continue behavior changes.
 - Gameplay scene changes.
-- Reworking cursor-style chooser behavior or audio-setting semantics.
+- Replacing the fixed cursor artwork or reworking audio-setting semantics.
 - Replacing the game's existing room art.
