@@ -74,6 +74,8 @@ public class PointClickPlayerMovement : MonoBehaviour
 	private bool hasAuthoredRendererSorting;
 	private AuthoredRendererSorting[] authoredRendererSorting = Array.Empty<AuthoredRendererSorting>();
 	private int currentSortingOrder;
+	private readonly Dictionary<SpriteRenderer, int> sortingAccessoryOffsets = new Dictionary<SpriteRenderer, int>();
+	private readonly List<SpriteRenderer> staleSortingAccessories = new List<SpriteRenderer>();
 	private int movementPathIndex;
 	private readonly List<Vector2> movementPath = new List<Vector2>();
 	private readonly List<Vector2> movementQueryPath = new List<Vector2>();
@@ -204,6 +206,74 @@ public class PointClickPlayerMovement : MonoBehaviour
 		{
 			RestoreAuthoredRendererSorting();
 		}
+	}
+
+	public void RegisterSortingAccessory(GameObject accessoryRoot, int sortingOrderOffset = 1)
+	{
+		if (accessoryRoot == null || !accessoryRoot.transform.IsChildOf(transform))
+		{
+			return;
+		}
+
+		UnregisterSortingAccessory(accessoryRoot);
+		SpriteRenderer[] accessoryRenderers = accessoryRoot.GetComponentsInChildren<SpriteRenderer>(true);
+		SpriteRenderer referenceRenderer = null;
+
+		for (int i = 0; i < accessoryRenderers.Length; i++)
+		{
+			if (accessoryRenderers[i] != null)
+			{
+				referenceRenderer = accessoryRenderers[i];
+				break;
+			}
+		}
+
+		if (referenceRenderer == null)
+		{
+			return;
+		}
+
+		int referenceOrder = referenceRenderer.sortingOrder;
+
+		for (int i = 0; i < accessoryRenderers.Length; i++)
+		{
+			SpriteRenderer accessoryRenderer = accessoryRenderers[i];
+
+			if (accessoryRenderer == null)
+			{
+				continue;
+			}
+
+			sortingAccessoryOffsets[accessoryRenderer] =
+				sortingOrderOffset + accessoryRenderer.sortingOrder - referenceOrder;
+		}
+
+		ApplyPlayerSorting();
+	}
+
+	public void UnregisterSortingAccessory(GameObject accessoryRoot)
+	{
+		if (accessoryRoot == null || sortingAccessoryOffsets.Count == 0)
+		{
+			return;
+		}
+
+		Transform accessoryTransform = accessoryRoot.transform;
+		staleSortingAccessories.Clear();
+
+		foreach (KeyValuePair<SpriteRenderer, int> entry in sortingAccessoryOffsets)
+		{
+			SpriteRenderer accessoryRenderer = entry.Key;
+
+			if (accessoryRenderer == null ||
+				accessoryRenderer.transform == accessoryTransform ||
+				accessoryRenderer.transform.IsChildOf(accessoryTransform))
+			{
+				staleSortingAccessories.Add(accessoryRenderer);
+			}
+		}
+
+		RemoveStaleSortingAccessories();
 	}
 
 	public readonly struct MovementTargetQuery
@@ -394,7 +464,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 		{
 			SpriteRenderer targetRenderer = spriteRenderers[i];
 
-			if (targetRenderer == null)
+			if (targetRenderer == null || IsSortingAccessory(targetRenderer))
 			{
 				continue;
 			}
@@ -418,7 +488,7 @@ public class PointClickPlayerMovement : MonoBehaviour
 			AuthoredRendererSorting sorting = authoredRendererSorting[i];
 			SpriteRenderer targetRenderer = sorting.Renderer;
 
-			if (targetRenderer == null)
+			if (targetRenderer == null || IsSortingAccessory(targetRenderer))
 			{
 				continue;
 			}
@@ -1789,7 +1859,10 @@ public class PointClickPlayerMovement : MonoBehaviour
 		{
 			SpriteRenderer targetRenderer = spriteRenderers[i];
 
-			if (targetRenderer == null || !targetRenderer.enabled || targetRenderer.sprite == null)
+			if (targetRenderer == null ||
+				IsSortingAccessory(targetRenderer) ||
+				!targetRenderer.enabled ||
+				targetRenderer.sprite == null)
 			{
 				continue;
 			}
@@ -3402,13 +3475,57 @@ public class PointClickPlayerMovement : MonoBehaviour
 		for (int i = 0; i < spriteRenderers.Length; i++)
 		{
 			SpriteRenderer targetRenderer = spriteRenderers[i];
-			if (targetRenderer == null)
+			if (targetRenderer == null || IsSortingAccessory(targetRenderer))
 				continue;
 
 			targetRenderer.sortingLayerName = sortingLayerName;
 			targetRenderer.sortingOrder = sortingOrder;
 			targetRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
 		}
+
+		ApplySortingAccessories(sortingLayerName, sortingOrder);
+	}
+
+	private void ApplySortingAccessories(string sortingLayerName, int sortingOrder)
+	{
+		if (sortingAccessoryOffsets.Count == 0)
+		{
+			return;
+		}
+
+		staleSortingAccessories.Clear();
+
+		foreach (KeyValuePair<SpriteRenderer, int> entry in sortingAccessoryOffsets)
+		{
+			SpriteRenderer accessoryRenderer = entry.Key;
+
+			if (accessoryRenderer == null || !accessoryRenderer.transform.IsChildOf(transform))
+			{
+				staleSortingAccessories.Add(accessoryRenderer);
+				continue;
+			}
+
+			accessoryRenderer.sortingLayerName = sortingLayerName;
+			accessoryRenderer.sortingOrder = sortingOrder + entry.Value;
+			accessoryRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
+		}
+
+		RemoveStaleSortingAccessories();
+	}
+
+	private bool IsSortingAccessory(SpriteRenderer targetRenderer)
+	{
+		return targetRenderer != null && sortingAccessoryOffsets.ContainsKey(targetRenderer);
+	}
+
+	private void RemoveStaleSortingAccessories()
+	{
+		for (int i = 0; i < staleSortingAccessories.Count; i++)
+		{
+			sortingAccessoryOffsets.Remove(staleSortingAccessories[i]);
+		}
+
+		staleSortingAccessories.Clear();
 	}
 
 	private float GetPlayerSortingY()
@@ -3424,7 +3541,10 @@ public class PointClickPlayerMovement : MonoBehaviour
 			{
 				SpriteRenderer targetRenderer = spriteRenderers[i];
 
-				if (targetRenderer == null || !targetRenderer.enabled || targetRenderer.sprite == null)
+				if (targetRenderer == null ||
+					IsSortingAccessory(targetRenderer) ||
+					!targetRenderer.enabled ||
+					targetRenderer.sprite == null)
 				{
 					continue;
 				}

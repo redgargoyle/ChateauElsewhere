@@ -166,9 +166,11 @@ public class Chapter1ArrivalController : MonoBehaviour
     private const string DefaultGuestFootstepCatalogResourcePath = "Audio/GuestFootstepCatalog";
     private const string GuestInterruptedLineText = "You inturrupted me.";
     private const float RuntimeGuestPixelsPerUnit = 200f / 3f;
+    private const float WornCoatVisualScaleMultiplier = 0.5f;
+    private const float GuestSevenWornCoatCenterAboveFeet = 1.08f;
     private static readonly Vector3 WorldCoatOffset = new Vector3(0.25f, 0.45f, 0f);
     private static readonly Vector3 ButlerCarriedCoatOffset = new Vector3(0.43f, 1.08f, 0f);
-    private static readonly Vector3 AssignedCoatFallbackScale = new Vector3(0.4f, 0.4f, 1f);
+    private static readonly Vector3 AssignedCoatFallbackScale = new Vector3(0.2f, 0.2f, 1f);
     private static readonly Vector2 WorldCoatColliderSize = new Vector2(0.35f, 0.25f);
     private static readonly Vector2 CoatHangerFallbackColliderSize = new Vector2(0.9f, 1.6f);
     private static readonly string[][] ChapterGuestNameAliases =
@@ -286,6 +288,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (carriedCoatVisual != null)
         {
+            ReleaseCarriedCoatSorting(carriedCoatVisual);
             carriedCoatVisual.SetActive(false);
             carriedCoatVisual = null;
         }
@@ -631,9 +634,11 @@ public class Chapter1ArrivalController : MonoBehaviour
         GameObject coatObject = guestState.CoatPickup.gameObject;
         coatObject.SetActive(true);
         AttachCoatToCharacterDisplay(coatObject, butlerTransform);
+        guestState.YSorter?.RefreshActorSortingTargets();
+        guestState.YSorter?.ApplySorting();
         coatObject.transform.localPosition = GetCoatOffsetWithSpritePivot(coatObject, ButlerCarriedCoatOffset);
         coatObject.transform.localRotation = Quaternion.identity;
-        BringCoatRenderersAboveButler(coatObject, butlerTransform);
+        ConfigureCarriedCoatSorting(coatObject, butlerTransform);
         carriedCoatVisual = coatObject;
 
         Debug.Log($"[Chapter1] Coat transferred to butler from guest {guestState.Config.GuestId}.", this);
@@ -657,14 +662,14 @@ public class Chapter1ArrivalController : MonoBehaviour
         coatObject.transform.SetParent(attachmentRoot, false);
     }
 
-    private static void BringCoatRenderersAboveButler(GameObject coatObject, Transform butlerTransform)
+    private void ConfigureCarriedCoatSorting(GameObject coatObject, Transform butlerTransform)
     {
         if (coatObject == null || butlerTransform == null)
         {
             return;
         }
 
-        SpriteRenderer butlerRenderer = butlerTransform.GetComponentInChildren<SpriteRenderer>(true);
+        SpriteRenderer butlerRenderer = FindCharacterSpriteRenderer(butlerTransform.gameObject);
         SpriteRenderer[] coatRenderers = coatObject.GetComponentsInChildren<SpriteRenderer>(true);
 
         for (int i = 0; i < coatRenderers.Length; i++)
@@ -677,12 +682,31 @@ public class Chapter1ArrivalController : MonoBehaviour
             }
 
             coatRenderer.enabled = true;
+        }
 
-            if (butlerRenderer != null)
+        if (playerMovement != null && coatObject.transform.IsChildOf(playerMovement.transform))
+        {
+            playerMovement.RegisterSortingAccessory(coatObject, 1);
+            return;
+        }
+
+        for (int i = 0; i < coatRenderers.Length; i++)
+        {
+            SpriteRenderer coatRenderer = coatRenderers[i];
+
+            if (coatRenderer != null && butlerRenderer != null)
             {
                 coatRenderer.sortingLayerID = butlerRenderer.sortingLayerID;
                 coatRenderer.sortingOrder = butlerRenderer.sortingOrder + 1;
             }
+        }
+    }
+
+    private void ReleaseCarriedCoatSorting(GameObject coatObject)
+    {
+        if (coatObject != null && playerMovement != null)
+        {
+            playerMovement.UnregisterSortingAccessory(coatObject);
         }
     }
 
@@ -1080,6 +1104,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (carriedCoatVisual != null)
         {
+            ReleaseCarriedCoatSorting(carriedCoatVisual);
             carriedCoatVisual.SetActive(false);
             carriedCoatVisual = null;
         }
@@ -1262,6 +1287,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         if (carriedCoatVisual != null)
         {
+            ReleaseCarriedCoatSorting(carriedCoatVisual);
             carriedCoatVisual.SetActive(false);
         }
 
@@ -2021,7 +2047,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         spriteRenderer.sprite = assignedSprite;
         spriteRenderer.color = Color.white;
         spriteRenderer.enabled = true;
-        ConfigureAssignedCoatSorting(guest, spriteRenderer);
+        ConfigureAssignedCoatSorting(guest, coatObject, spriteRenderer);
 
         if (spriteChanged && preserveAuthoredVisualSize && previousSize.x > 0f && previousSize.y > 0f)
         {
@@ -2040,6 +2066,8 @@ public class Chapter1ArrivalController : MonoBehaviour
                     assignedPivot.y * assignedSize.y * assignedScale.y - previousPivot.y * previousSize.y * previousScale.y,
                     0f);
 
+                assignedScale.x *= WornCoatVisualScaleMultiplier;
+                assignedScale.y *= WornCoatVisualScaleMultiplier;
                 spriteRenderer.transform.localScale = assignedScale;
                 spriteRenderer.transform.localPosition += pivotOffsetDelta;
             }
@@ -2053,6 +2081,100 @@ public class Chapter1ArrivalController : MonoBehaviour
                 spriteRenderer.transform.localPosition += GetSpritePivotOffset(spriteRenderer);
             }
         }
+
+        SpriteRenderer bodyRenderer = guest.GuestObject != null
+            ? FindCharacterSpriteRenderer(guest.GuestObject)
+            : null;
+        CharacterFloorReference floorReference = guest.YSorter != null
+            ? guest.YSorter.ActorFloorReference
+            : null;
+
+        if (floorReference == null && guest.GuestObject != null)
+        {
+            floorReference = guest.GuestObject.GetComponent<CharacterFloorReference>();
+        }
+
+        AlignWornCoatToGuestSevenWaist(coatObject, spriteRenderer, bodyRenderer, floorReference);
+        AlignWornCoatToAssignedAnchorHand(guest.GuestIndex, coatObject, spriteRenderer, bodyRenderer);
+    }
+
+    private static void AlignWornCoatToGuestSevenWaist(
+        GameObject coatObject,
+        SpriteRenderer coatRenderer,
+        SpriteRenderer bodyRenderer,
+        CharacterFloorReference floorReference)
+    {
+        if (coatObject == null || coatRenderer == null || coatRenderer.sprite == null)
+        {
+            return;
+        }
+
+        Transform coatPlacementSpace = coatObject.transform.parent;
+
+        if (coatPlacementSpace == null)
+        {
+            return;
+        }
+
+        float targetCenterY;
+
+        if (floorReference != null && floorReference.TryGetWorldPoint(out Vector3 floorWorldPoint))
+        {
+            Vector3 floorInPlacementSpace = coatPlacementSpace.InverseTransformPoint(floorWorldPoint);
+            targetCenterY = floorInPlacementSpace.y + GuestSevenWornCoatCenterAboveFeet;
+        }
+        else if (bodyRenderer != null && bodyRenderer.sprite != null)
+        {
+            Bounds bodyLocalBounds = bodyRenderer.sprite.bounds;
+            Vector3 targetBodyLocalPoint = bodyLocalBounds.center;
+            targetBodyLocalPoint.y = bodyLocalBounds.min.y + GuestSevenWornCoatCenterAboveFeet;
+            targetCenterY = coatPlacementSpace.InverseTransformPoint(
+                bodyRenderer.transform.TransformPoint(targetBodyLocalPoint)).y;
+        }
+        else
+        {
+            return;
+        }
+
+        Vector3 coatCenterInPlacementSpace = coatPlacementSpace.InverseTransformPoint(coatRenderer.bounds.center);
+        Vector3 coatLocalPosition = coatObject.transform.localPosition;
+        coatLocalPosition.y += targetCenterY - coatCenterInPlacementSpace.y;
+        coatObject.transform.localPosition = coatLocalPosition;
+    }
+
+    private static void AlignWornCoatToAssignedAnchorHand(
+        int zeroBasedAnchorIndex,
+        GameObject coatObject,
+        SpriteRenderer coatRenderer,
+        SpriteRenderer bodyRenderer)
+    {
+        if (zeroBasedAnchorIndex < 0 ||
+            zeroBasedAnchorIndex >= EntranceHallGuestSpotCount ||
+            coatObject == null ||
+            coatRenderer == null ||
+            coatRenderer.sprite == null)
+        {
+            return;
+        }
+
+        Transform coatPlacementSpace = coatObject.transform.parent;
+
+        if (coatPlacementSpace == null)
+        {
+            return;
+        }
+
+        float bodyCenterX = bodyRenderer != null
+            ? coatPlacementSpace.InverseTransformPoint(bodyRenderer.bounds.center).x
+            : 0f;
+        float coatCenterX = coatPlacementSpace.InverseTransformPoint(coatRenderer.bounds.center).x;
+        float distanceFromBodyCenter = Mathf.Abs(coatCenterX - bodyCenterX);
+        // Front_Entrance_Anchor_1, 3, 5, and 7 occupy the zero-based even slots.
+        bool useOppositeRightHand = zeroBasedAnchorIndex % 2 == 0;
+        float targetCenterX = bodyCenterX + (useOppositeRightHand ? -distanceFromBodyCenter : distanceFromBodyCenter);
+        Vector3 coatLocalPosition = coatObject.transform.localPosition;
+        coatLocalPosition.x += targetCenterX - coatCenterX;
+        coatObject.transform.localPosition = coatLocalPosition;
     }
 
     private static Vector2 GetSpritePivotNormalized(Sprite sprite)
@@ -2101,25 +2223,46 @@ public class Chapter1ArrivalController : MonoBehaviour
             0f);
     }
 
-    private void ConfigureAssignedCoatSorting(GuestRuntimeState guest, SpriteRenderer coatRenderer)
+    private void ConfigureAssignedCoatSorting(
+        GuestRuntimeState guest,
+        GameObject coatObject,
+        SpriteRenderer coatRenderer)
     {
-        if (coatRenderer == null)
+        if (coatObject == null || coatRenderer == null)
         {
             return;
         }
 
         SpriteRenderer guestRenderer = guest != null ? FindCharacterSpriteRenderer(guest.GuestObject) : null;
+        SpriteRenderer[] coatRenderers = coatObject.GetComponentsInChildren<SpriteRenderer>(true);
+        int coatReferenceOrder = coatRenderer.sortingOrder;
+        int fallbackBodyOrder = 9000 + (guest != null ? guest.GuestIndex : 0);
 
-        if (guestRenderer != null)
+        for (int i = 0; i < coatRenderers.Length; i++)
         {
-            coatRenderer.sortingLayerID = guestRenderer.sortingLayerID;
-            coatRenderer.sortingOrder = guestRenderer.sortingOrder + 1;
-            RefreshGuestYSorter(guest);
-            return;
+            SpriteRenderer currentCoatRenderer = coatRenderers[i];
+
+            if (currentCoatRenderer == null)
+            {
+                continue;
+            }
+
+            int relativeSortingOffset = 1 + currentCoatRenderer.sortingOrder - coatReferenceOrder;
+
+            if (guestRenderer != null)
+            {
+                currentCoatRenderer.sortingLayerID = guestRenderer.sortingLayerID;
+                currentCoatRenderer.sortingOrder = guestRenderer.sortingOrder + relativeSortingOffset;
+            }
+            else
+            {
+                currentCoatRenderer.sortingLayerName = "People";
+                currentCoatRenderer.sortingOrder = fallbackBodyOrder + relativeSortingOffset;
+            }
+
+            guest?.YSorter?.RegisterActorRenderer(currentCoatRenderer, relativeSortingOffset);
         }
 
-        coatRenderer.sortingLayerName = "People";
-        coatRenderer.sortingOrder = 9000 + (guest != null ? guest.GuestIndex : 0) + 1;
         RefreshGuestYSorter(guest);
     }
 
