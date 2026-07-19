@@ -33,8 +33,6 @@ public class MainMenuController : MonoBehaviour, ICancelHandler
     private const string TitleFontPath = "Assets/Art/UI/Fonts/NotoSerifDisplay-Medium.ttf";
     private const string LegacyTitleFontPath = "Assets/Art/UI/Fonts/LiberationSerif-Bold.ttf";
     private const string AudioSettingsPanelName = "Panel_AudioSettings";
-    private const string CursorStylePanelName = "Panel_CursorStyleChooser";
-    private const string CursorStyleFrameName = "Frame_CursorStyleChooser";
     private const string MenuTitle = "Chantilly";
     private const string DeveloperCredit = "developed by Kadabra Games";
 
@@ -110,10 +108,8 @@ public class MainMenuController : MonoBehaviour, ICancelHandler
     public float minResponsiveLayoutScale = 0.55f;
 
     private RectTransform audioSettingsPanel;
-    private RectTransform cursorStylePanel;
     private readonly List<AudioSliderBinding> audioSettingsBindings = new List<AudioSliderBinding>();
     private bool audioSettingsVisible;
-    private bool cursorStyleChooserVisible;
     private TMP_FontAsset resolvedTitleFontAsset;
     private Vector2 lastMenuLayoutSize = new Vector2(-1f, -1f);
 
@@ -164,7 +160,7 @@ public class MainMenuController : MonoBehaviour, ICancelHandler
             ApplyRightRailLayout();
         }
 
-        if ((audioSettingsVisible || cursorStyleChooserVisible) && WasCancelPressed())
+        if (audioSettingsVisible && WasCancelPressed())
         {
             CloseVisibleMenuOverlay();
         }
@@ -186,18 +182,12 @@ public class MainMenuController : MonoBehaviour, ICancelHandler
             return true;
         }
 
-        if (cursorStyleChooserVisible)
-        {
-            HideCursorStyleChooser();
-            return true;
-        }
-
         return false;
     }
 
     public void NewGame()
     {
-        ShowCursorStyleChooser();
+        LoadGameScene("New Game");
     }
 
     public void ContinueGame()
@@ -382,11 +372,6 @@ public class MainMenuController : MonoBehaviour, ICancelHandler
         if (audioSettingsVisible && audioSettingsPanel != null)
         {
             audioSettingsPanel.SetAsLastSibling();
-        }
-
-        if (cursorStyleChooserVisible && cursorStylePanel != null)
-        {
-            cursorStylePanel.SetAsLastSibling();
         }
     }
 
@@ -841,11 +826,6 @@ public class MainMenuController : MonoBehaviour, ICancelHandler
 
     private void ToggleAudioSettingsPanel()
     {
-        if (cursorStyleChooserVisible)
-        {
-            HideCursorStyleChooser();
-        }
-
         EnsureAudioSettingsPanel();
 
         if (audioSettingsVisible)
@@ -880,434 +860,6 @@ public class MainMenuController : MonoBehaviour, ICancelHandler
         if (EventSystem.current != null && settingsMenuButton != null && settingsMenuButton.isActiveAndEnabled)
         {
             settingsMenuButton.Select();
-        }
-    }
-
-    private void ShowCursorStyleChooser()
-    {
-        if (audioSettingsPanel != null)
-        {
-            HideAudioSettingsPanel();
-        }
-
-        EnsureCursorStyleChooserPanel();
-        cursorStyleChooserVisible = true;
-
-        if (cursorStylePanel != null)
-        {
-            cursorStylePanel.gameObject.SetActive(true);
-            cursorStylePanel.SetAsLastSibling();
-            SelectFirstCursorStyleCard();
-        }
-    }
-
-    private void HideCursorStyleChooser()
-    {
-        cursorStyleChooserVisible = false;
-
-        if (cursorStylePanel != null)
-        {
-            cursorStylePanel.gameObject.SetActive(false);
-        }
-    }
-
-    private void SelectCursorStyleAndStart(int styleIndex)
-    {
-        NavigationCursorController.SetCursorStyle(styleIndex);
-        HideCursorStyleChooser();
-        LoadGameScene("New Game");
-    }
-
-    private void EnsureCursorStyleChooserPanel()
-    {
-        if (cursorStylePanel != null)
-        {
-            RefreshCursorStyleChooserPreviews();
-            return;
-        }
-
-        RectTransform parent = menuPanel != null && menuPanel.parent is RectTransform menuParent
-            ? menuParent
-            : transform as RectTransform;
-
-        if (parent == null)
-        {
-            return;
-        }
-
-        Transform existing = parent.Find(CursorStylePanelName);
-        cursorStylePanel = existing as RectTransform;
-
-        if (cursorStylePanel == null)
-        {
-            GameObject panelObject = new GameObject(CursorStylePanelName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            cursorStylePanel = panelObject.GetComponent<RectTransform>();
-            cursorStylePanel.SetParent(parent, false);
-        }
-
-        PinStretch(cursorStylePanel);
-
-        Image panelImage = cursorStylePanel.GetComponent<Image>();
-
-        if (panelImage != null)
-        {
-            panelImage.color = new Color(0.015f, 0.022f, 0.014f, 0.92f);
-            panelImage.raycastTarget = true;
-        }
-
-        RectTransform frame = FindOrCreateCursorStyleFrame(cursorStylePanel);
-        CreateCursorStyleHeader(frame);
-        CreateCursorStyleGrid(frame);
-        CreateCursorStyleBackButton(frame);
-        cursorStylePanel.gameObject.SetActive(cursorStyleChooserVisible);
-    }
-
-    private RectTransform FindOrCreateCursorStyleFrame(RectTransform parent)
-    {
-        Transform existing = parent.Find(CursorStyleFrameName);
-        RectTransform frame = existing as RectTransform;
-
-        if (frame == null)
-        {
-            GameObject frameObject = new GameObject(CursorStyleFrameName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Outline));
-            frame = frameObject.GetComponent<RectTransform>();
-            frame.SetParent(parent, false);
-        }
-
-        frame.anchorMin = new Vector2(0.5f, 0.5f);
-        frame.anchorMax = new Vector2(0.5f, 0.5f);
-        frame.pivot = new Vector2(0.5f, 0.5f);
-        frame.sizeDelta = new Vector2(1120f, 690f);
-        frame.anchoredPosition = Vector2.zero;
-
-        Image frameImage = frame.GetComponent<Image>();
-
-        if (frameImage != null)
-        {
-            frameImage.color = new Color(0.055f, 0.105f, 0.07f, 0.97f);
-            frameImage.raycastTarget = true;
-        }
-
-        Outline outline = frame.GetComponent<Outline>();
-
-        if (outline != null)
-        {
-            outline.effectColor = new Color(0.82f, 0.64f, 0.27f, 0.95f);
-            outline.effectDistance = new Vector2(4f, -4f);
-        }
-
-        return frame;
-    }
-
-    private void CreateCursorStyleHeader(RectTransform frame)
-    {
-        TMP_Text titleLabel = FindOrCreateChooserText(frame, "Text_CursorStyleTitle", 36f, TextAlignmentOptions.Center, FontStyles.Bold);
-        titleLabel.text = "Choose Cursor Style";
-        titleLabel.color = titleColor;
-
-        RectTransform titleRect = titleLabel.GetComponent<RectTransform>();
-        titleRect.anchorMin = new Vector2(0f, 1f);
-        titleRect.anchorMax = new Vector2(1f, 1f);
-        titleRect.pivot = new Vector2(0.5f, 1f);
-        titleRect.anchoredPosition = new Vector2(0f, -24f);
-        titleRect.sizeDelta = new Vector2(-64f, 46f);
-
-        TMP_Text subtitleLabel = FindOrCreateChooserText(frame, "Text_CursorStyleSubtitle", 18f, TextAlignmentOptions.Center, FontStyles.Normal);
-        subtitleLabel.text = "Select the cursor set you want to use.";
-        subtitleLabel.color = new Color(0.92f, 0.82f, 0.58f, 1f);
-
-        RectTransform subtitleRect = subtitleLabel.GetComponent<RectTransform>();
-        subtitleRect.anchorMin = new Vector2(0f, 1f);
-        subtitleRect.anchorMax = new Vector2(1f, 1f);
-        subtitleRect.pivot = new Vector2(0.5f, 1f);
-        subtitleRect.anchoredPosition = new Vector2(0f, -72f);
-        subtitleRect.sizeDelta = new Vector2(-96f, 30f);
-    }
-
-    private void CreateCursorStyleGrid(RectTransform frame)
-    {
-        Transform existing = frame.Find("Grid_CursorStyles");
-        RectTransform grid = existing as RectTransform;
-
-        if (grid == null)
-        {
-            GameObject gridObject = new GameObject("Grid_CursorStyles", typeof(RectTransform), typeof(GridLayoutGroup));
-            grid = gridObject.GetComponent<RectTransform>();
-            grid.SetParent(frame, false);
-        }
-
-        grid.anchorMin = new Vector2(0.5f, 0.5f);
-        grid.anchorMax = new Vector2(0.5f, 0.5f);
-        grid.pivot = new Vector2(0.5f, 0.5f);
-        grid.sizeDelta = new Vector2(1030f, 470f);
-        grid.anchoredPosition = new Vector2(0f, -22f);
-
-        GridLayoutGroup layout = grid.GetComponent<GridLayoutGroup>();
-
-        if (layout != null)
-        {
-            layout.cellSize = new Vector2(190f, 220f);
-            layout.spacing = new Vector2(20f, 24f);
-            layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            layout.constraintCount = 5;
-            layout.childAlignment = TextAnchor.MiddleCenter;
-        }
-
-        int[] styles = NavigationCursorController.GetAvailableCursorStyles();
-
-        for (int i = 0; i < styles.Length; i++)
-        {
-            CreateOrRefreshCursorStyleCard(grid, styles[i]);
-        }
-    }
-
-    private void CreateOrRefreshCursorStyleCard(RectTransform grid, int styleIndex)
-    {
-        string cardName = $"Button_CursorStyle_{styleIndex:00}";
-        Transform existing = grid.Find(cardName);
-        RectTransform card = existing as RectTransform;
-
-        if (card == null)
-        {
-            GameObject cardObject = new GameObject(cardName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
-            card = cardObject.GetComponent<RectTransform>();
-            card.SetParent(grid, false);
-        }
-
-        Button button = card.GetComponent<Button>();
-        Image cardImage = card.GetComponent<Image>();
-
-        if (cardImage != null)
-        {
-            cardImage.color = new Color(0.105f, 0.14f, 0.08f, 0.98f);
-            cardImage.raycastTarget = true;
-        }
-
-        if (button != null)
-        {
-            int capturedStyle = styleIndex;
-            button.transition = Selectable.Transition.ColorTint;
-            button.targetGraphic = cardImage;
-            button.colors = CreateCursorStyleCardColors();
-            button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(() => SelectCursorStyleAndStart(capturedStyle));
-        }
-
-        ConfigureControlCursor(card, button);
-
-        TMP_Text label = FindOrCreateChooserText(card, "Text_Label", 17f, TextAlignmentOptions.Center, FontStyles.Bold);
-        label.text = $"Style {styleIndex}";
-        label.color = new Color(0.95f, 0.78f, 0.34f, 1f);
-
-        RectTransform labelRect = label.GetComponent<RectTransform>();
-        labelRect.anchorMin = new Vector2(0f, 1f);
-        labelRect.anchorMax = new Vector2(1f, 1f);
-        labelRect.pivot = new Vector2(0.5f, 1f);
-        labelRect.anchoredPosition = new Vector2(0f, -8f);
-        labelRect.sizeDelta = new Vector2(-16f, 24f);
-
-        RectTransform iconGrid = FindOrCreateCursorStyleIconGrid(card);
-        CursorStyleCatalog.CursorAction[] previewActions = CursorStyleCatalog.ChooserPreviewActions;
-
-        for (int i = 0; i < previewActions.Length; i++)
-        {
-            CreateOrRefreshCursorStylePreviewIcon(iconGrid, styleIndex, previewActions[i], i);
-        }
-    }
-
-    private RectTransform FindOrCreateCursorStyleIconGrid(RectTransform card)
-    {
-        Transform existing = card.Find("Grid_PreviewIcons");
-        RectTransform iconGrid = existing as RectTransform;
-
-        if (iconGrid == null)
-        {
-            GameObject iconGridObject = new GameObject("Grid_PreviewIcons", typeof(RectTransform), typeof(GridLayoutGroup));
-            iconGrid = iconGridObject.GetComponent<RectTransform>();
-            iconGrid.SetParent(card, false);
-        }
-
-        iconGrid.anchorMin = new Vector2(0.5f, 0f);
-        iconGrid.anchorMax = new Vector2(0.5f, 1f);
-        iconGrid.pivot = new Vector2(0.5f, 0.5f);
-        iconGrid.sizeDelta = new Vector2(156f, -44f);
-        iconGrid.anchoredPosition = new Vector2(0f, -12f);
-
-        GridLayoutGroup layout = iconGrid.GetComponent<GridLayoutGroup>();
-
-        if (layout != null)
-        {
-            layout.cellSize = new Vector2(34f, 34f);
-            layout.spacing = new Vector2(6f, 7f);
-            layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            layout.constraintCount = 4;
-            layout.childAlignment = TextAnchor.MiddleCenter;
-        }
-
-        return iconGrid;
-    }
-
-    private void CreateOrRefreshCursorStylePreviewIcon(
-        RectTransform iconGrid,
-        int styleIndex,
-        CursorStyleCatalog.CursorAction action,
-        int actionIndex)
-    {
-        string objectName = $"Icon_{actionIndex:00}_{CursorStyleCatalog.GetActionResourceName(action)}";
-        Transform existing = iconGrid.Find(objectName);
-        RawImage image;
-
-        if (existing == null)
-        {
-            GameObject iconObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
-            iconObject.transform.SetParent(iconGrid, false);
-            image = iconObject.GetComponent<RawImage>();
-        }
-        else
-        {
-            image = existing.GetComponent<RawImage>();
-        }
-
-        if (image == null)
-        {
-            return;
-        }
-
-        image.texture = NavigationCursorController.LoadCursorStylePreview(styleIndex, action);
-        image.color = Color.white;
-        image.raycastTarget = false;
-    }
-
-    private void CreateCursorStyleBackButton(RectTransform frame)
-    {
-        Transform existing = frame.Find("Button_CursorStyleBack");
-        RectTransform backRect = existing as RectTransform;
-
-        if (backRect == null)
-        {
-            GameObject backObject = new GameObject("Button_CursorStyleBack", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
-            backRect = backObject.GetComponent<RectTransform>();
-            backRect.SetParent(frame, false);
-        }
-
-        backRect.anchorMin = new Vector2(0.5f, 0f);
-        backRect.anchorMax = new Vector2(0.5f, 0f);
-        backRect.pivot = new Vector2(0.5f, 0f);
-        backRect.sizeDelta = new Vector2(150f, 38f);
-        backRect.anchoredPosition = new Vector2(0f, 22f);
-
-        Image image = backRect.GetComponent<Image>();
-
-        if (image != null)
-        {
-            image.color = new Color(0.18f, 0.14f, 0.075f, 1f);
-            image.raycastTarget = true;
-        }
-
-        Button button = backRect.GetComponent<Button>();
-
-        if (button != null)
-        {
-            button.transition = Selectable.Transition.ColorTint;
-            button.targetGraphic = image;
-            button.colors = CreateCursorStyleCardColors();
-            button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(HideCursorStyleChooser);
-        }
-
-        ConfigureControlCursor(backRect, button);
-
-        TMP_Text label = FindOrCreateChooserText(backRect, "Text_Label", 18f, TextAlignmentOptions.Center, FontStyles.Bold);
-        label.text = "Back";
-        label.color = titleColor;
-        RectTransform labelRect = label.GetComponent<RectTransform>();
-        labelRect.anchorMin = Vector2.zero;
-        labelRect.anchorMax = Vector2.one;
-        labelRect.offsetMin = Vector2.zero;
-        labelRect.offsetMax = Vector2.zero;
-    }
-
-    private TMP_Text FindOrCreateChooserText(
-        RectTransform parent,
-        string objectName,
-        float fontSize,
-        TextAlignmentOptions alignment,
-        FontStyles fontStyle)
-    {
-        Transform existing = parent.Find(objectName);
-        TMP_Text text = existing != null ? existing.GetComponent<TMP_Text>() : null;
-
-        if (text == null)
-        {
-            GameObject textObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
-            textObject.transform.SetParent(parent, false);
-            text = textObject.GetComponent<TMP_Text>();
-        }
-
-        ApplyMenuFont(text);
-
-        text.fontSize = fontSize;
-        text.fontStyle = fontStyle;
-        text.alignment = alignment;
-        text.textWrappingMode = TextWrappingModes.NoWrap;
-        text.raycastTarget = false;
-        return text;
-    }
-
-    private ColorBlock CreateCursorStyleCardColors()
-    {
-        ColorBlock colors = ColorBlock.defaultColorBlock;
-        colors.normalColor = new Color(0.105f, 0.14f, 0.08f, 0.98f);
-        colors.highlightedColor = new Color(0.31f, 0.25f, 0.09f, 1f);
-        colors.selectedColor = new Color(0.36f, 0.29f, 0.11f, 1f);
-        colors.pressedColor = new Color(0.07f, 0.045f, 0.02f, 1f);
-        colors.disabledColor = new Color(0.06f, 0.06f, 0.05f, 0.82f);
-        colors.colorMultiplier = 1f;
-        colors.fadeDuration = 0.08f;
-        return colors;
-    }
-
-    private void RefreshCursorStyleChooserPreviews()
-    {
-        if (cursorStylePanel == null)
-        {
-            return;
-        }
-
-        RectTransform frame = cursorStylePanel.Find(CursorStyleFrameName) as RectTransform;
-
-        if (frame == null)
-        {
-            return;
-        }
-
-        RectTransform grid = frame.Find("Grid_CursorStyles") as RectTransform;
-
-        if (grid == null)
-        {
-            return;
-        }
-
-        int[] styles = NavigationCursorController.GetAvailableCursorStyles();
-
-        for (int i = 0; i < styles.Length; i++)
-        {
-            CreateOrRefreshCursorStyleCard(grid, styles[i]);
-        }
-    }
-
-    private void SelectFirstCursorStyleCard()
-    {
-        if (EventSystem.current == null || cursorStylePanel == null)
-        {
-            return;
-        }
-
-        Button firstButton = cursorStylePanel.GetComponentInChildren<Button>(true);
-
-        if (firstButton != null)
-        {
-            firstButton.Select();
         }
     }
 

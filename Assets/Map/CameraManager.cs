@@ -2081,32 +2081,6 @@ public static class NavigationCursorController
         ApplyCursor();
     }
 
-    public static int[] GetAvailableCursorStyles()
-    {
-        return CursorStyleCatalog.GetAvailableStyleIndices();
-    }
-
-    public static int GetSelectedCursorStyle()
-    {
-        return CursorStyleCatalog.GetSelectedStyleIndex();
-    }
-
-    public static void SetCursorStyle(int styleIndex)
-    {
-        if (!CursorStyleCatalog.SetSelectedStyleIndex(styleIndex))
-        {
-            return;
-        }
-
-        ClearCursorTextureCache();
-        ApplyCursor();
-    }
-
-    public static Texture2D LoadCursorStylePreview(int styleIndex, CursorStyleCatalog.CursorAction action)
-    {
-        return CursorStyleCatalog.LoadTexture(styleIndex, action);
-    }
-
     public static void SetEdgePanDirection(int direction)
     {
         SetEdgePanDirection(direction, 0);
@@ -2529,90 +2503,90 @@ public static class NavigationCursorController
 
     private static Texture2D GetDoorCursor()
     {
-        return GetStyledCursorTexture(ref doorCursor, CursorStyleCatalog.CursorAction.OpenDoor, CreateDoorCursor);
+        return GetCursorActionTexture(ref doorCursor, CursorStyleCatalog.CursorAction.OpenDoor, CreateDoorCursor);
     }
 
     private static Texture2D GetExitLeaveRoomCursor()
     {
-        return GetStyledCursorTexture(ref exitLeaveRoomCursor, CursorStyleCatalog.CursorAction.ExitLeaveRoom, CreateDoorCursor);
+        return GetCursorActionTexture(ref exitLeaveRoomCursor, CursorStyleCatalog.CursorAction.ExitLeaveRoom, CreateDoorCursor);
     }
 
     private static Texture2D GetStairwayCursor()
     {
-        return GetStyledCursorTexture(ref stairwayCursor, CursorStyleCatalog.CursorAction.StairsUp, CreateStairwayCursor);
+        return GetCursorActionTexture(ref stairwayCursor, CursorStyleCatalog.CursorAction.StairsUp, CreateStairwayCursor);
     }
 
     private static Texture2D GetStairsUpCursor()
     {
-        return GetStyledCursorTexture(ref stairsUpCursor, CursorStyleCatalog.CursorAction.StairsUp, CreateStairwayCursor);
+        return GetCursorActionTexture(ref stairsUpCursor, CursorStyleCatalog.CursorAction.StairsUp, CreateStairwayCursor);
     }
 
     private static Texture2D GetStairsDownCursor()
     {
-        return GetStyledCursorTexture(ref stairsDownCursor, CursorStyleCatalog.CursorAction.StairsDown, CreateStairwayCursor);
+        return GetCursorActionTexture(ref stairsDownCursor, CursorStyleCatalog.CursorAction.StairsDown, CreateStairwayCursor);
     }
 
     private static Texture2D GetInspectCursor()
     {
-        return GetStyledCursorTexture(ref inspectCursor, CursorStyleCatalog.CursorAction.InspectLook, CreateUiCursor);
+        return GetCursorActionTexture(ref inspectCursor, CursorStyleCatalog.CursorAction.InspectLook, CreateUiCursor);
     }
 
     private static Texture2D GetPickUpTakeCursor()
     {
-        return GetStyledCursorTexture(ref pickUpTakeCursor, CursorStyleCatalog.CursorAction.PickUpTake, () => CreateCoatCursor("Cursor_PickUpTake", false));
+        return GetCursorActionTexture(ref pickUpTakeCursor, CursorStyleCatalog.CursorAction.PickUpTake, () => CreateCoatCursor("Cursor_PickUpTake", false));
     }
 
     private static Texture2D GetPickUpCoatCursor()
     {
-        return GetStyledCursorTexture(ref pickUpCoatCursor, CursorStyleCatalog.CursorAction.PickUpCoat, () => CreateCoatCursor("Cursor_PickUpCoat", false));
+        return GetCursorActionTexture(ref pickUpCoatCursor, CursorStyleCatalog.CursorAction.PickUpCoat, () => CreateCoatCursor("Cursor_PickUpCoat", false));
     }
 
     private static Texture2D GetCoatCursor()
     {
-        return GetStyledCursorTexture(ref coatCursor, CursorStyleCatalog.CursorAction.PickUpCoat, () => CreateCoatCursor("Cursor_Coat", false));
+        return GetCursorActionTexture(ref coatCursor, CursorStyleCatalog.CursorAction.PickUpCoat, () => CreateCoatCursor("Cursor_Coat", false));
     }
 
     private static Texture2D GetPlaceHangCoatCursor()
     {
-        return GetStyledCursorTexture(ref placeHangCoatCursor, CursorStyleCatalog.CursorAction.PlaceHangCoat, () => CreateCoatCursor("Cursor_PlaceHangCoat", false));
+        return GetCursorActionTexture(ref placeHangCoatCursor, CursorStyleCatalog.CursorAction.PlaceHangCoat, () => CreateCoatCursor("Cursor_PlaceHangCoat", false));
     }
 
     private static Texture2D GetBlockedCoatCursor()
     {
-        return GetStyledCursorTexture(ref blockedCoatCursor, CursorStyleCatalog.CursorAction.LockedCannotUse, () => CreateCoatCursor("Cursor_CoatBlocked", true));
+        return GetCursorActionTexture(ref blockedCoatCursor, CursorStyleCatalog.CursorAction.LockedCannotUse, () => CreateCoatCursor("Cursor_CoatBlocked", true));
     }
 
     private static Texture2D GetTalkCursor()
     {
-        return GetStyledCursorTexture(ref talkCursor, CursorStyleCatalog.CursorAction.TalkConverse, CreateTalkCursor);
+        return GetCursorActionTexture(ref talkCursor, CursorStyleCatalog.CursorAction.TalkConverse, CreateTalkCursor);
     }
 
     private static Texture2D GetLockedCursor()
     {
-        return GetStyledCursorTexture(ref lockedCursor, CursorStyleCatalog.CursorAction.LockedCannotUse, () => CreateCoatCursor("Cursor_Locked", true));
+        return GetCursorActionTexture(ref lockedCursor, CursorStyleCatalog.CursorAction.LockedCannotUse, () => CreateCoatCursor("Cursor_Locked", true));
     }
 
     private static Texture2D GetUnavailableCursor()
     {
-        return GetStyledCursorTexture(ref unavailableCursor, CursorStyleCatalog.CursorAction.NotAvailableDisabled, () => CreateWalkCursor("Cursor_Unavailable", true));
+        return GetCursorActionTexture(ref unavailableCursor, CursorStyleCatalog.CursorAction.NotAvailableDisabled, () => CreateWalkCursor("Cursor_Unavailable", true));
     }
 
     private static Texture2D GetUiCursor()
     {
-        return GetStyledCursorTexture(ref uiCursor, CursorStyleCatalog.CursorAction.UseInteract, CreateUiCursor);
+        return GetCursorActionTexture(ref uiCursor, CursorStyleCatalog.CursorAction.UseInteract, CreateUiCursor);
     }
 
     private static Texture2D GetWalkCursor()
     {
-        return GetStyledCursorTexture(ref walkCursor, CursorStyleCatalog.CursorAction.WalkMove, () => CreateWalkCursor("Cursor_Walk", false));
+        return GetCursorActionTexture(ref walkCursor, CursorStyleCatalog.CursorAction.WalkMove, () => CreateWalkCursor("Cursor_Walk", false));
     }
 
     private static Texture2D GetBlockedWalkCursor()
     {
-        return GetStyledCursorTexture(ref blockedWalkCursor, CursorStyleCatalog.CursorAction.NotAvailableDisabled, () => CreateWalkCursor("Cursor_WalkBlocked", true));
+        return GetCursorActionTexture(ref blockedWalkCursor, CursorStyleCatalog.CursorAction.NotAvailableDisabled, () => CreateWalkCursor("Cursor_WalkBlocked", true));
     }
 
-    private static Texture2D GetStyledCursorTexture(
+    private static Texture2D GetCursorActionTexture(
         ref Texture2D cache,
         CursorStyleCatalog.CursorAction action,
         System.Func<Texture2D> fallbackFactory)
@@ -2622,8 +2596,8 @@ public static class NavigationCursorController
             return cache;
         }
 
-        Texture2D styledTexture = CursorStyleCatalog.LoadSelectedTexture(action);
-        cache = styledTexture != null ? styledTexture : fallbackFactory();
+        Texture2D catalogTexture = CursorStyleCatalog.LoadTexture(action);
+        cache = catalogTexture != null ? catalogTexture : fallbackFactory();
         return cache;
     }
 

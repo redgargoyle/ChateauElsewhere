@@ -9,6 +9,9 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public class Chapter2InteractionHUD : MonoBehaviour
 {
+    // Match Chapter 1's safe top-left region below the closed Settings button.
+    private const float StatusTopInset = 58f;
+
     private const string CanvasName = "Canvas_Chapter2HUD";
     private const string ObjectiveTextName = "Text_Chapter2Objective";
     private const string StatusTextName = "Text_Chapter2Status";
@@ -241,12 +244,13 @@ public class Chapter2InteractionHUD : MonoBehaviour
         objectiveRect.anchoredPosition = new Vector2(0f, 104f);
         objectiveRect.sizeDelta = new Vector2(900f, 76f);
 
-        statusText = FindOrCreateText(root, StatusTextName, 18f, TextAlignmentOptions.Left);
+        statusText = FindOrCreateText(root, StatusTextName, 18f, TextAlignmentOptions.TopLeft);
+        statusText.alignment = TextAlignmentOptions.TopLeft;
         RectTransform statusRect = statusText.GetComponent<RectTransform>();
         statusRect.anchorMin = new Vector2(0f, 1f);
         statusRect.anchorMax = new Vector2(0f, 1f);
         statusRect.pivot = new Vector2(0f, 1f);
-        statusRect.anchoredPosition = new Vector2(18f, -18f);
+        statusRect.anchoredPosition = new Vector2(18f, -StatusTopInset);
         statusRect.sizeDelta = new Vector2(500f, 90f);
 
         foundListText = FindOrCreateText(root, FoundListTextName, 18f, TextAlignmentOptions.TopRight);

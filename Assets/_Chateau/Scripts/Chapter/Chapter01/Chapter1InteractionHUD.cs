@@ -6,6 +6,10 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public class Chapter1InteractionHUD : MonoBehaviour
 {
+    // The closed Settings button occupies the first 46 reference pixels from the top.
+    // Start chapter status 12 pixels below it so the two HUD layers never overlap.
+    private const float StatusTopInset = 58f;
+
     [SerializeField] private bool showButtonPrompts = true;
 
     private Chapter1ArrivalController arrivalController;
@@ -67,13 +71,15 @@ public class Chapter1InteractionHUD : MonoBehaviour
         Transform existingStatus = root.Find("Text_Chapter1Status");
         statusText = existingStatus != null
             ? existingStatus.GetComponent<TMP_Text>()
-            : CreateText("Text_Chapter1Status", root, 18f, TextAlignmentOptions.Left);
+            : CreateText("Text_Chapter1Status", root, 18f, TextAlignmentOptions.TopLeft);
+
+        statusText.alignment = TextAlignmentOptions.TopLeft;
 
         RectTransform statusRect = statusText.GetComponent<RectTransform>();
         statusRect.anchorMin = new Vector2(0f, 1f);
         statusRect.anchorMax = new Vector2(0f, 1f);
         statusRect.pivot = new Vector2(0f, 1f);
-        statusRect.anchoredPosition = new Vector2(18f, -18f);
+        statusRect.anchoredPosition = new Vector2(18f, -StatusTopInset);
         statusRect.sizeDelta = new Vector2(430f, 80f);
     }
 

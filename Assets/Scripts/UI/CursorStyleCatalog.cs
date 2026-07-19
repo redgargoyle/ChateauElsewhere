@@ -19,29 +19,10 @@ public static class CursorStyleCatalog
         NotAvailableDisabled
     }
 
-    public const int DefaultStyleIndex = 1;
-    public const int StyleCount = 10;
-    public const string PlayerPrefsKey = "Dreadforge.CursorStyle";
+    public const int DefaultStyleIndex = 9;
 
     private const string ResourceRoot = "UI/Cursors/styles";
-
-    public static readonly CursorAction[] ChooserPreviewActions =
-    {
-        CursorAction.WalkMove,
-        CursorAction.OpenDoor,
-        CursorAction.StairsUp,
-        CursorAction.StairsDown,
-        CursorAction.InspectLook,
-        CursorAction.TalkConverse,
-        CursorAction.PickUpTake,
-        CursorAction.PickUpCoat,
-        CursorAction.PlaceHangCoat,
-        CursorAction.UseInteract,
-        CursorAction.LockedCannotUse,
-        CursorAction.NotAvailableDisabled
-    };
-
-    public static readonly string[] CursorActions =
+    private static readonly string[] CursorActions =
     {
         "walk_move",
         "open_door",
@@ -58,90 +39,17 @@ public static class CursorStyleCatalog
         "not_available_disabled"
     };
 
-    public static int[] GetAvailableStyleIndices()
+    public static Texture2D LoadTexture(CursorAction action)
     {
-        int[] styles = new int[StyleCount];
-
-        for (int i = 0; i < styles.Length; i++)
-        {
-            styles[i] = i + 1;
-        }
-
-        return styles;
+        return Resources.Load<Texture2D>(GetCursorIconPath(action));
     }
 
-    public static int GetSelectedStyleIndex()
+    public static string GetCursorIconPath(CursorAction action)
     {
-        return SanitizeStyleIndex(PlayerPrefs.GetInt(PlayerPrefsKey, DefaultStyleIndex));
+        return $"{ResourceRoot}/style_{DefaultStyleIndex:00}/{GetActionResourceName(action)}";
     }
 
-    public static bool SetSelectedStyleIndex(int styleIndex)
-    {
-        int cleanStyleIndex = SanitizeStyleIndex(styleIndex);
-
-        if (GetSelectedStyleIndex() == cleanStyleIndex)
-        {
-            return false;
-        }
-
-        PlayerPrefs.SetInt(PlayerPrefsKey, cleanStyleIndex);
-        PlayerPrefs.Save();
-        return true;
-    }
-
-    public static int SanitizeStyleIndex(int styleIndex)
-    {
-        return styleIndex >= 1 && styleIndex <= StyleCount
-            ? styleIndex
-            : DefaultStyleIndex;
-    }
-
-    public static Texture2D LoadSelectedTexture(CursorAction action)
-    {
-        return LoadTexture(GetSelectedStyleIndex(), action);
-    }
-
-    public static Texture2D LoadTexture(int styleIndex, CursorAction action)
-    {
-        return Resources.Load<Texture2D>(GetCursorIconPath(styleIndex, action));
-    }
-
-    public static Texture2D LoadTexture(int styleIndex, string actionName)
-    {
-        return LoadTexture(styleIndex, GetActionFromName(actionName));
-    }
-
-    public static string GetCursorIconPath(int styleIndex, CursorAction action)
-    {
-        return $"{ResourceRoot}/style_{SanitizeStyleIndex(styleIndex):00}/{GetActionResourceName(action)}";
-    }
-
-    public static string GetCursorIconPath(int styleIndex, string actionName)
-    {
-        return GetCursorIconPath(styleIndex, GetActionFromName(actionName));
-    }
-
-    public static CursorAction GetActionFromName(string actionName)
-    {
-        if (string.IsNullOrWhiteSpace(actionName))
-        {
-            return CursorAction.UseInteract;
-        }
-
-        string cleanActionName = actionName.Trim();
-
-        for (int i = 0; i < CursorActions.Length; i++)
-        {
-            if (string.Equals(cleanActionName, CursorActions[i], System.StringComparison.OrdinalIgnoreCase))
-            {
-                return (CursorAction)i;
-            }
-        }
-
-        return CursorAction.UseInteract;
-    }
-
-    public static string GetActionResourceName(CursorAction action)
+    private static string GetActionResourceName(CursorAction action)
     {
         int index = (int)action;
         return index >= 0 && index < CursorActions.Length
