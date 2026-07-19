@@ -346,12 +346,19 @@ public class PointClickPlayerMovement : MonoBehaviour
 		// then establish the room-stage reference used by every movement conversion.
 		yield return null;
 		Canvas.ForceUpdateCanvases();
+		// The walkable boundaries live below the room-stage RectTransform. This
+		// project disables automatic 2D transform synchronization, so standalone
+		// builds can otherwise query the collider at its pre-layout position.
+		Physics2D.SyncTransforms();
 		CacheReferences();
 		ResetRoomStageVisualReference();
 		InitializeVisualStateFromTransform();
 
 		FindWalkableFloor();
 		RefreshWalkableFloorForCurrentRoom();
+		// Boundary selection can follow a final active-room layout update. Ensure
+		// the initial clamp below always sees the matching physics transform.
+		Physics2D.SyncTransforms();
 
 		if (walkableFloor == null && !allowMovementWithoutWalkableFloor)
 		{

@@ -1523,6 +1523,14 @@ public class CameraManager : MonoBehaviour
 
         if (TryApplyRoomStageLayout(rectTransform))
         {
+            // Player boundaries, blockers, and doors are children of the room
+            // stage. Auto Sync Transforms is disabled, so publish this finalized
+            // layout to Physics 2D before movement or pointer queries use them.
+            if (Application.isPlaying)
+            {
+                Physics2D.SyncTransforms();
+            }
+
             roomLayoutDirty = false;
             return;
         }

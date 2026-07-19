@@ -91,6 +91,43 @@ public sealed class PointClickStandaloneMovementRegressionTests
     }
 
     [Test]
+    public void StartupSynchronizesFinalizedWalkableBoundaryBeforeInitialClamp()
+    {
+        GameObject boundaryObject = new GameObject("StandaloneStartupBoundarySyncTest");
+        GameObject player = new GameObject("StandaloneStartupBoundarySyncPlayer");
+
+        try
+        {
+            boundaryObject.transform.position = new Vector3(0f, -70f, 0f);
+            BoxCollider2D boundary = boundaryObject.AddComponent<BoxCollider2D>();
+            boundary.size = new Vector2(10f, 10f);
+            Physics2D.SyncTransforms();
+
+            // Reproduce the standalone startup order: Canvas layout moves the room
+            // stage, while Physics 2D still holds the boundary's old transform.
+            boundaryObject.transform.position = Vector3.zero;
+            player.transform.position = new Vector3(0f, -2f, 0f);
+
+            PointClickPlayerMovement movement = player.AddComponent<PointClickPlayerMovement>();
+            SetPrivateField(movement, "walkableFloor", boundary);
+            SetPrivateField(movement, "useCurrentRoomBoundary", false);
+
+            IEnumerator startup = InvokeStartup(movement);
+            Assert.That(startup.MoveNext(), Is.True);
+            Assert.That(startup.MoveNext(), Is.False);
+
+            Assert.That(boundary.OverlapPoint(player.transform.position), Is.True);
+            Assert.That(movement.LogicalPosition.x, Is.EqualTo(0f).Within(0.0001f));
+            Assert.That(movement.LogicalPosition.y, Is.EqualTo(-2f).Within(0.0001f));
+        }
+        finally
+        {
+            Object.DestroyImmediate(player);
+            Object.DestroyImmediate(boundaryObject);
+        }
+    }
+
+    [Test]
     public void RoomStageResetRebasesAStaleLogicalPositionFromTheVisibleWorldPoint()
     {
         GameObject player = new GameObject("StandaloneRoomRebaseTest");
