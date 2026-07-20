@@ -8,8 +8,7 @@ using UnityEngine.InputSystem;
 public enum Chapter1SceneActionType
 {
     FrontDoor = 0,
-    CoatCloset = 1,
-    DrawingRoomExit = 3
+    CoatCloset = 1
 }
 
 [DisallowMultipleComponent]
@@ -193,12 +192,6 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerDownHandler, IPointerC
                 if (arrivalController != null)
                 {
                     arrivalController.HandleClosetClicked();
-                }
-                break;
-            case Chapter1SceneActionType.DrawingRoomExit:
-                if (arrivalController != null)
-                {
-                    arrivalController.TryCompleteChapterFromDrawingRoomExit();
                 }
                 break;
         }
@@ -594,11 +587,6 @@ public class Chapter1SceneAction : MonoBehaviour, IPointerDownHandler, IPointerC
             return arrivalController != null && arrivalController.ButlerCarryingCoat
                 ? NavigationCursorController.HoverIcon.PlaceHangCoat
                 : NavigationCursorController.HoverIcon.Locked;
-        }
-
-        if (actionType == Chapter1SceneActionType.DrawingRoomExit)
-        {
-            return NavigationCursorController.HoverIcon.ExitLeaveRoom;
         }
 
         return NavigationCursorController.HoverIcon.Door;

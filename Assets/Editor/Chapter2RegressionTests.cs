@@ -1862,6 +1862,10 @@ public class Chapter2RegressionTests
         Assert.That(chapter1Text, Does.Match(@"(?s)\bCheckChapterCompletionGate\s*\([^)]*\)\s*\{.*!sequenceActive \|\| chapterCompletionRequested"), "Chapter 1 completion gate should not run after Chapter 1 has ended.");
         Assert.That(chapter1Text, Does.Match(@"(?s)chapterCompletionRequested = true;.*sequenceActive = false;.*UnsubscribeFromRoomChanges\(\);.*CompleteChapterAndTriggerNextChapter\(""chapter_02_pending""\)"), "Chapter 1 should unsubscribe before requesting Chapter 2.");
         Assert.That(chapter1Text, Does.Match(@"(?s)\bHandleRoomChanged\s*\([^)]*\)\s*\{.*!sequenceActive \|\| chapterCompletionRequested"), "Re-entering Drawing Room after Chapter 1 should not call the completion gate.");
+        Assert.That(chapter1Text, Does.Not.Contain("TryCompleteChapterFromDrawingRoomExit"), "Chapter completion already has state-driven gates and must not depend on a room-wide click target.");
+        Assert.That(chapter1Text, Does.Not.Contain("Chapter1_ClickTarget_DrawingRoomExit"), "The legacy 160x160 Drawing Room click target must not consume floor movement.");
+        Assert.That(chapter1Text, Does.Not.Contain("EnsureSceneActionTargets"));
+        Assert.That(chapter1Text, Does.Not.Contain("CreateClickTarget"));
 
         Assert.That(managerText, Does.Contain("IsDuplicateChapter2Request"), "ChapterManager should reject duplicate Chapter 2 handoff requests before fading.");
         Assert.That(managerText, Does.Contain("Chapter 2 request ignored because Chapter 2 is already active."));

@@ -410,6 +410,15 @@ public class Chapter1GuestRoomVisibilityRegressionTests
             Assert.That(sceneText, Does.Contain($"m_Name: {anchorName}"), $"Gameplay should contain editable scene object {anchorName}.");
             Assert.That(sceneText, Does.Contain($"anchorId: {anchorName}"), $"{anchorName} should have a RoomAnchor id.");
         }
+
+        Match guestSevenAnchor = Regex.Match(
+            sceneText,
+            @"(?s)m_Name: DrawingRoomGuestPoint_07\s+.*?m_LocalPosition: \{x: -257, y: (?<y>-?[0-9.]+), z: -7691\.114\}.*?anchorId: DrawingRoomGuestPoint_07");
+        Assert.That(guestSevenAnchor.Success, Is.True, "Guest 7's calibrated Drawing Room anchor should remain authored in Gameplay.");
+        Assert.That(
+            float.Parse(guestSevenAnchor.Groups["y"].Value, CultureInfo.InvariantCulture),
+            Is.EqualTo(-265f).Within(0.01f),
+            "Guest 7 uses bottom-pivot locomotion art, so point 07 must preserve his pre-normalization visible floor line instead of the old root Y -72.");
     }
 
     [Test]

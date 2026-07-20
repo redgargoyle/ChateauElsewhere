@@ -397,9 +397,9 @@ public class NavigationRegressionTests
         Assert.That(chapter1ArrivalText, Does.Not.Contain("grandfatherClock"));
         Assert.That(chapter1ArrivalText, Does.Not.Contain("AddComponent<GrandfatherClockInteraction>"));
         Assert.That(chapter1ArrivalText, Does.Not.Contain("Chapter1_ClickTarget_GrandfatherClock"));
-        Assert.That(chapter1ArrivalText, Does.Contain("interactionHUD.Initialize(this);"));
+        Assert.That(chapter1ArrivalText, Does.Contain("interactionHUD?.Initialize(this);"));
         Assert.That(chapter1ActionText, Does.Not.Contain("GrandfatherClock"));
-        Assert.That(chapter1ActionText, Does.Contain("DrawingRoomExit = 3"));
+        Assert.That(chapter1ActionText, Does.Not.Contain("DrawingRoomExit"));
         Assert.That(chapter1HudText, Does.Not.Contain("clockInteraction"));
         Assert.That(gameplayText, Does.Not.Contain("grandfatherClock:"));
         Assert.That(gameplayText, Does.Not.Contain("clockInteraction:"));
@@ -794,7 +794,7 @@ public class NavigationRegressionTests
         Assert.That(pickupObjectText, Does.Contain("HoverIcon.PickUpTake"));
         Assert.That(sceneActionText, Does.Contain("HoverIcon.PlaceHangCoat"));
         Assert.That(sceneActionText, Does.Contain("HoverIcon.Inspect"));
-        Assert.That(sceneActionText, Does.Contain("HoverIcon.ExitLeaveRoom"));
+        Assert.That(sceneActionText, Does.Not.Contain("Chapter1SceneActionType.DrawingRoomExit"));
         Assert.That(guestFindText, Does.Contain("HoverIcon.Talk"));
         Assert.That(playerText, Does.Contain("SetWalkHover"), "Floor hover should keep driving selected walk/blocked cursor actions.");
     }

@@ -1117,11 +1117,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         CheckChapterCompletionGate();
     }
 
-    public void TryCompleteChapterFromDrawingRoomExit()
-    {
-        CheckChapterCompletionGate();
-    }
-
     public string BuildShortHudState(string timeLabel)
     {
         int outsideGuests = CountGuestsWaitingOutside();
@@ -4567,36 +4562,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         interactionHUD?.Initialize(this);
 
         EnsureDoorAnswerTriggerAction(createRuntimeClickTargets);
-
-        if (createRuntimeClickTargets)
-        {
-            EnsureSceneActionTargets();
-        }
-    }
-
-    private void EnsureSceneActionTargets()
-    {
-        RemoveClickTarget("Chapter1_ClickTarget_CoatCloset");
-        CreateClickTarget("Chapter1_ClickTarget_DrawingRoomExit", drawingRoomEntryPoint, Chapter1SceneActionType.DrawingRoomExit);
-    }
-
-    private void RemoveClickTarget(string objectName)
-    {
-        GameObject targetObject = GameObject.Find(objectName);
-
-        if (targetObject == null)
-        {
-            return;
-        }
-
-        if (Application.isPlaying)
-        {
-            Destroy(targetObject);
-        }
-        else
-        {
-            DestroyImmediate(targetObject);
-        }
     }
 
     private void EnsureDoorAnswerTriggerAction(bool createFallback)
@@ -4715,49 +4680,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         return Vector2.one;
-    }
-
-    private void CreateClickTarget(string objectName, Transform target, Chapter1SceneActionType actionType)
-    {
-        if (target == null)
-        {
-            return;
-        }
-
-        GameObject targetObject = GameObject.Find(objectName);
-
-        if (targetObject == null)
-        {
-            targetObject = new GameObject(objectName);
-            targetObject.transform.SetParent(target.parent, true);
-
-            SpriteRenderer renderer = targetObject.AddComponent<SpriteRenderer>();
-            renderer.sprite = GetRuntimeCoatSprite();
-            renderer.color = new Color(1f, 1f, 1f, 0f);
-            renderer.sortingLayerName = "People";
-            renderer.sortingOrder = 6000;
-
-            BoxCollider2D collider = targetObject.AddComponent<BoxCollider2D>();
-            collider.size = new Vector2(160f, 160f);
-            collider.isTrigger = true;
-        }
-
-        targetObject.transform.position = target.position;
-
-        Chapter1SceneAction action = targetObject.GetComponent<Chapter1SceneAction>();
-
-        if (action == null)
-        {
-            action = targetObject.AddComponent<Chapter1SceneAction>();
-        }
-
-        action.Initialize(actionType, this);
-
-        if (actionType == Chapter1SceneActionType.FrontDoor)
-        {
-            frontDoorSceneAction = action;
-            frontDoorSceneAction.SetAvailable(true);
-        }
     }
 
     private void EnsureGuestConfigs(bool createFallbacks)
