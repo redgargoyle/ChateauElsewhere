@@ -17,7 +17,10 @@ public class CharacterPresentationOwnershipTests
         "GuestRoomStageScaleUtility",
         "RoomProjectedEntity",
         "RoomPerspectiveProfile",
-        "CharacterVisualProfile"
+        "CharacterVisualProfile",
+        "CharacterScaleCatalog",
+        "CharacterScaleRoom",
+        "CharacterScaleFunction"
     };
 
     private static readonly string[] DeletedEditorTypes =
@@ -27,7 +30,8 @@ public class CharacterPresentationOwnershipTests
         "GuestScaleAudit",
         "RoomProjectionCalibrationWindow",
         "RoomPerspectiveProfileEditor",
-        "RoomProjectedEntityEditor"
+        "RoomProjectedEntityEditor",
+        "CharacterScaleTool"
     };
 
     private static readonly string[] DeletedLegacyGuids =
@@ -41,16 +45,16 @@ public class CharacterPresentationOwnershipTests
         "9d7c5206bdd145f4bdd4426f7ccc37bd"
     };
 
-    // CharacterAnimationDisplay is the sole body-size writer, and it may only scale
+    // CharacterDisplayScaleController is the sole body-size writer, and it may only scale
     // its dedicated visual child. Every other production assignment under Assets is
     // reviewed here as an exact file + normalized statement + occurrence count for a
     // UI, prop, environment, VFX, camera, room-stage, or other non-body target.
     private static readonly Dictionary<string, Dictionary<string, int>> AllowedCharacterDisplayScaleAssignments =
         new Dictionary<string, Dictionary<string, int>>(StringComparer.Ordinal)
         {
-            ["Assets/Scripts/Characters/CharacterAnimationDisplay.cs"] = new Dictionary<string, int>(StringComparer.Ordinal)
+            ["Assets/Scripts/Characters/DisplayScale/CharacterDisplayScaleController.cs"] = new Dictionary<string, int>(StringComparer.Ordinal)
             {
-                ["animationDisplay.localScale = requestedScale;"] = 1
+                ["visualScaleRoot.localScale = requestedScale;"] = 1
             }
         };
 
@@ -302,6 +306,47 @@ public class CharacterPresentationOwnershipTests
     }
 
     [Test]
+    public void UniversalScaleAuthorityIsReadOnlyOutsideItsDedicatedVisualRoot()
+    {
+        const string controllerPath = "Assets/Scripts/Characters/DisplayScale/CharacterDisplayScaleController.cs";
+        const string subjectPath = "Assets/Scripts/Characters/DisplayScale/CharacterDisplayScaleSubject.cs";
+        const string animationDisplayPath = "Assets/Scripts/Characters/CharacterAnimationDisplay.cs";
+        const string actorRoomStatePath = "Assets/Scripts/Story/ActorRoomState.cs";
+        const string movementPath = "Assets/Scripts/PointClickPlayerMovement.cs";
+        string controllerText = File.ReadAllText(controllerPath);
+        string subjectText = File.ReadAllText(subjectPath);
+        string animationDisplayText = File.ReadAllText(animationDisplayPath);
+        string actorRoomStateText = File.ReadAllText(actorRoomStatePath);
+        string movementText = File.ReadAllText(movementPath);
+
+        Assert.That(controllerText, Does.Not.Contain("AlignActorToWorldPoint")
+            .And.Not.Contain("transform.position")
+            .And.Not.Contain("CharacterAnimationPresenter"),
+            "The controller must not translate gameplay roots or control animation state.");
+        Assert.That(subjectText, Does.Contain("TryGetCurrentFloorWorldPointReadOnly"),
+            "The Butler scale input must use a read-only logical floor query.");
+        Assert.That(subjectText, Does.Not.Contain("TryGetWorldPointFromLogicalPosition"),
+            "Scale evaluation must not call the navigation-refreshing conversion API.");
+        Assert.That(subjectText, Does.Not.Contain("localScale ="),
+            "Subjects provide read-only context and may not apply display scale.");
+        Assert.That(animationDisplayText, Does.Not.Contain("localScale =")
+            .And.Not.Contain("CharacterDisplayScaleCatalog"),
+            "The animation-root descriptor must not retain scale ownership.");
+        Assert.That(actorRoomStateText, Does.Not.Contain("CharacterDisplayScale"),
+            "ActorRoomState must retain room/placement state without scale-binding logic.");
+        Assert.That(movementText, Does.Contain("TryGetCurrentFloorWorldPointReadOnly"),
+            "PointClickPlayerMovement should expose only the read-only foot data required by display scaling.");
+
+        foreach (string path in GetProductionSourcePaths().Where(path => !string.Equals(path, controllerPath, StringComparison.Ordinal)))
+        {
+            Assert.That(
+                File.ReadAllText(path),
+                Does.Not.Contain("TryApplySubject("),
+                $"Only {controllerPath} may invoke the universal display-scale application path: {path}");
+        }
+    }
+
+    [Test]
     public void OldScaleAndProjectionInfrastructureCannotBeRecreatedAtRuntime()
     {
         foreach (string path in GetProductionSourcePaths())
@@ -515,14 +560,7 @@ public class CharacterPresentationOwnershipTests
 
     private static string[] GetSerializedMonoBehaviourGuardPaths()
     {
-        IEnumerable<string> enabledBuildScenes = EditorBuildSettings.scenes
-            .Where(scene => scene.enabled && !string.IsNullOrWhiteSpace(scene.path))
-            .Select(scene => scene.path.Replace('\\', '/'))
-            .Where(File.Exists);
-
-        return enabledBuildScenes
-            .Concat(GetFiles("Assets", "*.prefab"))
-            .Distinct(StringComparer.Ordinal)
+        return GetSerializedAssetPaths()
             .OrderBy(path => path, StringComparer.Ordinal)
             .ToArray();
     }

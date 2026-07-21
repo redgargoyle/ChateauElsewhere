@@ -2,20 +2,18 @@ using UnityEngine;
 
 /// <summary>
 /// Stable actor-floor point used by movement, character scaling, and depth sorting.
-/// The point is captured once in a visual transform's local space so display scaling
-/// remains respected while sprite rect, pivot, and bounds changes cannot move the
-/// actor between depth bands.
+/// The point is captured once in the unscaled actor root's local space so display
+/// scaling, sprite rects, pivots, and animation frames cannot move gameplay depth.
 /// </summary>
 [DisallowMultipleComponent]
 [AddComponentMenu("Dreadforge/Characters/Character Floor Reference")]
 public sealed class CharacterFloorReference : MonoBehaviour
 {
-    [SerializeField, HideInInspector] private Transform referenceTransform;
     [SerializeField, HideInInspector] private Vector3 localFloorPoint;
     [SerializeField, HideInInspector] private bool isInitialized;
 
     public bool IsInitialized => isInitialized;
-    public Transform ReferenceTransform => referenceTransform;
+    public Transform ReferenceTransform => transform;
     public Vector3 WorldPoint => GetReferenceTransform().TransformPoint(localFloorPoint);
 
     public bool TryGetWorldPoint(out Vector3 worldPoint)
@@ -31,8 +29,11 @@ public sealed class CharacterFloorReference : MonoBehaviour
 
     public void CaptureWorldPoint(Vector3 worldPoint, Transform visualReference)
     {
-        referenceTransform = visualReference != null ? visualReference : transform;
-        localFloorPoint = referenceTransform.InverseTransformPoint(worldPoint);
+        // visualReference identifies where the one-time sample came from; it is
+        // intentionally not retained as the coordinate owner. Keeping the point
+        // relative to the actor root prevents visual-child scale from changing
+        // movement, sorting, or the next room Y-to-scale input.
+        localFloorPoint = transform.InverseTransformPoint(worldPoint);
         isInitialized = true;
     }
 
@@ -60,7 +61,7 @@ public sealed class CharacterFloorReference : MonoBehaviour
             return false;
         }
 
-        CaptureWorldPoint(visibleFeetWorldPoint, ResolveVisualReference(visualRoot));
+        CaptureWorldPoint(visibleFeetWorldPoint, transform);
         return true;
     }
 
@@ -109,31 +110,6 @@ public sealed class CharacterFloorReference : MonoBehaviour
 
     private Transform GetReferenceTransform()
     {
-        return referenceTransform != null ? referenceTransform : transform;
-    }
-
-    private Transform ResolveVisualReference(GameObject visualRoot)
-    {
-        GameObject requestedRoot = visualRoot != null ? visualRoot : gameObject;
-        CharacterAnimationDisplay animationDisplay = requestedRoot.GetComponent<CharacterAnimationDisplay>();
-
-        if (animationDisplay != null && animationDisplay.HasValidDisplayRoot())
-        {
-            return animationDisplay.AnimationDisplay;
-        }
-
-        SpriteRenderer[] renderers = requestedRoot.GetComponentsInChildren<SpriteRenderer>(true);
-
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            SpriteRenderer renderer = renderers[i];
-
-            if (renderer != null && renderer.sprite != null)
-            {
-                return renderer.transform;
-            }
-        }
-
-        return requestedRoot.transform;
+        return transform;
     }
 }

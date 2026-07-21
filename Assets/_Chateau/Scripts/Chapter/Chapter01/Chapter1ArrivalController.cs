@@ -3727,9 +3727,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
             if (bindVisibleFeetToTarget)
             {
-                ApplyGuestCharacterScale(guestState);
                 AlignGuestVisibleFeetToPosition(guestState.GuestObject, guestTransform, feetPosition, true);
-                ApplyGuestCharacterScale(guestState);
             }
 
             return;
@@ -3798,17 +3796,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         Vector3 footCorrection = feetPosition - currentFeetPosition;
         footCorrection.z = 0f;
         guestTransform.position += footCorrection;
-    }
-
-    private static void ApplyGuestCharacterScale(GuestRuntimeState guestState)
-    {
-        if (guestState?.GuestObject == null)
-        {
-            return;
-        }
-
-        CharacterAnimationDisplay display = guestState.GuestObject.GetComponent<CharacterAnimationDisplay>();
-        display?.TryApplyCurrentRoomScale();
     }
 
     private void BindGuestCurrentFloorPointToRoomStage(GuestRuntimeState guestState, Transform roomReference)
@@ -5137,6 +5124,9 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         actorState.SetActorId(MakeGuestId(guestObject.name, index));
+        CharacterDisplayScaleSubject.EnsureForActor(
+            guestObject,
+            (CharacterDisplayId)Mathf.Clamp(index + 1, (int)CharacterDisplayId.Guest1, (int)CharacterDisplayId.Guest8));
         ConfigureGuestFootsteps(guestObject, index + 1);
 
         bool preserveAuthoredSorting = ShouldPreserveAuthoredGuestSorting(guestObject);

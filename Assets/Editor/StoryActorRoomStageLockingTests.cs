@@ -128,15 +128,9 @@ public class StoryActorRoomStageLockingTests
         try
         {
             rig.ActorState.SetCurrentRoom(rig.RoomContent.RoomName);
-            GameObject visual = new GameObject("AnimationDisplay");
-            visual.transform.SetParent(rig.ActorState.transform, false);
-            CharacterScaleCatalog catalog = CreateScaleCatalog(rig, 2f, 1f);
-            CharacterAnimationDisplay display = rig.ActorState.gameObject.AddComponent<CharacterAnimationDisplay>();
-            display.Configure(visual.transform, catalog);
 
             PlaceActorAt(rig, rig.Anchor);
             AssertActorLockedToAnchor(rig, "door spawn before speech pause");
-            AssertDisplayUsesVisibleFeetScale(rig, catalog, display, "door spawn before speech pause");
 
             NPCWaypointMover mover = rig.ActorState.gameObject.AddComponent<NPCWaypointMover>();
             mover.ConstrainToPlayerFloorBoundary = false;
@@ -149,13 +143,10 @@ public class StoryActorRoomStageLockingTests
                 ApplyBinding(rig),
                 Is.True,
                 "Queuing a paused walk must not detach a stationary guest from the door anchor.");
-            AssertDisplayUsesVisibleFeetScale(rig, catalog, display, "queued walk while speech-paused");
-
             rig.CameraManager.defaultRoomZoom = rig.CameraManager.maxRoomZoom;
             rig.CameraManager.SetRoomLookForPreview(0.65f, -0.35f, 0.8f);
             Assert.That(ApplyBinding(rig), Is.True);
             AssertActorLockedToAnchor(rig, "door spawn while panning and zooming during speech");
-            AssertDisplayUsesVisibleFeetScale(rig, catalog, display, "door scale while panning and zooming during speech");
 
             mover.ReleaseSpeechPause();
             Assert.That(move.MoveNext(), Is.True, "Movement should resume after the speech pause ends.");
@@ -306,9 +297,30 @@ public class StoryActorRoomStageLockingTests
         SpriteRenderer bodyRenderer = visual.GetComponent<SpriteRenderer>();
         bodyRenderer.sprite = bodySprite;
 
-        CharacterScaleCatalog catalog = CreateConstantScaleCatalog(rig, 2f);
-        CharacterAnimationDisplay display = rig.ActorState.gameObject.AddComponent<CharacterAnimationDisplay>();
-        display.Configure(visual.transform, catalog);
+        CharacterDisplayScaleCatalog catalog = ScriptableObject.CreateInstance<CharacterDisplayScaleCatalog>();
+        catalog.SetRooms(new[]
+        {
+            new RoomDisplayScaleEntry(
+                rig.RoomContent.RoomName,
+                new Vector2(0f, -100f),
+                2f,
+                new Vector2(0f, 100f),
+                2f,
+                AnimationCurve.Linear(0f, 0f, 1f, 1f))
+        });
+        GameObject controllerObject = new GameObject("Character Display Scale Controller Test");
+        controllerObject.SetActive(false);
+        CharacterDisplayScaleController controller =
+            controllerObject.AddComponent<CharacterDisplayScaleController>();
+        controller.ConfigureForEditor(catalog);
+        CharacterDisplayScaleTestContext context =
+            rig.ActorState.gameObject.AddComponent<CharacterDisplayScaleTestContext>();
+        context.RoomId = rig.RoomContent.RoomName;
+        context.RoomLocalFootY = 0f;
+        CharacterDisplayScaleSubject subject =
+            rig.ActorState.gameObject.AddComponent<CharacterDisplayScaleSubject>();
+        subject.ConfigureForEditor(CharacterDisplayId.Guest1, visual.transform, context);
+        controllerObject.SetActive(true);
 
         try
         {
@@ -317,11 +329,14 @@ public class StoryActorRoomStageLockingTests
             rootRenderer.enabled = false;
 
             PlaceActorAt(rig, rig.Anchor);
-
-            float expectedDisplayScale = 2f * rig.RoomCoordinates.CurrentStageScale;
             Assert.That(
-                display.AnimationDisplay.localScale,
-                Is.EqualTo(new Vector3(expectedDisplayScale, expectedDisplayScale, 1f)),
+                controller.TryApplySubject(subject),
+                Is.True,
+                "CharacterDisplayScaleController, not ActorRoomState, should apply the target room scale.");
+
+            Assert.That(
+                subject.VisualScaleRoot.localScale,
+                Is.EqualTo(new Vector3(2f, 2f, 1f)),
                 "Static placement must apply the target room's display scale without moving the actor root.");
             AssertActorLockedToAnchor(rig, "scaled static root binding");
             Assert.That(rig.ActorState.transform.localScale, Is.EqualTo(authoredRootScale),
@@ -329,6 +344,8 @@ public class StoryActorRoomStageLockingTests
         }
         finally
         {
+            Object.DestroyImmediate(controllerObject);
+            Object.DestroyImmediate(catalog);
             Object.DestroyImmediate(bodySprite);
             Object.DestroyImmediate(bodyTexture);
             rig.Destroy();
@@ -553,74 +570,6 @@ public class StoryActorRoomStageLockingTests
         return rig;
     }
 
-    private static CharacterScaleCatalog CreateConstantScaleCatalog(TestRig rig, float scale)
-    {
-        return CreateScaleCatalog(rig, scale, scale);
-    }
-
-    private static CharacterScaleCatalog CreateScaleCatalog(TestRig rig, float frontScale, float backScale)
-    {
-        CharacterScaleCatalog catalog = ScriptableObject.CreateInstance<CharacterScaleCatalog>();
-        catalog.name = "Character Scale Catalog";
-        rig.ScaleCatalog = catalog;
-
-        GameObject markerRoot = new GameObject("Character Scale");
-        markerRoot.transform.SetParent(rig.RoomContent.transform, false);
-
-        GameObject front = new GameObject("Front");
-        front.transform.SetParent(markerRoot.transform, false);
-        front.transform.localPosition = new Vector3(0f, -100f, 0f);
-        front.transform.localScale = new Vector3(frontScale, frontScale, 1f);
-
-        GameObject back = new GameObject("Back");
-        back.transform.SetParent(markerRoot.transform, false);
-        back.transform.localPosition = new Vector3(0f, 100f, 0f);
-        back.transform.localScale = new Vector3(backScale, backScale, 1f);
-
-        CharacterScaleRoom roomCoordinates = rig.RoomContent.gameObject.AddComponent<CharacterScaleRoom>();
-        roomCoordinates.ConfigureHandles(
-            rig.RoomContent,
-            front.transform,
-            back.transform);
-        rig.RoomCoordinates = roomCoordinates;
-
-        catalog.SetRooms(new[]
-        {
-            new CharacterScaleRoomDefinition(
-                rig.RoomContent.RoomName,
-                -100f,
-                frontScale,
-                100f,
-                backScale)
-        });
-        return catalog;
-    }
-
-    private static void AssertDisplayUsesVisibleFeetScale(
-        TestRig rig,
-        CharacterScaleCatalog catalog,
-        CharacterAnimationDisplay display,
-        string context)
-    {
-        Assert.That(
-            rig.RoomCoordinates.TryGetCharacterRoomY(rig.ActorState.transform.position, out float visibleFeetRoomY),
-            Is.True,
-            context);
-        Assert.That(rig.RoomCoordinates, Is.Not.Null, context);
-        Assert.That(
-            catalog.TryEvaluateScaleAtRoomY(
-                rig.RoomContent.RoomName,
-                visibleFeetRoomY,
-                rig.RoomCoordinates.CurrentStageScale,
-                out float expectedScale),
-            Is.True,
-            context);
-        Assert.That(display.TryApplyCurrentRoomScale(), Is.True, context);
-        Assert.That(display.AnimationDisplay.localScale.x, Is.EqualTo(expectedScale).Within(0.0001f), context);
-        Assert.That(display.AnimationDisplay.localScale.y, Is.EqualTo(expectedScale).Within(0.0001f), context);
-        Assert.That(display.AnimationDisplay.localScale.z, Is.EqualTo(1f).Within(0.0001f), context);
-    }
-
     private static void SetPrivateField<T>(ActorRoomState actorState, string fieldName, T value)
     {
         FieldInfo field = typeof(ActorRoomState).GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
@@ -754,8 +703,6 @@ public class StoryActorRoomStageLockingTests
         public RectTransform Viewport, Stage, Anchor;
         public RoomContentGroup RoomContent;
         public ActorRoomState ActorState;
-        public CharacterScaleRoom RoomCoordinates;
-        public CharacterScaleCatalog ScaleCatalog;
         public List<GameObject> PreviousMainCameras;
 
         public void Destroy()
@@ -764,8 +711,6 @@ public class StoryActorRoomStageLockingTests
             Object.DestroyImmediate(Root);
             Object.DestroyImmediate(Texture);
             Object.DestroyImmediate(CameraTarget);
-            Object.DestroyImmediate(ScaleCatalog);
-
             for (int i = 0; i < PreviousMainCameras.Count; i++)
             {
                 if (PreviousMainCameras[i] != null)

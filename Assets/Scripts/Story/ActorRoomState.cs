@@ -215,10 +215,6 @@ public class ActorRoomState : MonoBehaviour
         boundRoomId = roomContentGroup.RoomName;
         roomStageBindingAnchorMode = anchorMode;
         hasRoomStageLocalBinding = true;
-
-        // Refresh immediately so first-frame placement uses the target room's
-        // current character scale instead of the previous room's display scale.
-        TryApplyBoundAnimationDisplayScale(targetTransform.gameObject);
     }
 
     public bool BindCurrentWorldFootPointToRoomStage(Transform roomReference)
@@ -273,7 +269,6 @@ public class ActorRoomState : MonoBehaviour
         boundRoomId = roomContentGroup.RoomName;
         roomStageBindingAnchorMode = RoomStageBindingAnchorMode.VisibleFeet;
         hasRoomStageLocalBinding = true;
-        TryApplyBoundAnimationDisplayScale(targetObject);
         TryApplyRoomStageLocalBindingIfNeeded();
         return true;
     }
@@ -624,13 +619,6 @@ public class ActorRoomState : MonoBehaviour
         if (roomStageBindingAnchorMode == RoomStageBindingAnchorMode.VisibleFeet)
         {
             AlignVisibleFeetToWorldPoint(targetObject, targetTransform, worldPoint);
-            TryApplyBoundAnimationDisplayScale(targetObject);
-            AlignVisibleFeetToWorldPoint(targetObject, targetTransform, worldPoint);
-            TryApplyBoundAnimationDisplayScale(targetObject);
-        }
-        else
-        {
-            SettleBoundAnimationDisplayScale(targetObject);
         }
 
         return true;
@@ -651,25 +639,6 @@ public class ActorRoomState : MonoBehaviour
         Vector3 footCorrection = desiredFeetWorldPoint - feetWorldPoint;
         footCorrection.z = 0f;
         targetTransform.position += footCorrection;
-    }
-
-    private void SettleBoundAnimationDisplayScale(GameObject targetObject)
-    {
-        for (int pass = 0; pass < 4; pass++)
-        {
-            TryApplyBoundAnimationDisplayScale(targetObject);
-        }
-    }
-
-    private void TryApplyBoundAnimationDisplayScale(GameObject targetObject)
-    {
-        if (targetObject == null || string.IsNullOrWhiteSpace(boundRoomId))
-        {
-            return;
-        }
-
-        CharacterAnimationDisplay display = targetObject.GetComponent<CharacterAnimationDisplay>();
-        display?.TryApplyScaleForRoom(boundRoomId);
     }
 
     private static bool IsActorUnderRoomStage(Transform targetTransform)

@@ -166,7 +166,8 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(placeDoorBody, Does.Not.Contain("RoomProjectedEntity"), "Door arrival should have one authored placement path, not a projection-side relocation path.");
         Assert.That(placeFeetBody, Does.Contain("bindVisibleFeetToTarget"), "Door arrival should explicitly opt into visible-feet placement.");
         Assert.That(placeFeetBody, Does.Contain("OffsetGuestRootToPlaceVisibleFeet"), "Feet-aware placement should offset the Guest root so visible feet land on the authored target.");
-        Assert.That(placeFeetBody, Does.Contain("AlignGuestVisibleFeetToPosition"), "Feet-aware placement should realign visible feet after the display scale refresh.");
+        Assert.That(placeFeetBody, Does.Contain("AlignGuestVisibleFeetToPosition"), "Feet-aware placement should align the canonical feet after assigning the persistent Guest root.");
+        Assert.That(placeFeetBody, Does.Not.Contain("ApplyGuestCharacterScale"), "Story placement must not drive or settle the universal display-scale authority.");
         Assert.That(placeFeetBody, Does.Contain("guestTransform.position = targetPosition"), "Door arrival should assign the authored room anchor directly to the persistent Guest root.");
         Assert.That(placeFeetBody, Does.Contain("BindGuestToRoomStagePoint(guestState, roomStageTarget, bindVisibleFeetToTarget)"), "World guests should remain locked to the door anchor until movement begins.");
         Assert.That(placeDoorBody, Does.Contain("GetWorldDoorArrivalBasePosition(guestState)"), "World-space door spawning should begin at the same shared front-door foot point.");

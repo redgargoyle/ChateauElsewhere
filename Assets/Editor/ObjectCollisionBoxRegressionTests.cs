@@ -185,7 +185,7 @@ public class ObjectCollisionBoxRegressionTests
 
             Assert.That(sorter.ActorFloorReference, Is.Not.Null);
             Assert.That(sorter.ActorFloorReference.IsInitialized, Is.True);
-            Assert.That(sorter.ActorFloorReference.ReferenceTransform, Is.SameAs(visualObject.transform));
+            Assert.That(sorter.ActorFloorReference.ReferenceTransform, Is.SameAs(actorObject.transform));
             float stableFloorY = sorter.CurrentActorSortingY;
             int firstExpectedOrder = sortingSource.GetSortingOrderForFootY(stableFloorY);
             Assert.That(bodyRenderer.sortingOrder, Is.EqualTo(firstExpectedOrder));
@@ -196,12 +196,12 @@ public class ObjectCollisionBoxRegressionTests
             float scaledStableFloorY = sorter.CurrentActorSortingY;
             Assert.That(
                 scaledStableFloorY,
-                Is.EqualTo(stableFloorY * 2f).Within(0.0001f),
-                "The canonical foot should follow AnimationDisplay scale without remeasuring an animation frame.");
+                Is.EqualTo(stableFloorY).Within(0.0001f),
+                "Display-only scale must not change the actor's canonical gameplay floor point.");
             Assert.That(
-                scaledStableFloorY,
-                Is.EqualTo(bodyRenderer.bounds.min.y).Within(0.0001f),
-                "Scaling the originally captured frame should keep its canonical contact point on the visible feet.");
+                Mathf.Abs(scaledStableFloorY - bodyRenderer.bounds.min.y),
+                Is.GreaterThan(0.001f),
+                "This centered-pivot fixture should prove sorting no longer follows scale-dependent renderer bounds.");
             int scaledExpectedOrder = sortingSource.GetSortingOrderForFootY(scaledStableFloorY);
             Assert.That(bodyRenderer.sortingOrder, Is.EqualTo(scaledExpectedOrder));
             float scaledVisibleBoundsY = bodyRenderer.bounds.min.y;

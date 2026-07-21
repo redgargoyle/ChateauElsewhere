@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 7656683542599176262}
   - component: {fileID: 6481024636379014001}
   - component: {fileID: 85254032790067636}
+  - component: {fileID: 1565377206276048315}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -74,7 +75,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fbc4bfb46da335ef392e49b8ba30aa78, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterController2D
   m_JumpForce: 400
   m_CrouchSpeed: 0.36
@@ -103,7 +104,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0a3a55dd8487815229cb003de0eeaf13, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   controller: {fileID: 7110128061864666233}
   animator: {fileID: 7299312938216872570}
@@ -148,12 +149,28 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 84f8b87a58d9dbf14b902c3021228880, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterAnimationDisplay
   animationDisplay: {fileID: 7844876254638571509}
-  catalog: {fileID: 11400000, guid: c30d693aa93049e3a4c0f2ccefd5fd74, type: 2}
+--- !u!114 &1565377206276048315
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5236250058300121345}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad4a245b1be7e14469b0c91c6b06af0b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterDisplayScaleSubject
+  characterId: 0
+  visualScaleRoot: {fileID: 7844876254638571509}
+  contextSource: {fileID: 0}
   actorRoomState: {fileID: 0}
+  pointClickMovement: {fileID: 6481024636379014001}
   navigationManager: {fileID: 0}
+  floorReference: {fileID: 0}
 --- !u!1 &8011871591847095916
 GameObject:
   m_ObjectHideFlags: 0

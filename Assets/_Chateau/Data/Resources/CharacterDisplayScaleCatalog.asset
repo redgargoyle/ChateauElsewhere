@@ -1,0 +1,718 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adb1c4e010cc3ef21a1513149a26e6da, type: 3}
+  m_Name: CharacterDisplayScaleCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterDisplayScaleCatalog
+  rooms:
+  - roomId: Ballroom
+    frontPreviewPosition: {x: 0, y: -556.58936}
+    backPreviewPosition: {x: 0, y: -68.67108}
+    frontScale: 2.5
+    backScale: 0.5518164
+    yToScaleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    characterOverrides: []
+    stateOverrides:
+      drawingRoomSeated:
+        enabled: 0
+        scale: 1
+      diningRoomSeated:
+        enabled: 0
+        scale: 1
+  - roomId: Billiard Room
+    frontPreviewPosition: {x: 0, y: -533.9481}
+    backPreviewPosition: {x: 0, y: -122.932236}
+    frontScale: 2.454557
+    backScale: 1.1938814
+    yToScaleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    characterOverrides: []
+    stateOverrides:
+      drawingRoomSeated:
+        enabled: 0
+        scale: 1
+      diningRoomSeated:
+        enabled: 0
+        scale: 1
+  - roomId: Blue Bedroom
+    frontPreviewPosition: {x: 0, y: -487.8619}
+    backPreviewPosition: {x: 0, y: -151.66829}
+    frontScale: 2.5
+    backScale: 1.1528362
+    yToScaleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    characterOverrides: []
+    stateOverrides:
+      drawingRoomSeated:
+        enabled: 0
+        scale: 1
+      diningRoomSeated:
+        enabled: 0
+        scale: 1
+  - roomId: Butlers Pantry
+    frontPreviewPosition: {x: 0, y: -457.76678}
+    backPreviewPosition: {x: 0, y: -251.90562}
+    frontScale: 2.5
+    backScale: 2.0208333
+    yToScaleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    characterOverrides: []
+    stateOverrides:
+      drawingRoomSeated:
+        enabled: 0
+        scale: 1
+      diningRoomSeated:
+        enabled: 0
+        scale: 1
+  - roomId: Chapel
+    frontPreviewPosition: {x: 0, y: -542.91187}
+    backPreviewPosition: {x: 0, y: -230.23573}
+    frontScale: 2.3
+    backScale: 0.99158704
+    yToScaleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    characterOverrides: []
+    stateOverrides:
+      drawingRoomSeated:
+        enabled: 0
+        scale: 1
+      diningRoomSeated:
+        enabled: 0
+        scale: 1
+  - roomId: Conservatory
+    frontPreviewPosition: {x: 0, y: -467.1245}
+    backPreviewPosition: {x: 0, y: -80.01454}
+    frontScale: 2.260003
+    backScale: 0.8745046
+    yToScaleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    characterOverrides: []
+    stateOverrides:
+      drawingRoomSeated:
+        enabled: 0
+        scale: 1
+      diningRoomSeated:
+        enabled: 0
+        scale: 1
+  - roomId: Dining Room
+    frontPreviewPosition: {x: 0, y: -451.8298}
+    backPreviewPosition: {x: 0, y: -30.95443}
+    frontScale: 2.3865647
+    backScale: 1.1485544
+    yToScaleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    characterOverrides: []
+    stateOverrides:
+      drawingRoomSeated:
+        enabled: 0
+        scale: 1
+      diningRoomSeated:
+        enabled: 0
+        scale: 1
+  - roomId: Drawing Room
+    frontPreviewPosition: {x: 0, y: -384.02182}
+    backPreviewPosition: {x: 0, y: -119.561905}
+    frontScale: 2.057692
+    backScale: 1.3752748
+    yToScaleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    characterOverrides: []
+    stateOverrides:
+      drawingRoomSeated:
+        enabled: 0
+        scale: 1
+      diningRoomSeated:
+        enabled: 0
+        scale: 1
+  - roomId: Grand Entrance Hall
+    frontPreviewPosition: {x: 0, y: -381.67844}
+    backPreviewPosition: {x: 0, y: -98.47123}
+    frontScale: 2.1461537
+    backScale: 0.661823
+    yToScaleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    characterOverrides: []
+    stateOverrides:
+      drawingRoomSeated:
+        enabled: 0
+        scale: 1
+      diningRoomSeated:
+        enabled: 0
+        scale: 1
+  - roomId: Grand Entrance Hall Rear view
+    frontPreviewPosition: {x: 0, y: -482.1259}
+    backPreviewPosition: {x: 0, y: -184.96538}
+    frontScale: 2.2174373
+    backScale: 0.85019803
+    yToScaleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    characterOverrides: []
+    stateOverrides:
+      drawingRoomSeated:
+        enabled: 0
+        scale: 1
+      diningRoomSeated:
+        enabled: 0
+        scale: 1
+  - roomId: Kitchen
+    frontPreviewPosition: {x: 0, y: -504.42188}
+    backPreviewPosition: {x: 0, y: -160.59215}
+    frontScale: 2.8999996
+    backScale: 1.4510988
+    yToScaleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    characterOverrides: []
+    stateOverrides:
+      drawingRoomSeated:
+        enabled: 0
+        scale: 1
+      diningRoomSeated:
+        enabled: 0
+        scale: 1
+  - roomId: Library
+    frontPreviewPosition: {x: 0, y: -472.17596}
+    backPreviewPosition: {x: 0, y: -163.73544}
+    frontScale: 2.3511229
+    backScale: 1.1844121
+    yToScaleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    characterOverrides: []
+    stateOverrides:
+      drawingRoomSeated:
+        enabled: 0
+        scale: 1
+      diningRoomSeated:
+        enabled: 0
+        scale: 1
+  - roomId: Master Bedroom Suite
+    frontPreviewPosition: {x: 0, y: -456.25656}
+    backPreviewPosition: {x: 0, y: -122.098785}
+    frontScale: 2.5
+    backScale: 0.99745065
+    yToScaleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    characterOverrides: []
+    stateOverrides:
+      drawingRoomSeated:
+        enabled: 0
+        scale: 1
+      diningRoomSeated:
+        enabled: 0
+        scale: 1
+  - roomId: Music Room
+    frontPreviewPosition: {x: 0, y: -474.99722}
+    backPreviewPosition: {x: 0, y: -137.45297}
+    frontScale: 2.5
+    backScale: 1.1866922
+    yToScaleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    characterOverrides: []
+    stateOverrides:
+      drawingRoomSeated:
+        enabled: 0
+        scale: 1
+      diningRoomSeated:
+        enabled: 0
+        scale: 1
+  - roomId: Nursery
+    frontPreviewPosition: {x: 0, y: -466.49628}
+    backPreviewPosition: {x: 0, y: -99.451546}
+    frontScale: 2.5
+    backScale: 1.2261313
+    yToScaleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    characterOverrides: []
+    stateOverrides:
+      drawingRoomSeated:
+        enabled: 0
+        scale: 1
+      diningRoomSeated:
+        enabled: 0
+        scale: 1
+  - roomId: Service Corridor
+    frontPreviewPosition: {x: 0, y: -487.8619}
+    backPreviewPosition: {x: 0, y: -157.21262}
+    frontScale: 2.5
+    backScale: 1.424028
+    yToScaleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    characterOverrides: []
+    stateOverrides:
+      drawingRoomSeated:
+        enabled: 0
+        scale: 1
+      diningRoomSeated:
+        enabled: 0
+        scale: 1
+  - roomId: Side Stair Mudroom
+    frontPreviewPosition: {x: 0, y: -471.69177}
+    backPreviewPosition: {x: 0, y: -153.06122}
+    frontScale: 2.5
+    backScale: 0.88457614
+    yToScaleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    characterOverrides: []
+    stateOverrides:
+      drawingRoomSeated:
+        enabled: 0
+        scale: 1
+      diningRoomSeated:
+        enabled: 0
+        scale: 1
+  - roomId: Upper Gallery
+    frontPreviewPosition: {x: 0, y: -469.4363}
+    backPreviewPosition: {x: 0, y: -41.078682}
+    frontScale: 2.5
+    backScale: 0.842065
+    yToScaleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    characterOverrides: []
+    stateOverrides:
+      drawingRoomSeated:
+        enabled: 0
+        scale: 1
+      diningRoomSeated:
+        enabled: 0
+        scale: 1
+  - roomId: Upper Sitting Hall
+    frontPreviewPosition: {x: 0, y: -468.75174}
+    backPreviewPosition: {x: 0, y: -58.043415}
+    frontScale: 2.5
+    backScale: 0.9094965
+    yToScaleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    characterOverrides: []
+    stateOverrides:
+      drawingRoomSeated:
+        enabled: 0
+        scale: 1
+      diningRoomSeated:
+        enabled: 0
+        scale: 1

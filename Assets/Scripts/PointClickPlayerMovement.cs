@@ -846,6 +846,22 @@ public class PointClickPlayerMovement : MonoBehaviour
 		return true;
 	}
 
+	/// <summary>
+	/// Returns the current logical floor point in world space without refreshing
+	/// navigation state, rebasing the route, or changing the current destination.
+	/// Character display scaling uses this read-only view in LateUpdate.
+	/// </summary>
+	public bool TryGetCurrentFloorWorldPointReadOnly(out Vector2 worldPoint)
+	{
+		worldPoint = Vector2.zero;
+
+		if (!isReady)
+			return false;
+
+		worldPoint = LogicalToWalkableWorldPoint(logicalPosition);
+		return true;
+	}
+
 	public bool TryGetLogicalPositionFromWorldPoint(
 		Vector2 worldPoint,
 		bool clampToWalkableArea,
