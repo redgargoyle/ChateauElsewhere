@@ -15,6 +15,7 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
     [SerializeField] private GameObject assignedChair;
     [SerializeField] private SpriteRenderer assignedChairRenderer;
     [SerializeField] private SpriteRenderer frontOccluderRenderer;
+    [SerializeField] private SpriteRenderer sortingCeilingRenderer;
     [SerializeField] private SpriteRenderer diningTableRenderer;
 
     private SortingGroup sortingGroup;
@@ -33,6 +34,7 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
     public RoomAnchor AssignedSeat => assignedSeat;
     public GameObject AssignedChair => assignedChair;
     public SpriteRenderer FrontOccluderRenderer => frontOccluderRenderer;
+    public SpriteRenderer SortingCeilingRenderer => sortingCeilingRenderer;
 
     private void Awake()
     {
@@ -126,11 +128,35 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
         string targetRoomName,
         string targetButlerExclusionObjectName)
     {
+        ActivateForSeat(
+            targetActorState,
+            seatAnchor,
+            chairObject,
+            chairRenderer,
+            targetFrontOccluderRenderer,
+            null,
+            tableRenderer,
+            targetRoomName,
+            targetButlerExclusionObjectName);
+    }
+
+    public void ActivateForSeat(
+        ActorRoomState targetActorState,
+        RoomAnchor seatAnchor,
+        GameObject chairObject,
+        SpriteRenderer chairRenderer,
+        SpriteRenderer targetFrontOccluderRenderer,
+        SpriteRenderer targetSortingCeilingRenderer,
+        SpriteRenderer tableRenderer,
+        string targetRoomName,
+        string targetButlerExclusionObjectName)
+    {
         actorState = targetActorState != null ? targetActorState : actorState;
         assignedSeat = seatAnchor;
         assignedChair = chairObject;
         assignedChairRenderer = chairRenderer;
         frontOccluderRenderer = targetFrontOccluderRenderer;
+        sortingCeilingRenderer = targetSortingCeilingRenderer;
         diningTableRenderer = tableRenderer;
         diningRoomName = string.IsNullOrWhiteSpace(targetRoomName) ? "Dining Room" : targetRoomName.Trim();
         butlerExclusionObjectName = string.IsNullOrWhiteSpace(targetButlerExclusionObjectName)
@@ -152,6 +178,7 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
         assignedChair = null;
         assignedChairRenderer = null;
         frontOccluderRenderer = null;
+        sortingCeilingRenderer = null;
         diningTableRenderer = null;
         loggedInvalidOrder = false;
     }
@@ -179,7 +206,10 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
             frontOccluderRenderer.sortingOrder = tableOrder;
         }
 
-        int guestOrder = tableOrder - 1;
+        int guestSortingCeilingOrder = sortingCeilingRenderer != null
+            ? Mathf.Min(tableOrder, sortingCeilingRenderer.sortingOrder)
+            : tableOrder;
+        int guestOrder = guestSortingCeilingOrder - 1;
 
         if (guestOrder <= chairOrder)
         {
@@ -189,6 +219,7 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
                     $"{InvalidOrderMessage} seat={assignedSeat.name} chair={assignedChair.name} " +
                     $"chairOrder={chairOrder} guestOrder={guestOrder} " +
                     $"frontOrder={(frontOccluderRenderer != null ? frontOccluderRenderer.sortingOrder : tableOrder)} " +
+                    $"ceilingOrder={(sortingCeilingRenderer != null ? sortingCeilingRenderer.sortingOrder : tableOrder)} " +
                     $"tableOrder={tableOrder}",
                     this);
                 loggedInvalidOrder = true;

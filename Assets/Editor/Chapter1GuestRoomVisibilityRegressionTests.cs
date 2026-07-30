@@ -689,6 +689,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string seatedMethodBody = ExtractMethodBody(controllerText, "ApplyDrawingRoomSeatedOcclusion");
         string chairMapMethodBody = ExtractMethodBody(controllerText, "GetDrawingRoomChairRenderer");
         string frontOccluderMapMethodBody = ExtractMethodBody(controllerText, "GetDrawingRoomFrontOccluderRenderer");
+        string sortingCeilingMapMethodBody = ExtractMethodBody(controllerText, "GetDrawingRoomSortingCeilingRenderer");
         string gameplaySceneText = File.ReadAllText(GameplayScenePath);
 
         Assert.That(completeMethodBody, Does.Match(@"PlaceGuestAt\(guest, drawingRoomSpot[\s\S]*ApplyDrawingRoomSeatedOcclusion\(guest, drawingRoomSpot\)"), "Normal arrivals should use continuous Y sorting plus the narrow seated exception.");
@@ -701,6 +702,10 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(chairMapMethodBody, Does.Match(@"case 7:[\s\S]*drawingRoomGreenChairRenderer"));
         Assert.That(frontOccluderMapMethodBody, Does.Match(@"case 0:[\s\S]*drawingRoomSofaArmrestRenderer"), "The grey-haired sofa guest needs the sofa armrest in front of her without changing the other sofa guests.");
         Assert.That(frontOccluderMapMethodBody, Does.Match(@"case 7:[\s\S]*drawingRoomGreenChairArmrestRenderer"), "The green-chair guest needs its isolated armrest in front.");
+        Assert.That(
+            sortingCeilingMapMethodBody,
+            Does.Match(@"case 0:[\s\S]*drawingRoomGreenChairRenderer"),
+            "The yellow-dress sofa guest is physically behind the foreground green chair.");
         Assert.That(gameplaySceneText, Does.Contain("drawingRoomTeaTableRenderer: {fileID: 2088426359}"));
         Assert.That(gameplaySceneText, Does.Contain("drawingRoomSofaRenderer: {fileID: 496480228}"));
         Assert.That(gameplaySceneText, Does.Contain("drawingRoomSofaArmrestRenderer: {fileID: 300441655}"));

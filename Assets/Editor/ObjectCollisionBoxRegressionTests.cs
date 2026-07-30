@@ -771,6 +771,105 @@ public class ObjectCollisionBoxRegressionTests
     }
 
     [Test]
+    public void SeatedGuestOverrideStaysBehindPhysicalSortingCeilingWithoutMovingIt()
+    {
+        GameObject roomObject = null;
+        GameObject actorObject = null;
+        GameObject chairObject = null;
+        GameObject ceilingObject = null;
+        GameObject tableObject = null;
+
+        try
+        {
+            roomObject = new GameObject("Room_Drawing_Room");
+            RoomContentGroup room = roomObject.AddComponent<RoomContentGroup>();
+            room.SetRoomName("Drawing Room");
+            GameObject seatObject = new GameObject("DrawingRoomGuestPoint_01");
+            seatObject.transform.SetParent(roomObject.transform, false);
+            RoomAnchor seat = seatObject.AddComponent<RoomAnchor>();
+            seat.RefreshFromHierarchy();
+
+            actorObject = new GameObject("Yellow Dress Guest");
+            SpriteRenderer actorRenderer = actorObject.AddComponent<SpriteRenderer>();
+            actorRenderer.sortingLayerName = "People";
+            actorRenderer.sortingOrder = 1500;
+            ActorRoomState actorState = actorObject.AddComponent<ActorRoomState>();
+            SerializedObject serializedActor = new SerializedObject(actorState);
+            serializedActor.FindProperty("restrictVisibilityToCurrentRoom").boolValue = false;
+            serializedActor.ApplyModifiedPropertiesWithoutUndo();
+            actorState.SetCurrentRoom("Drawing Room");
+            actorState.SetAvailableInCurrentChapter(true);
+            actorState.SetVisibleByChapterState(true);
+            actorState.SetSeated(true);
+
+            chairObject = new GameObject("purple_sofa");
+            SpriteRenderer chairRenderer = chairObject.AddComponent<SpriteRenderer>();
+            chairRenderer.sortingLayerName = "People";
+            chairRenderer.sortingOrder = 1200;
+
+            ceilingObject = new GameObject("drawingroomgreenchair_0");
+            SpriteRenderer ceilingRenderer = ceilingObject.AddComponent<SpriteRenderer>();
+            ceilingRenderer.sortingLayerName = "People";
+            ceilingRenderer.sortingOrder = 1600;
+
+            tableObject = new GameObject("tea_service_table");
+            SpriteRenderer tableRenderer = tableObject.AddComponent<SpriteRenderer>();
+            tableRenderer.sortingLayerName = "People";
+            tableRenderer.sortingOrder = 1800;
+
+            DiningRoomSeatedGuestOcclusionException seatedException =
+                actorObject.AddComponent<DiningRoomSeatedGuestOcclusionException>();
+            seatedException.ActivateForSeat(
+                actorState,
+                seat,
+                chairObject,
+                chairRenderer,
+                null,
+                ceilingRenderer,
+                tableRenderer,
+                "Drawing Room",
+                "Butler");
+
+            SortingGroup group = actorObject.GetComponent<SortingGroup>();
+            Assert.That(seatedException.IsExceptionActive, Is.True);
+            Assert.That(seatedException.SortingCeilingRenderer, Is.SameAs(ceilingRenderer));
+            Assert.That(group, Is.Not.Null);
+            Assert.That(group.sortingOrder, Is.GreaterThan(chairRenderer.sortingOrder));
+            Assert.That(group.sortingOrder, Is.EqualTo(ceilingRenderer.sortingOrder - 1));
+            Assert.That(group.sortingOrder, Is.LessThan(tableRenderer.sortingOrder));
+            Assert.That(ceilingRenderer.sortingOrder, Is.EqualTo(1600),
+                "The green chair must keep its physical bottom-pivot Y-sort order.");
+        }
+        finally
+        {
+            if (tableObject != null)
+            {
+                Object.DestroyImmediate(tableObject);
+            }
+
+            if (ceilingObject != null)
+            {
+                Object.DestroyImmediate(ceilingObject);
+            }
+
+            if (chairObject != null)
+            {
+                Object.DestroyImmediate(chairObject);
+            }
+
+            if (actorObject != null)
+            {
+                Object.DestroyImmediate(actorObject);
+            }
+
+            if (roomObject != null)
+            {
+                Object.DestroyImmediate(roomObject);
+            }
+        }
+    }
+
+    [Test]
     public void DiningSeatSixUsesOnlyTheLocalRightBackChairOverlayAsItsFrontOccluder()
     {
         string gameplaySceneText = File.ReadAllText(GameplayScenePath);

@@ -5256,6 +5256,7 @@ public class Chapter1ArrivalController : MonoBehaviour
         RoomAnchor seatAnchor = drawingRoomSpot != null ? drawingRoomSpot.GetComponent<RoomAnchor>() : null;
         SpriteRenderer chairRenderer = GetDrawingRoomChairRenderer(guestState.GuestIndex);
         SpriteRenderer frontOccluderRenderer = GetDrawingRoomFrontOccluderRenderer(guestState.GuestIndex);
+        SpriteRenderer sortingCeilingRenderer = GetDrawingRoomSortingCeilingRenderer(guestState.GuestIndex);
 
         if (seatAnchor == null || chairRenderer == null || drawingRoomTeaTableRenderer == null)
         {
@@ -5275,6 +5276,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             chairRenderer.gameObject,
             chairRenderer,
             frontOccluderRenderer,
+            sortingCeilingRenderer,
             drawingRoomTeaTableRenderer,
             drawingRoomId,
             "Butler");
@@ -5305,6 +5307,17 @@ public class Chapter1ArrivalController : MonoBehaviour
                 return drawingRoomSofaArmrestRenderer;
             case 7:
                 return drawingRoomGreenChairArmrestRenderer;
+            default:
+                return null;
+        }
+    }
+
+    private SpriteRenderer GetDrawingRoomSortingCeilingRenderer(int guestIndex)
+    {
+        switch (guestIndex)
+        {
+            case 0:
+                return drawingRoomGreenChairRenderer;
             default:
                 return null;
         }
