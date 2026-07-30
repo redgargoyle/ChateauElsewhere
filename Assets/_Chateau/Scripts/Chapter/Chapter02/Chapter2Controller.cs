@@ -96,6 +96,7 @@ public class Chapter2Controller : MonoBehaviour
         diningObjectiveTransitionRoutine = null;
         diningRoomCompletionRoutine = null;
         ResolveReferences();
+        HideChapter1StatusHud();
         SetPhase(Chapter2Phase.FadeInDrawingRoom);
         SetPlayerInputEnabled(false);
         MoveToDrawingRoom();
@@ -117,6 +118,13 @@ public class Chapter2Controller : MonoBehaviour
         }
 
         Debug.Log("Chapter 2 started", this);
+    }
+
+    private static void HideChapter1StatusHud()
+    {
+        Chapter1InteractionHUD chapter1Hud =
+            FindAnyObjectByType<Chapter1InteractionHUD>(FindObjectsInactive.Include);
+        chapter1Hud?.SetStatusVisible(false);
     }
 
     private void Update()

@@ -327,6 +327,27 @@ public class NavigationRegressionTests
     }
 
     [Test]
+    public void ChapterTransitionLeavesOnlyTheCurrentChapterStatusTextVisible()
+    {
+        string chapter1HudText = File.ReadAllText(Chapter1InteractionHUDPath);
+        string chapter2ControllerText = File.ReadAllText(Chapter2ControllerPath);
+        string chapter1UpdateBody = ExtractMethodBody(chapter1HudText, "private void Update");
+        string beginChapter2Body = ExtractMethodBody(chapter2ControllerText, "public void BeginChapter2");
+        string hideChapter1HudBody = ExtractMethodBody(chapter2ControllerText, "private static void HideChapter1StatusHud");
+
+        Assert.That(chapter1HudText, Does.Contain("public void SetStatusVisible(bool visible)"));
+        Assert.That(
+            chapter1UpdateBody,
+            Does.Contain("statusVisible && !string.IsNullOrWhiteSpace(statusText.text)"),
+            "A hidden Chapter 1 status must not reactivate itself on its next Update.");
+        Assert.That(
+            beginChapter2Body,
+            Does.Match(@"HideChapter1StatusHud\(\)[\s\S]*InitializeInteractionHUD\(\)"),
+            "Chapter 1 status should be hidden before Chapter 2 creates or refreshes its own status.");
+        Assert.That(hideChapter1HudBody, Does.Contain("SetStatusVisible(false)"));
+    }
+
+    [Test]
     public void GameplayHudUsesMainMenuTypographyBelowSettingsButton()
     {
         const string mainMenuFontGuid = "504ed30e71b6ae0fcb04344068a1ff4e";

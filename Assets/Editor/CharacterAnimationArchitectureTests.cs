@@ -139,12 +139,12 @@ public sealed class CharacterAnimationArchitectureTests
     }
 
     [Test]
-    public void AllAssignedGuestCoatsUseHalfSizeGuestSevenWaistPresentation()
+    public void AllAssignedGuestCoatsUseFullSizeGuestSevenWaistPresentation()
     {
         const float AuthoredScaleX = 0.07031f;
         const float AuthoredScaleY = 0.09882f;
         const float PreviousFallbackScale = 0.4f;
-        const float HalfScale = 0.5f;
+        const float FullScale = 1f;
         const float GuestSevenCenterAboveFeet = 1.08f;
         GameObject controllerObject = new GameObject("Chapter1 Coat Presentation Test");
         Texture2D bodyTexture = new Texture2D(100, 300, TextureFormat.RGBA32, false);
@@ -220,19 +220,19 @@ public sealed class CharacterAnimationArchitectureTests
                     Assert.That(authoredRenderer.sprite, Is.SameAs(assignedSprite), $"Guest {guestNumber} authored sprite");
                     Assert.That(
                         authoredRenderer.bounds.size.x,
-                        Is.EqualTo(authoredReferenceWorldSize.x * HalfScale).Within(0.0001f),
+                        Is.EqualTo(authoredReferenceWorldSize.x * FullScale).Within(0.0001f),
                         $"Guest {guestNumber} authored coat width");
                     Assert.That(
                         authoredRenderer.bounds.size.y,
-                        Is.EqualTo(authoredReferenceWorldSize.y * HalfScale).Within(0.0001f),
+                        Is.EqualTo(authoredReferenceWorldSize.y * FullScale).Within(0.0001f),
                         $"Guest {guestNumber} authored coat height");
                     Assert.That(
                         authoredCoat.transform.localScale.x,
-                        Is.EqualTo(AuthoredScaleX * authoredPlaceholder.bounds.size.x / assignedSprite.bounds.size.x * HalfScale).Within(0.0001f),
+                        Is.EqualTo(AuthoredScaleX * authoredPlaceholder.bounds.size.x / assignedSprite.bounds.size.x * FullScale).Within(0.0001f),
                         $"Guest {guestNumber} authored local scale X");
                     Assert.That(
                         authoredCoat.transform.localScale.y,
-                        Is.EqualTo(AuthoredScaleY * authoredPlaceholder.bounds.size.y / assignedSprite.bounds.size.y * HalfScale).Within(0.0001f),
+                        Is.EqualTo(AuthoredScaleY * authoredPlaceholder.bounds.size.y / assignedSprite.bounds.size.y * FullScale).Within(0.0001f),
                         $"Guest {guestNumber} authored local scale Y");
                     AssertCoatCenterAboveBodyFeet(
                         authoredRenderer,
@@ -267,14 +267,14 @@ public sealed class CharacterAnimationArchitectureTests
 
                     Assert.That(fallbackRenderer, Is.Not.Null, $"Guest {guestNumber} fallback renderer");
                     Assert.That(fallbackRenderer.sprite, Is.SameAs(assignedSprite), $"Guest {guestNumber} fallback sprite");
-                    Assert.That(fallbackCoat.transform.localScale, Is.EqualTo(new Vector3(0.2f, 0.2f, 1f)), $"Guest {guestNumber} fallback scale");
+                    Assert.That(fallbackCoat.transform.localScale, Is.EqualTo(new Vector3(0.4f, 0.4f, 1f)), $"Guest {guestNumber} fallback scale");
                     Assert.That(
                         fallbackRenderer.bounds.size.x,
-                        Is.EqualTo(assignedSprite.bounds.size.x * PreviousFallbackScale * actor.transform.lossyScale.x * HalfScale).Within(0.0001f),
+                        Is.EqualTo(assignedSprite.bounds.size.x * PreviousFallbackScale * actor.transform.lossyScale.x * FullScale).Within(0.0001f),
                         $"Guest {guestNumber} fallback coat width");
                     Assert.That(
                         fallbackRenderer.bounds.size.y,
-                        Is.EqualTo(assignedSprite.bounds.size.y * PreviousFallbackScale * actor.transform.lossyScale.y * HalfScale).Within(0.0001f),
+                        Is.EqualTo(assignedSprite.bounds.size.y * PreviousFallbackScale * actor.transform.lossyScale.y * FullScale).Within(0.0001f),
                         $"Guest {guestNumber} fallback coat height");
                     AssertCoatCenterAboveBodyFeet(
                         fallbackRenderer,

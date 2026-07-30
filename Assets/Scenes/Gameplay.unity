@@ -42817,6 +42817,7 @@ GameObject:
   m_Component:
   - component: {fileID: 618835547}
   - component: {fileID: 618835548}
+  - component: {fileID: 618835549}
   m_Layer: 0
   m_Name: kitchen_work_table
   m_TagString: Untagged
@@ -42898,6 +42899,28 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 1
+--- !u!114 &618835549
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 618835546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75f090bb68ab450d9703d9581c5c543a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::WorldYSortSpriteRenderer
+  sortingLayerName: People
+  sortingOrderBase: 1000
+  sortingOrderPerYUnit: 100
+  sortingOrderOffset: 0
+  includeChildren: 1
+  forcePivotSortPoint: 1
+  sortSolidObstacleFromPhysicalBottom: 0
+  forceBehindPlayerInsidePhysicalBounds: 0
+  behindPlayerSortingOffset: -1
+  yReference: {fileID: 618835547}
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0
@@ -117117,7 +117140,7 @@ MonoBehaviour:
   category: Table
   footprintHeightFraction: 0.3
   generatedByCollisionBoxTool: 1
-  sortSourceRenderers: 1
+  sortSourceRenderers: 0
   sourceSortingLayerName: People
   sourceSortingOrderBase: 1000
   sourceSortingOrderPerYUnit: 100
@@ -148588,8 +148611,10 @@ MonoBehaviour:
   drawingRoomEntryPoint: {fileID: 641292382}
   drawingRoomTeaTableRenderer: {fileID: 2088426359}
   drawingRoomSofaRenderer: {fileID: 496480228}
+  drawingRoomSofaArmrestRenderer: {fileID: 300441655}
   drawingRoomRedChairRenderer: {fileID: 3602000202}
-  drawingRoomGreenChairRenderer: {fileID: 362573330}
+  drawingRoomGreenChairRenderer: {fileID: 1850905446}
+  drawingRoomGreenChairArmrestRenderer: {fileID: 362573330}
   firstArrivalHour: 18
   firstArrivalMinute: 0
   guestGroupCount: 4
@@ -152806,6 +152831,7 @@ MonoBehaviour:
   - seatAnchor: {fileID: 3602000052}
     assignedChair: {fileID: 3910000050}
     assignedChairRenderer: {fileID: 3910000052}
+    frontOccluderRenderer: {fileID: 777689895}
   - seatAnchor: {fileID: 3602000062}
     assignedChair: {fileID: 3910000070}
     assignedChairRenderer: {fileID: 3910000072}

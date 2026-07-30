@@ -14,6 +14,7 @@ public sealed class DiningRoomSeatedGuestOcclusionController : MonoBehaviour
         public RoomAnchor seatAnchor;
         public GameObject assignedChair;
         public SpriteRenderer assignedChairRenderer;
+        public SpriteRenderer frontOccluderRenderer;
     }
 
     [SerializeField] private string diningRoomName = "Dining Room";
@@ -79,6 +80,7 @@ public sealed class DiningRoomSeatedGuestOcclusionController : MonoBehaviour
             binding.seatAnchor,
             binding.assignedChair,
             binding.assignedChairRenderer,
+            binding.frontOccluderRenderer,
             diningTableRenderer,
             diningRoomName,
             butlerExclusionObjectName);

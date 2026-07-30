@@ -15,6 +15,7 @@ public class Chapter1InteractionHUD : MonoBehaviour
     private Chapter1ArrivalController arrivalController;
     private Canvas canvas;
     private TMP_Text statusText;
+    private bool statusVisible = true;
 
     private void Update()
     {
@@ -26,7 +27,7 @@ public class Chapter1InteractionHUD : MonoBehaviour
         statusText.text = arrivalController != null
             ? arrivalController.BuildShortHudState(string.Empty).TrimStart('\r', '\n')
             : string.Empty;
-        statusText.gameObject.SetActive(!string.IsNullOrWhiteSpace(statusText.text));
+        statusText.gameObject.SetActive(statusVisible && !string.IsNullOrWhiteSpace(statusText.text));
     }
 
     public void Initialize(Chapter1ArrivalController controller)
@@ -38,6 +39,16 @@ public class Chapter1InteractionHUD : MonoBehaviour
     public void SetHangCoatAvailable(bool value)
     {
         EnsureUI();
+    }
+
+    public void SetStatusVisible(bool visible)
+    {
+        statusVisible = visible;
+
+        if (statusText != null)
+        {
+            statusText.gameObject.SetActive(visible && !string.IsNullOrWhiteSpace(statusText.text));
+        }
     }
 
     private void EnsureUI()

@@ -673,6 +673,125 @@ public class ObjectCollisionBoxRegressionTests
     }
 
     [Test]
+    public void SeatedGuestOverrideStaysBehindOptionalFrontOccluder()
+    {
+        GameObject roomObject = null;
+        GameObject actorObject = null;
+        GameObject chairObject = null;
+        GameObject frontOccluderObject = null;
+        GameObject tableObject = null;
+
+        try
+        {
+            roomObject = new GameObject("Room_Drawing_Room");
+            RoomContentGroup room = roomObject.AddComponent<RoomContentGroup>();
+            room.SetRoomName("Drawing Room");
+            GameObject seatObject = new GameObject("DrawingRoomGuestPoint_01");
+            seatObject.transform.SetParent(roomObject.transform, false);
+            RoomAnchor seat = seatObject.AddComponent<RoomAnchor>();
+            seat.RefreshFromHierarchy();
+
+            actorObject = new GameObject("Guest1");
+            actorObject.AddComponent<SpriteRenderer>();
+            ActorRoomState actorState = actorObject.AddComponent<ActorRoomState>();
+            SerializedObject serializedActor = new SerializedObject(actorState);
+            serializedActor.FindProperty("restrictVisibilityToCurrentRoom").boolValue = false;
+            serializedActor.ApplyModifiedPropertiesWithoutUndo();
+            actorState.SetCurrentRoom("Drawing Room");
+            actorState.SetAvailableInCurrentChapter(true);
+            actorState.SetVisibleByChapterState(true);
+            actorState.SetSeated(true);
+
+            chairObject = new GameObject("purple_sofa");
+            SpriteRenderer chairRenderer = chairObject.AddComponent<SpriteRenderer>();
+            chairRenderer.sortingLayerName = "People";
+            chairRenderer.sortingOrder = 1200;
+            frontOccluderObject = new GameObject("redcoucharmrest_0");
+            SpriteRenderer frontOccluderRenderer = frontOccluderObject.AddComponent<SpriteRenderer>();
+            frontOccluderRenderer.sortingLayerName = "People";
+            frontOccluderRenderer.sortingOrder = 1100;
+            tableObject = new GameObject("tea_service_table");
+            SpriteRenderer tableRenderer = tableObject.AddComponent<SpriteRenderer>();
+            tableRenderer.sortingLayerName = "People";
+            tableRenderer.sortingOrder = 1800;
+
+            DiningRoomSeatedGuestOcclusionException seatedException =
+                actorObject.AddComponent<DiningRoomSeatedGuestOcclusionException>();
+            seatedException.ActivateForSeat(
+                actorState,
+                seat,
+                chairObject,
+                chairRenderer,
+                frontOccluderRenderer,
+                tableRenderer,
+                "Drawing Room",
+                "Butler");
+
+            SortingGroup group = actorObject.GetComponent<SortingGroup>();
+            Assert.That(seatedException.IsExceptionActive, Is.True);
+            Assert.That(seatedException.FrontOccluderRenderer, Is.SameAs(frontOccluderRenderer));
+            Assert.That(group, Is.Not.Null);
+            Assert.That(group.sortingOrder, Is.GreaterThan(chairRenderer.sortingOrder));
+            Assert.That(group.sortingOrder, Is.EqualTo(frontOccluderRenderer.sortingOrder - 1));
+            Assert.That(group.sortingOrder, Is.LessThan(tableRenderer.sortingOrder));
+            Assert.That(frontOccluderRenderer.sortingOrder, Is.EqualTo(tableRenderer.sortingOrder));
+
+            seatedException.DeactivateForSeat();
+
+            Assert.That(group.enabled, Is.False);
+            Assert.That(frontOccluderRenderer.sortingOrder, Is.EqualTo(1100));
+        }
+        finally
+        {
+            if (tableObject != null)
+            {
+                Object.DestroyImmediate(tableObject);
+            }
+
+            if (frontOccluderObject != null)
+            {
+                Object.DestroyImmediate(frontOccluderObject);
+            }
+
+            if (chairObject != null)
+            {
+                Object.DestroyImmediate(chairObject);
+            }
+
+            if (actorObject != null)
+            {
+                Object.DestroyImmediate(actorObject);
+            }
+
+            if (roomObject != null)
+            {
+                Object.DestroyImmediate(roomObject);
+            }
+        }
+    }
+
+    [Test]
+    public void DiningSeatSixUsesOnlyTheLocalRightBackChairOverlayAsItsFrontOccluder()
+    {
+        string gameplaySceneText = File.ReadAllText(GameplayScenePath);
+
+        Assert.That(
+            gameplaySceneText,
+            Does.Match(
+                @"seatAnchor: \{fileID: 3602000052\}\s+" +
+                @"assignedChair: \{fileID: 3910000050\}\s+" +
+                @"assignedChairRenderer: \{fileID: 3910000052\}\s+" +
+                @"frontOccluderRenderer: \{fileID: 777689895\}"),
+            "Only the affected dining seat should use the chair overlay that must stay in front of its seated guest.");
+        Assert.That(
+            System.Text.RegularExpressions.Regex.Matches(
+                gameplaySceneText,
+                @"frontOccluderRenderer: \{fileID: 777689895\}").Count,
+            Is.EqualTo(1),
+            "The one-off chair overlay must not become a room-wide occlusion rule.");
+    }
+
+    [Test]
     public void DrawingRoomPurpleArmchairUsesLowerFootprintForSharedButlerYSort()
     {
         SceneSetup[] previousSceneSetup = EditorSceneManager.GetSceneManagerSetup();
@@ -859,6 +978,42 @@ public class ObjectCollisionBoxRegressionTests
         finally
         {
             if (previousSceneSetup.Length > 0)
+            {
+                EditorSceneManager.RestoreSceneManagerSetup(previousSceneSetup);
+            }
+        }
+    }
+
+    [Test]
+    public void KitchenWorkTableUsesItsBottomPivotAsTheOnlyYSortWriter()
+    {
+        SceneSetup[] previousSceneSetup = EditorSceneManager.GetSceneManagerSetup();
+
+        try
+        {
+            Scene scene = EditorSceneManager.OpenScene(GameplayScenePath, OpenSceneMode.Single);
+            Transform room = FindTransformInScene(scene, "Room_Kitchen");
+            Transform table = FindDescendant(room, "kitchen_work_table");
+            Transform blockerTransform = FindDescendant(room, "PlayerBlocker_kitchen_work_table");
+
+            Assert.That(room, Is.Not.Null);
+            Assert.That(table, Is.Not.Null);
+            Assert.That(blockerTransform, Is.Not.Null);
+
+            SpriteRenderer tableRenderer = table.GetComponent<SpriteRenderer>();
+            WorldYSortSpriteRenderer tableSorter = table.GetComponent<WorldYSortSpriteRenderer>();
+            ObjectMovementBlocker2D blocker = blockerTransform.GetComponent<ObjectMovementBlocker2D>();
+
+            Assert.That(tableRenderer, Is.Not.Null);
+            Assert.That(tableRenderer.spriteSortPoint, Is.EqualTo(SpriteSortPoint.Pivot));
+            Assert.That(tableSorter, Is.Not.Null, "The table's authored bottom pivot must be its local Y-sort reference.");
+            Assert.That(blocker, Is.Not.Null);
+            Assert.That(blocker.SortSourceRenderers, Is.False,
+                "The movement footprint must not compete with the table's bottom-pivot sorter.");
+        }
+        finally
+        {
+            if (previousSceneSetup != null && previousSceneSetup.Length > 0)
             {
                 EditorSceneManager.RestoreSceneManagerSetup(previousSceneSetup);
             }

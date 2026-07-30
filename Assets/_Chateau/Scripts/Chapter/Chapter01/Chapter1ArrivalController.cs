@@ -82,8 +82,10 @@ public class Chapter1ArrivalController : MonoBehaviour
     [Header("Drawing Room Seated Occlusion")]
     [SerializeField] private SpriteRenderer drawingRoomTeaTableRenderer;
     [SerializeField] private SpriteRenderer drawingRoomSofaRenderer;
+    [SerializeField] private SpriteRenderer drawingRoomSofaArmrestRenderer;
     [SerializeField] private SpriteRenderer drawingRoomRedChairRenderer;
     [SerializeField] private SpriteRenderer drawingRoomGreenChairRenderer;
+    [SerializeField] private SpriteRenderer drawingRoomGreenChairArmrestRenderer;
 
     [Header("Clock Timeline")]
     [SerializeField, Range(0, 23)] private int firstArrivalHour = 18;
@@ -166,11 +168,11 @@ public class Chapter1ArrivalController : MonoBehaviour
     private const string DefaultGuestFootstepCatalogResourcePath = "Audio/GuestFootstepCatalog";
     private const string GuestInterruptedLineText = "You inturrupted me.";
     private const float RuntimeGuestPixelsPerUnit = 200f / 3f;
-    private const float WornCoatVisualScaleMultiplier = 0.5f;
+    private const float WornCoatVisualScaleMultiplier = 1f;
     private const float GuestSevenWornCoatCenterAboveFeet = 1.08f;
     private static readonly Vector3 WorldCoatOffset = new Vector3(0.25f, 0.45f, 0f);
     private static readonly Vector3 ButlerCarriedCoatOffset = new Vector3(0.43f, 1.08f, 0f);
-    private static readonly Vector3 AssignedCoatFallbackScale = new Vector3(0.2f, 0.2f, 1f);
+    private static readonly Vector3 AssignedCoatFallbackScale = new Vector3(0.4f, 0.4f, 1f);
     private static readonly Vector2 WorldCoatColliderSize = new Vector2(0.35f, 0.25f);
     private static readonly Vector2 CoatHangerFallbackColliderSize = new Vector2(0.9f, 1.6f);
     private static readonly string[][] ChapterGuestNameAliases =
@@ -5253,6 +5255,7 @@ public class Chapter1ArrivalController : MonoBehaviour
 
         RoomAnchor seatAnchor = drawingRoomSpot != null ? drawingRoomSpot.GetComponent<RoomAnchor>() : null;
         SpriteRenderer chairRenderer = GetDrawingRoomChairRenderer(guestState.GuestIndex);
+        SpriteRenderer frontOccluderRenderer = GetDrawingRoomFrontOccluderRenderer(guestState.GuestIndex);
 
         if (seatAnchor == null || chairRenderer == null || drawingRoomTeaTableRenderer == null)
         {
@@ -5271,6 +5274,7 @@ public class Chapter1ArrivalController : MonoBehaviour
             seatAnchor,
             chairRenderer.gameObject,
             chairRenderer,
+            frontOccluderRenderer,
             drawingRoomTeaTableRenderer,
             drawingRoomId,
             "Butler");
@@ -5288,6 +5292,19 @@ public class Chapter1ArrivalController : MonoBehaviour
                 return drawingRoomRedChairRenderer;
             case 7:
                 return drawingRoomGreenChairRenderer;
+            default:
+                return null;
+        }
+    }
+
+    private SpriteRenderer GetDrawingRoomFrontOccluderRenderer(int guestIndex)
+    {
+        switch (guestIndex)
+        {
+            case 0:
+                return drawingRoomSofaArmrestRenderer;
+            case 7:
+                return drawingRoomGreenChairArmrestRenderer;
             default:
                 return null;
         }
