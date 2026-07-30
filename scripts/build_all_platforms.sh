@@ -205,8 +205,10 @@ build_platform() {
 
     mkdir -p -- "$chantilly_build_root/Logs"
 
-    if ! "$chantilly_unity_path" "${unity_args[@]}"; then
-        local unity_status=$?
+    "$chantilly_unity_path" "${unity_args[@]}"
+    local unity_status=$?
+
+    if ((unity_status != 0)); then
         echo "ERROR: $display_name build failed with exit code $unity_status." >&2
         if [[ -f "$log_path" ]]; then
             tail -n 80 "$log_path"
