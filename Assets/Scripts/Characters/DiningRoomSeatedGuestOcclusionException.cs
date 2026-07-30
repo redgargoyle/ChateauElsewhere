@@ -18,6 +18,7 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
     [SerializeField] private SpriteRenderer diningTableRenderer;
 
     private bool frontOccluderOnly;
+    private bool actorBehindOccluder;
     private SortingGroup sortingGroup;
     private bool createdSortingGroup;
     private bool capturedOriginalSortingGroupState;
@@ -25,8 +26,9 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
     private string originalSortingLayerName;
     private int originalSortingOrder;
     private bool capturedFrontOccluderState;
-    private string originalFrontOccluderLayerName;
+    private int originalFrontOccluderLayerId;
     private int originalFrontOccluderOrder;
+    private SpriteSortPoint originalFrontOccluderSortPoint;
     private bool appliedException;
     private bool loggedInvalidOrder;
 
@@ -135,6 +137,7 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
         frontOccluderRenderer = targetFrontOccluderRenderer;
         diningTableRenderer = tableRenderer;
         frontOccluderOnly = false;
+        actorBehindOccluder = false;
         diningRoomName = string.IsNullOrWhiteSpace(targetRoomName) ? "Dining Room" : targetRoomName.Trim();
         butlerExclusionObjectName = string.IsNullOrWhiteSpace(targetButlerExclusionObjectName)
             ? "Butler"
@@ -158,6 +161,32 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
         frontOccluderRenderer = targetFrontOccluderRenderer;
         diningTableRenderer = null;
         frontOccluderOnly = true;
+        actorBehindOccluder = false;
+        diningRoomName = string.IsNullOrWhiteSpace(targetRoomName) ? "Drawing Room" : targetRoomName.Trim();
+        butlerExclusionObjectName = string.IsNullOrWhiteSpace(targetButlerExclusionObjectName)
+            ? "Butler"
+            : targetButlerExclusionObjectName.Trim();
+        loggedInvalidOrder = false;
+        ApplyOrRestore();
+    }
+
+    public void ActivateBehindOccluder(
+        ActorRoomState targetActorState,
+        RoomAnchor seatAnchor,
+        SpriteRenderer targetOccluderRenderer,
+        SpriteRenderer targetFrontOccluderRenderer,
+        string targetRoomName,
+        string targetButlerExclusionObjectName)
+    {
+        RestoreNormalSorting();
+        actorState = targetActorState != null ? targetActorState : actorState;
+        assignedSeat = seatAnchor;
+        assignedChair = targetOccluderRenderer != null ? targetOccluderRenderer.gameObject : null;
+        assignedChairRenderer = targetOccluderRenderer;
+        frontOccluderRenderer = targetFrontOccluderRenderer;
+        diningTableRenderer = null;
+        frontOccluderOnly = false;
+        actorBehindOccluder = true;
         diningRoomName = string.IsNullOrWhiteSpace(targetRoomName) ? "Drawing Room" : targetRoomName.Trim();
         butlerExclusionObjectName = string.IsNullOrWhiteSpace(targetButlerExclusionObjectName)
             ? "Butler"
@@ -180,6 +209,7 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
         frontOccluderRenderer = null;
         diningTableRenderer = null;
         frontOccluderOnly = false;
+        actorBehindOccluder = false;
         loggedInvalidOrder = false;
     }
 
@@ -193,6 +223,12 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
         if (!ShouldApplyException())
         {
             RestoreNormalSorting();
+            return;
+        }
+
+        if (actorBehindOccluder)
+        {
+            ApplyActorBehindOccluder();
             return;
         }
 
@@ -269,9 +305,40 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
             return false;
         }
 
+        if (actorBehindOccluder)
+        {
+            return assignedChairRenderer != null;
+        }
+
         return frontOccluderOnly
             ? frontOccluderRenderer != null
             : assignedChair != null && assignedChairRenderer != null && diningTableRenderer != null;
+    }
+
+    private void ApplyActorBehindOccluder()
+    {
+        int occluderOrder = assignedChairRenderer.sortingOrder;
+
+        if (frontOccluderRenderer != null)
+        {
+            CaptureFrontOccluderStateIfNeeded();
+            frontOccluderRenderer.sortingLayerID = assignedChairRenderer.sortingLayerID;
+            frontOccluderRenderer.sortingOrder = occluderOrder + 1;
+            frontOccluderRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
+        }
+
+        SortingGroup targetGroup = EnsureSortingGroup();
+
+        if (targetGroup == null)
+        {
+            RestoreNormalSorting();
+            return;
+        }
+
+        targetGroup.enabled = true;
+        targetGroup.sortingLayerID = assignedChairRenderer.sortingLayerID;
+        targetGroup.sortingOrder = occluderOrder - 1;
+        appliedException = true;
     }
 
     private void ApplyFrontOccluderOnly()
@@ -286,8 +353,7 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
             if (candidate != null &&
                 candidate.enabled &&
                 candidate.gameObject.activeInHierarchy &&
-                (frontmostActorRenderer == null ||
-                candidate.sortingOrder > frontmostActorRenderer.sortingOrder))
+                IsRendererInFront(candidate, frontmostActorRenderer))
             {
                 frontmostActorRenderer = candidate;
             }
@@ -300,7 +366,7 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
         }
 
         CaptureFrontOccluderStateIfNeeded();
-        frontOccluderRenderer.sortingLayerName = frontmostActorRenderer.sortingLayerName;
+        frontOccluderRenderer.sortingLayerID = frontmostActorRenderer.sortingLayerID;
         frontOccluderRenderer.sortingOrder = frontmostActorRenderer.sortingOrder + 1;
         frontOccluderRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
         appliedException = true;
@@ -375,8 +441,9 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
             return;
         }
 
-        originalFrontOccluderLayerName = frontOccluderRenderer.sortingLayerName;
+        originalFrontOccluderLayerId = frontOccluderRenderer.sortingLayerID;
         originalFrontOccluderOrder = frontOccluderRenderer.sortingOrder;
+        originalFrontOccluderSortPoint = frontOccluderRenderer.spriteSortPoint;
         capturedFrontOccluderState = true;
     }
 
@@ -389,8 +456,9 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
 
         if (frontOccluderRenderer != null)
         {
-            frontOccluderRenderer.sortingLayerName = originalFrontOccluderLayerName;
+            frontOccluderRenderer.sortingLayerID = originalFrontOccluderLayerId;
             frontOccluderRenderer.sortingOrder = originalFrontOccluderOrder;
+            frontOccluderRenderer.spriteSortPoint = originalFrontOccluderSortPoint;
         }
 
         capturedFrontOccluderState = false;
@@ -432,4 +500,24 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
             !string.IsNullOrWhiteSpace(fragment) &&
             value.IndexOf(fragment, System.StringComparison.OrdinalIgnoreCase) >= 0;
     }
+
+    private static bool IsRendererInFront(SpriteRenderer candidate, SpriteRenderer currentFrontmost)
+    {
+        if (candidate == null)
+        {
+            return false;
+        }
+
+        if (currentFrontmost == null)
+        {
+            return true;
+        }
+
+        int candidateLayerValue = SortingLayer.GetLayerValueFromID(candidate.sortingLayerID);
+        int currentLayerValue = SortingLayer.GetLayerValueFromID(currentFrontmost.sortingLayerID);
+        return candidateLayerValue > currentLayerValue ||
+            (candidateLayerValue == currentLayerValue &&
+            candidate.sortingOrder > currentFrontmost.sortingOrder);
+    }
+
 }

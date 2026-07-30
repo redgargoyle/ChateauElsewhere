@@ -148609,6 +148609,7 @@ MonoBehaviour:
   drawingRoomSideButlerSpot: {fileID: 140767560}
   closetPoint: {fileID: 3503000007}
   drawingRoomEntryPoint: {fileID: 641292382}
+  drawingRoomGreenChairRenderer: {fileID: 1850905446}
   drawingRoomGreenChairForegroundRenderer: {fileID: 800827573}
   drawingRoomGreenChairArmrestRenderer: {fileID: 362573330}
   firstArrivalHour: 18

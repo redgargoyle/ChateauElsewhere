@@ -771,10 +771,11 @@ public class ObjectCollisionBoxRegressionTests
     }
 
     [Test]
-    public void FrontOccluderOnlyWinsAfterAnotherLateSortWriter()
+    public void SeatedGuestStaysBehindOccluderWithoutBreakingWorldYSorting()
     {
         GameObject roomObject = null;
         GameObject actorObject = null;
+        GameObject fullChairObject = null;
         GameObject frontOccluderObject = null;
 
         try
@@ -806,6 +807,10 @@ public class ObjectCollisionBoxRegressionTests
             actorState.SetVisibleByChapterState(true);
             actorState.SetSeated(true);
 
+            fullChairObject = new GameObject("drawingroomgreenchair_0");
+            SpriteRenderer fullChairRenderer = fullChairObject.AddComponent<SpriteRenderer>();
+            fullChairRenderer.sortingLayerName = "People";
+            fullChairRenderer.sortingOrder = 1050;
             frontOccluderObject = new GameObject("drawingroomgreenchair[_0");
             SpriteRenderer frontOccluderRenderer = frontOccluderObject.AddComponent<SpriteRenderer>();
             frontOccluderRenderer.sortingLayerName = "People";
@@ -813,26 +818,39 @@ public class ObjectCollisionBoxRegressionTests
 
             DiningRoomSeatedGuestOcclusionException seatedException =
                 actorObject.AddComponent<DiningRoomSeatedGuestOcclusionException>();
-            seatedException.ActivateFrontOccluderOnly(
+            seatedException.ActivateBehindOccluder(
                 actorState,
                 seat,
+                fullChairRenderer,
                 frontOccluderRenderer,
                 "Drawing Room",
                 "Butler");
 
+            SortingGroup group = actorObject.GetComponent<SortingGroup>();
             Assert.That(seatedException.IsExceptionActive, Is.True);
-            Assert.That(frontOccluderRenderer.sortingOrder, Is.EqualTo(1501));
-            Assert.That(actorObject.GetComponent<SortingGroup>(), Is.Null,
-                "The Drawing Room foreground fix must not replace ordinary actor Y sorting.");
+            Assert.That(seatedException.FrontOccluderRenderer, Is.SameAs(frontOccluderRenderer));
+            Assert.That(group, Is.Not.Null);
+            Assert.That(group.enabled, Is.True);
+            Assert.That(group.sortingOrder, Is.EqualTo(fullChairRenderer.sortingOrder - 1));
+            Assert.That(fullChairRenderer.sortingOrder, Is.EqualTo(1050),
+                "The chair must retain its ordinary world-Y order for every other actor.");
+            Assert.That(frontOccluderRenderer.sortingOrder, Is.EqualTo(1051));
 
+            fullChairRenderer.sortingOrder = 800;
             frontOccluderRenderer.sortingOrder = 900;
             actorRenderer.sortingOrder = 1600;
             seatedException.ApplyOcclusionNow();
 
-            Assert.That(frontOccluderRenderer.sortingOrder, Is.EqualTo(1601),
-                "The seated exception executes after the blocker and must be the final foreground writer.");
+            Assert.That(group.sortingOrder, Is.EqualTo(799),
+                "The seated guest must follow immediately behind the chair's latest WorldY order.");
+            Assert.That(fullChairRenderer.sortingOrder, Is.EqualTo(800),
+                "The seated exception must never take world-Y ownership away from the full chair.");
+            Assert.That(frontOccluderRenderer.sortingOrder, Is.EqualTo(801),
+                "The detached rail must follow immediately in front of the chair.");
 
             seatedException.DeactivateForSeat();
+            Assert.That(group.enabled, Is.False);
+            Assert.That(fullChairRenderer.sortingOrder, Is.EqualTo(800));
             Assert.That(frontOccluderRenderer.sortingOrder, Is.EqualTo(1100));
         }
         finally
@@ -840,6 +858,11 @@ public class ObjectCollisionBoxRegressionTests
             if (frontOccluderObject != null)
             {
                 Object.DestroyImmediate(frontOccluderObject);
+            }
+
+            if (fullChairObject != null)
+            {
+                Object.DestroyImmediate(fullChairObject);
             }
 
             if (actorObject != null)
@@ -1439,34 +1462,50 @@ public class ObjectCollisionBoxRegressionTests
                     Assert.That(seatedException.IsExceptionActive, Is.True);
                     Assert.That(seatedException.FrontOccluderRenderer, Is.Not.Null);
 
-                    SpriteRenderer[] guestRenderers = guest.GetComponentsInChildren<SpriteRenderer>(true);
-
-                    for (int rendererIndex = 0; rendererIndex < guestRenderers.Length; rendererIndex++)
-                    {
-                        SpriteRenderer guestRenderer = guestRenderers[rendererIndex];
-
-                        if (guestRenderer != null && guestRenderer.enabled)
-                        {
-                            Assert.That(
-                                seatedException.FrontOccluderRenderer.sortingOrder,
-                                Is.GreaterThan(guestRenderer.sortingOrder),
-                                $"{seatedException.FrontOccluderRenderer.name} must finish in front of {guest.ActorId}.");
-                        }
-                    }
-
                     SortingGroup group = guest.GetComponentInChildren<SortingGroup>(true);
-                    Assert.That(group == null || !group.enabled, Is.True,
-                        "Drawing Room cutouts must not replace the guest's ordinary world-Y sorting.");
 
                     if (string.Equals(guest.ActorId, "guest_1", System.StringComparison.OrdinalIgnoreCase))
                     {
                         Assert.That(seatedException.FrontOccluderRenderer, Is.SameAs(greenChairForegroundRenderer));
                         greenChairForegroundMarker.ApplySourceSortingNow();
+                        greenChairSorter.ApplySorting();
                         seatedException.ApplyOcclusionNow();
+
+                        SpriteRenderer frontmostGuestRenderer = FindFrontmostActiveRenderer(guest.gameObject);
+
+                        Assert.That(frontmostGuestRenderer, Is.Not.Null);
+                        Assert.That(group, Is.Not.Null);
+                        Assert.That(group.enabled, Is.True);
+                        Assert.That(
+                            group.sortingLayerID,
+                            Is.EqualTo(greenChairRenderer.sortingLayerID),
+                            "The seated Guest 1 override and green chair must use the same sorting layer.");
+                        Assert.That(
+                            group.sortingOrder,
+                            Is.EqualTo(greenChairRenderer.sortingOrder - 1),
+                            $"Seated Guest 1 must finish immediately behind the full green chair. " +
+                            $"chair={DescribeRendererSorting(greenChairRenderer)} " +
+                            $"guest={DescribeRendererSorting(frontmostGuestRenderer)} " +
+                            $"group={group.sortingLayerName}/{group.sortingOrder}");
                         Assert.That(
                             greenChairForegroundRenderer.sortingOrder,
-                            Is.GreaterThan(sorter.ActorFootRenderer.sortingOrder),
-                            "The green chair foreground must win after its movement blocker writes.");
+                            Is.EqualTo(greenChairRenderer.sortingOrder + 1),
+                            $"The green chair foreground must finish immediately in front of the full chair. " +
+                            $"foreground={DescribeRendererSorting(greenChairForegroundRenderer)} " +
+                            $"chair={DescribeRendererSorting(greenChairRenderer)}");
+                    }
+                    else
+                    {
+                        Assert.That(group == null || !group.enabled, Is.True,
+                            "Only Guest 1 needs a Drawing Room sorting-group override.");
+
+                        SpriteRenderer frontmostGuestRenderer = FindFrontmostActiveRenderer(guest.gameObject);
+
+                        Assert.That(frontmostGuestRenderer, Is.Not.Null);
+                        Assert.That(
+                            seatedException.FrontOccluderRenderer.sortingOrder,
+                            Is.GreaterThan(frontmostGuestRenderer.sortingOrder),
+                            $"{seatedException.FrontOccluderRenderer.name} must finish in front of {guest.ActorId}.");
                     }
                 }
                 else
@@ -1688,5 +1727,58 @@ public class ObjectCollisionBoxRegressionTests
         }
 
         return null;
+    }
+
+    private static SpriteRenderer FindFrontmostActiveRenderer(GameObject actorObject)
+    {
+        if (actorObject == null)
+        {
+            return null;
+        }
+
+        SpriteRenderer[] renderers = actorObject.GetComponentsInChildren<SpriteRenderer>(true);
+        SpriteRenderer frontmostRenderer = null;
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            SpriteRenderer renderer = renderers[i];
+
+            if (renderer == null ||
+                !renderer.enabled ||
+                !renderer.gameObject.activeInHierarchy ||
+                renderer.sprite == null)
+            {
+                continue;
+            }
+
+            if (frontmostRenderer == null ||
+                SortingLayer.GetLayerValueFromID(renderer.sortingLayerID) >
+                SortingLayer.GetLayerValueFromID(frontmostRenderer.sortingLayerID) ||
+                (renderer.sortingLayerID == frontmostRenderer.sortingLayerID &&
+                renderer.sortingOrder > frontmostRenderer.sortingOrder))
+            {
+                frontmostRenderer = renderer;
+            }
+        }
+
+        return frontmostRenderer;
+    }
+
+    private static string DescribeRendererSorting(SpriteRenderer renderer)
+    {
+        if (renderer == null)
+        {
+            return "<null>";
+        }
+
+        SortingGroup parentGroup = renderer.GetComponentInParent<SortingGroup>();
+        string parentGroupDescription = parentGroup != null && parentGroup.enabled
+            ? $"{parentGroup.name}:{parentGroup.sortingLayerName}/{parentGroup.sortingOrder}"
+            : "none";
+        int renderQueue = renderer.sharedMaterial != null ? renderer.sharedMaterial.renderQueue : -1;
+
+        return $"{renderer.name} layer={renderer.sortingLayerName}({SortingLayer.GetLayerValueFromID(renderer.sortingLayerID)}) " +
+            $"order={renderer.sortingOrder} group={parentGroupDescription} priority={renderer.rendererPriority} " +
+            $"queue={renderQueue} z={renderer.transform.position.z}";
     }
 }

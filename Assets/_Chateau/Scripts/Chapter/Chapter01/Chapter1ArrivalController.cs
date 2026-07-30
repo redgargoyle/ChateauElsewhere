@@ -80,6 +80,7 @@ public class Chapter1ArrivalController : MonoBehaviour
     [SerializeField] private Transform drawingRoomEntryPoint;
 
     [Header("Drawing Room Seated Foreground Cutouts")]
+    [SerializeField] private SpriteRenderer drawingRoomGreenChairRenderer;
     [SerializeField] private SpriteRenderer drawingRoomGreenChairForegroundRenderer;
     [SerializeField] private SpriteRenderer drawingRoomGreenChairArmrestRenderer;
 
@@ -5250,7 +5251,6 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         RoomAnchor seatAnchor = drawingRoomSpot != null ? drawingRoomSpot.GetComponent<RoomAnchor>() : null;
-        SpriteRenderer frontOccluderRenderer = GetDrawingRoomFrontOccluderRenderer(guestState.GuestIndex);
 
         if (seatAnchor == null)
         {
@@ -5258,6 +5258,32 @@ public class Chapter1ArrivalController : MonoBehaviour
             seatedException?.DeactivateForSeat();
             return;
         }
+
+        if (guestState.GuestIndex == 0)
+        {
+            if (drawingRoomGreenChairRenderer == null || drawingRoomGreenChairForegroundRenderer == null)
+            {
+                Debug.LogError("Drawing Room green chair occlusion renderers are not fully wired for guest 1.", this);
+                seatedException?.DeactivateForSeat();
+                return;
+            }
+
+            if (seatedException == null)
+            {
+                seatedException = guestState.ActorState.gameObject.AddComponent<DiningRoomSeatedGuestOcclusionException>();
+            }
+
+            seatedException.ActivateBehindOccluder(
+                guestState.ActorState,
+                seatAnchor,
+                drawingRoomGreenChairRenderer,
+                drawingRoomGreenChairForegroundRenderer,
+                drawingRoomId,
+                "Butler");
+            return;
+        }
+
+        SpriteRenderer frontOccluderRenderer = GetDrawingRoomFrontOccluderRenderer(guestState.GuestIndex);
 
         if (frontOccluderRenderer == null)
         {
@@ -5282,8 +5308,6 @@ public class Chapter1ArrivalController : MonoBehaviour
     {
         switch (guestIndex)
         {
-            case 0:
-                return drawingRoomGreenChairForegroundRenderer;
             case 7:
                 return drawingRoomGreenChairArmrestRenderer;
             default:
