@@ -15,9 +15,9 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
     [SerializeField] private GameObject assignedChair;
     [SerializeField] private SpriteRenderer assignedChairRenderer;
     [SerializeField] private SpriteRenderer frontOccluderRenderer;
-    [SerializeField] private SpriteRenderer sortingCeilingRenderer;
     [SerializeField] private SpriteRenderer diningTableRenderer;
 
+    private bool frontOccluderOnly;
     private SortingGroup sortingGroup;
     private bool createdSortingGroup;
     private bool capturedOriginalSortingGroupState;
@@ -34,7 +34,6 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
     public RoomAnchor AssignedSeat => assignedSeat;
     public GameObject AssignedChair => assignedChair;
     public SpriteRenderer FrontOccluderRenderer => frontOccluderRenderer;
-    public SpriteRenderer SortingCeilingRenderer => sortingCeilingRenderer;
 
     private void Awake()
     {
@@ -128,37 +127,38 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
         string targetRoomName,
         string targetButlerExclusionObjectName)
     {
-        ActivateForSeat(
-            targetActorState,
-            seatAnchor,
-            chairObject,
-            chairRenderer,
-            targetFrontOccluderRenderer,
-            null,
-            tableRenderer,
-            targetRoomName,
-            targetButlerExclusionObjectName);
-    }
-
-    public void ActivateForSeat(
-        ActorRoomState targetActorState,
-        RoomAnchor seatAnchor,
-        GameObject chairObject,
-        SpriteRenderer chairRenderer,
-        SpriteRenderer targetFrontOccluderRenderer,
-        SpriteRenderer targetSortingCeilingRenderer,
-        SpriteRenderer tableRenderer,
-        string targetRoomName,
-        string targetButlerExclusionObjectName)
-    {
+        RestoreNormalSorting();
         actorState = targetActorState != null ? targetActorState : actorState;
         assignedSeat = seatAnchor;
         assignedChair = chairObject;
         assignedChairRenderer = chairRenderer;
         frontOccluderRenderer = targetFrontOccluderRenderer;
-        sortingCeilingRenderer = targetSortingCeilingRenderer;
         diningTableRenderer = tableRenderer;
+        frontOccluderOnly = false;
         diningRoomName = string.IsNullOrWhiteSpace(targetRoomName) ? "Dining Room" : targetRoomName.Trim();
+        butlerExclusionObjectName = string.IsNullOrWhiteSpace(targetButlerExclusionObjectName)
+            ? "Butler"
+            : targetButlerExclusionObjectName.Trim();
+        loggedInvalidOrder = false;
+        ApplyOrRestore();
+    }
+
+    public void ActivateFrontOccluderOnly(
+        ActorRoomState targetActorState,
+        RoomAnchor seatAnchor,
+        SpriteRenderer targetFrontOccluderRenderer,
+        string targetRoomName,
+        string targetButlerExclusionObjectName)
+    {
+        RestoreNormalSorting();
+        actorState = targetActorState != null ? targetActorState : actorState;
+        assignedSeat = seatAnchor;
+        assignedChair = null;
+        assignedChairRenderer = null;
+        frontOccluderRenderer = targetFrontOccluderRenderer;
+        diningTableRenderer = null;
+        frontOccluderOnly = true;
+        diningRoomName = string.IsNullOrWhiteSpace(targetRoomName) ? "Drawing Room" : targetRoomName.Trim();
         butlerExclusionObjectName = string.IsNullOrWhiteSpace(targetButlerExclusionObjectName)
             ? "Butler"
             : targetButlerExclusionObjectName.Trim();
@@ -178,8 +178,8 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
         assignedChair = null;
         assignedChairRenderer = null;
         frontOccluderRenderer = null;
-        sortingCeilingRenderer = null;
         diningTableRenderer = null;
+        frontOccluderOnly = false;
         loggedInvalidOrder = false;
     }
 
@@ -196,6 +196,12 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
             return;
         }
 
+        if (frontOccluderOnly)
+        {
+            ApplyFrontOccluderOnly();
+            return;
+        }
+
         int tableOrder = diningTableRenderer.sortingOrder;
         int chairOrder = assignedChairRenderer.sortingOrder;
 
@@ -206,10 +212,7 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
             frontOccluderRenderer.sortingOrder = tableOrder;
         }
 
-        int guestSortingCeilingOrder = sortingCeilingRenderer != null
-            ? Mathf.Min(tableOrder, sortingCeilingRenderer.sortingOrder)
-            : tableOrder;
-        int guestOrder = guestSortingCeilingOrder - 1;
+        int guestOrder = tableOrder - 1;
 
         if (guestOrder <= chairOrder)
         {
@@ -219,7 +222,6 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
                     $"{InvalidOrderMessage} seat={assignedSeat.name} chair={assignedChair.name} " +
                     $"chairOrder={chairOrder} guestOrder={guestOrder} " +
                     $"frontOrder={(frontOccluderRenderer != null ? frontOccluderRenderer.sortingOrder : tableOrder)} " +
-                    $"ceilingOrder={(sortingCeilingRenderer != null ? sortingCeilingRenderer.sortingOrder : tableOrder)} " +
                     $"tableOrder={tableOrder}",
                     this);
                 loggedInvalidOrder = true;
@@ -247,11 +249,7 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
     {
         ResolveActorState();
 
-        if (actorState == null ||
-            assignedSeat == null ||
-            assignedChair == null ||
-            assignedChairRenderer == null ||
-            diningTableRenderer == null)
+        if (actorState == null || assignedSeat == null)
         {
             return false;
         }
@@ -261,10 +259,51 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
             return false;
         }
 
-        return actorState.IsSeated &&
+        bool actorCanUseException = actorState.IsSeated &&
             actorState.IsVisibleInCurrentRoom &&
             SameRoom(actorState.CurrentRoomId, diningRoomName) &&
             SameRoom(assignedSeat.RoomId, diningRoomName);
+
+        if (!actorCanUseException)
+        {
+            return false;
+        }
+
+        return frontOccluderOnly
+            ? frontOccluderRenderer != null
+            : assignedChair != null && assignedChairRenderer != null && diningTableRenderer != null;
+    }
+
+    private void ApplyFrontOccluderOnly()
+    {
+        SpriteRenderer[] actorRenderers = actorState.GetComponentsInChildren<SpriteRenderer>(true);
+        SpriteRenderer frontmostActorRenderer = null;
+
+        for (int i = 0; i < actorRenderers.Length; i++)
+        {
+            SpriteRenderer candidate = actorRenderers[i];
+
+            if (candidate != null &&
+                candidate.enabled &&
+                candidate.gameObject.activeInHierarchy &&
+                (frontmostActorRenderer == null ||
+                candidate.sortingOrder > frontmostActorRenderer.sortingOrder))
+            {
+                frontmostActorRenderer = candidate;
+            }
+        }
+
+        if (frontmostActorRenderer == null)
+        {
+            RestoreNormalSorting();
+            return;
+        }
+
+        CaptureFrontOccluderStateIfNeeded();
+        frontOccluderRenderer.sortingLayerName = frontmostActorRenderer.sortingLayerName;
+        frontOccluderRenderer.sortingOrder = frontmostActorRenderer.sortingOrder + 1;
+        frontOccluderRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
+        appliedException = true;
     }
 
     private SortingGroup EnsureSortingGroup()

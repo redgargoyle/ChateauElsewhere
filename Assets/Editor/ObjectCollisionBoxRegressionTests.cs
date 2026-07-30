@@ -771,13 +771,11 @@ public class ObjectCollisionBoxRegressionTests
     }
 
     [Test]
-    public void SeatedGuestOverrideStaysBehindPhysicalSortingCeilingWithoutMovingIt()
+    public void FrontOccluderOnlyWinsAfterAnotherLateSortWriter()
     {
         GameObject roomObject = null;
         GameObject actorObject = null;
-        GameObject chairObject = null;
-        GameObject ceilingObject = null;
-        GameObject tableObject = null;
+        GameObject frontOccluderObject = null;
 
         try
         {
@@ -789,10 +787,16 @@ public class ObjectCollisionBoxRegressionTests
             RoomAnchor seat = seatObject.AddComponent<RoomAnchor>();
             seat.RefreshFromHierarchy();
 
-            actorObject = new GameObject("Yellow Dress Guest");
+            actorObject = new GameObject("Guest 1");
             SpriteRenderer actorRenderer = actorObject.AddComponent<SpriteRenderer>();
             actorRenderer.sortingLayerName = "People";
             actorRenderer.sortingOrder = 1500;
+            GameObject hiddenCoatObject = new GameObject("Stored Coat");
+            hiddenCoatObject.transform.SetParent(actorObject.transform, false);
+            SpriteRenderer hiddenCoatRenderer = hiddenCoatObject.AddComponent<SpriteRenderer>();
+            hiddenCoatRenderer.sortingLayerName = "People";
+            hiddenCoatRenderer.sortingOrder = 9999;
+            hiddenCoatObject.SetActive(false);
             ActorRoomState actorState = actorObject.AddComponent<ActorRoomState>();
             SerializedObject serializedActor = new SerializedObject(actorState);
             serializedActor.FindProperty("restrictVisibilityToCurrentRoom").boolValue = false;
@@ -802,59 +806,40 @@ public class ObjectCollisionBoxRegressionTests
             actorState.SetVisibleByChapterState(true);
             actorState.SetSeated(true);
 
-            chairObject = new GameObject("purple_sofa");
-            SpriteRenderer chairRenderer = chairObject.AddComponent<SpriteRenderer>();
-            chairRenderer.sortingLayerName = "People";
-            chairRenderer.sortingOrder = 1200;
-
-            ceilingObject = new GameObject("drawingroomgreenchair_0");
-            SpriteRenderer ceilingRenderer = ceilingObject.AddComponent<SpriteRenderer>();
-            ceilingRenderer.sortingLayerName = "People";
-            ceilingRenderer.sortingOrder = 1600;
-
-            tableObject = new GameObject("tea_service_table");
-            SpriteRenderer tableRenderer = tableObject.AddComponent<SpriteRenderer>();
-            tableRenderer.sortingLayerName = "People";
-            tableRenderer.sortingOrder = 1800;
+            frontOccluderObject = new GameObject("drawingroomgreenchair[_0");
+            SpriteRenderer frontOccluderRenderer = frontOccluderObject.AddComponent<SpriteRenderer>();
+            frontOccluderRenderer.sortingLayerName = "People";
+            frontOccluderRenderer.sortingOrder = 1100;
 
             DiningRoomSeatedGuestOcclusionException seatedException =
                 actorObject.AddComponent<DiningRoomSeatedGuestOcclusionException>();
-            seatedException.ActivateForSeat(
+            seatedException.ActivateFrontOccluderOnly(
                 actorState,
                 seat,
-                chairObject,
-                chairRenderer,
-                null,
-                ceilingRenderer,
-                tableRenderer,
+                frontOccluderRenderer,
                 "Drawing Room",
                 "Butler");
 
-            SortingGroup group = actorObject.GetComponent<SortingGroup>();
             Assert.That(seatedException.IsExceptionActive, Is.True);
-            Assert.That(seatedException.SortingCeilingRenderer, Is.SameAs(ceilingRenderer));
-            Assert.That(group, Is.Not.Null);
-            Assert.That(group.sortingOrder, Is.GreaterThan(chairRenderer.sortingOrder));
-            Assert.That(group.sortingOrder, Is.EqualTo(ceilingRenderer.sortingOrder - 1));
-            Assert.That(group.sortingOrder, Is.LessThan(tableRenderer.sortingOrder));
-            Assert.That(ceilingRenderer.sortingOrder, Is.EqualTo(1600),
-                "The green chair must keep its physical bottom-pivot Y-sort order.");
+            Assert.That(frontOccluderRenderer.sortingOrder, Is.EqualTo(1501));
+            Assert.That(actorObject.GetComponent<SortingGroup>(), Is.Null,
+                "The Drawing Room foreground fix must not replace ordinary actor Y sorting.");
+
+            frontOccluderRenderer.sortingOrder = 900;
+            actorRenderer.sortingOrder = 1600;
+            seatedException.ApplyOcclusionNow();
+
+            Assert.That(frontOccluderRenderer.sortingOrder, Is.EqualTo(1601),
+                "The seated exception executes after the blocker and must be the final foreground writer.");
+
+            seatedException.DeactivateForSeat();
+            Assert.That(frontOccluderRenderer.sortingOrder, Is.EqualTo(1100));
         }
         finally
         {
-            if (tableObject != null)
+            if (frontOccluderObject != null)
             {
-                Object.DestroyImmediate(tableObject);
-            }
-
-            if (ceilingObject != null)
-            {
-                Object.DestroyImmediate(ceilingObject);
-            }
-
-            if (chairObject != null)
-            {
-                Object.DestroyImmediate(chairObject);
+                Object.DestroyImmediate(frontOccluderObject);
             }
 
             if (actorObject != null)
@@ -1355,8 +1340,13 @@ public class ObjectCollisionBoxRegressionTests
         Transform table = FindDescendant(room, DrawingRoomTeaTableName);
         Transform blockerTransform = FindDescendant(room, $"PlayerBlocker_{DrawingRoomTeaTableName}");
         Transform greenChair = FindDescendant(room, "drawingroomgreenchair_0");
+        Transform greenChairForeground = FindDescendant(room, "drawingroomgreenchair[_0");
+        Transform greenChairForegroundBlocker = FindDescendant(room, "PlayerBlocker_drawingroomgreenchair_0");
         SpriteRenderer tableRenderer = table != null ? table.GetComponent<SpriteRenderer>() : null;
         SpriteRenderer greenChairRenderer = greenChair != null ? greenChair.GetComponent<SpriteRenderer>() : null;
+        SpriteRenderer greenChairForegroundRenderer = greenChairForeground != null
+            ? greenChairForeground.GetComponent<SpriteRenderer>()
+            : null;
         WorldYSortSpriteRenderer greenChairSorter = greenChair != null
             ? greenChair.GetComponent<WorldYSortSpriteRenderer>()
             : null;
@@ -1365,6 +1355,9 @@ public class ObjectCollisionBoxRegressionTests
             : null;
         PolygonCollider2D tableBlocker = blockerTransform != null
             ? blockerTransform.GetComponent<PolygonCollider2D>()
+            : null;
+        ObjectMovementBlocker2D greenChairForegroundMarker = greenChairForegroundBlocker != null
+            ? greenChairForegroundBlocker.GetComponent<ObjectMovementBlocker2D>()
             : null;
 
         Assert.That(navigation, Is.Not.Null);
@@ -1377,6 +1370,9 @@ public class ObjectCollisionBoxRegressionTests
         Assert.That(tableBlocker, Is.Not.Null);
         Assert.That(greenChairRenderer, Is.Not.Null);
         Assert.That(greenChairSorter, Is.Not.Null);
+        Assert.That(greenChairForegroundRenderer, Is.Not.Null);
+        Assert.That(greenChairForegroundMarker, Is.Not.Null);
+        Assert.That(greenChairForegroundMarker.SourceObject, Is.SameAs(greenChairForeground.gameObject));
 
         ActorRoomState[] actorStates = Object.FindObjectsByType<ActorRoomState>(FindObjectsInactive.Include);
         List<ActorRoomState> drawingRoomGuests = new List<ActorRoomState>();
@@ -1433,17 +1429,45 @@ public class ObjectCollisionBoxRegressionTests
                 if (guest.IsSeated)
                 {
                     seatedCount++;
-                    Assert.That(seatedException, Is.Not.Null);
+
+                    if (seatedException == null)
+                    {
+                        continue;
+                    }
+
                     seatedException.ApplyOcclusionNow();
                     Assert.That(seatedException.IsExceptionActive, Is.True);
+                    Assert.That(seatedException.FrontOccluderRenderer, Is.Not.Null);
+
+                    SpriteRenderer[] guestRenderers = guest.GetComponentsInChildren<SpriteRenderer>(true);
+
+                    for (int rendererIndex = 0; rendererIndex < guestRenderers.Length; rendererIndex++)
+                    {
+                        SpriteRenderer guestRenderer = guestRenderers[rendererIndex];
+
+                        if (guestRenderer != null && guestRenderer.enabled)
+                        {
+                            Assert.That(
+                                seatedException.FrontOccluderRenderer.sortingOrder,
+                                Is.GreaterThan(guestRenderer.sortingOrder),
+                                $"{seatedException.FrontOccluderRenderer.name} must finish in front of {guest.ActorId}.");
+                        }
+                    }
+
                     SortingGroup group = guest.GetComponentInChildren<SortingGroup>(true);
-                    SpriteRenderer chairRenderer = seatedException.AssignedChair != null
-                        ? seatedException.AssignedChair.GetComponent<SpriteRenderer>()
-                        : null;
-                    Assert.That(group, Is.Not.Null);
-                    Assert.That(chairRenderer, Is.Not.Null);
-                    Assert.That(group.sortingOrder, Is.GreaterThan(chairRenderer.sortingOrder));
-                    Assert.That(group.sortingOrder, Is.LessThan(tableRenderer.sortingOrder));
+                    Assert.That(group == null || !group.enabled, Is.True,
+                        "Drawing Room cutouts must not replace the guest's ordinary world-Y sorting.");
+
+                    if (string.Equals(guest.ActorId, "guest_1", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        Assert.That(seatedException.FrontOccluderRenderer, Is.SameAs(greenChairForegroundRenderer));
+                        greenChairForegroundMarker.ApplySourceSortingNow();
+                        seatedException.ApplyOcclusionNow();
+                        Assert.That(
+                            greenChairForegroundRenderer.sortingOrder,
+                            Is.GreaterThan(sorter.ActorFootRenderer.sortingOrder),
+                            "The green chair foreground must win after its movement blocker writes.");
+                    }
                 }
                 else
                 {

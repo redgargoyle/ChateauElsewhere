@@ -79,12 +79,8 @@ public class Chapter1ArrivalController : MonoBehaviour
     [SerializeField] private Transform closetPoint;
     [SerializeField] private Transform drawingRoomEntryPoint;
 
-    [Header("Drawing Room Seated Occlusion")]
-    [SerializeField] private SpriteRenderer drawingRoomTeaTableRenderer;
-    [SerializeField] private SpriteRenderer drawingRoomSofaRenderer;
-    [SerializeField] private SpriteRenderer drawingRoomSofaArmrestRenderer;
-    [SerializeField] private SpriteRenderer drawingRoomRedChairRenderer;
-    [SerializeField] private SpriteRenderer drawingRoomGreenChairRenderer;
+    [Header("Drawing Room Seated Foreground Cutouts")]
+    [SerializeField] private SpriteRenderer drawingRoomGreenChairForegroundRenderer;
     [SerializeField] private SpriteRenderer drawingRoomGreenChairArmrestRenderer;
 
     [Header("Clock Timeline")]
@@ -5254,13 +5250,17 @@ public class Chapter1ArrivalController : MonoBehaviour
         }
 
         RoomAnchor seatAnchor = drawingRoomSpot != null ? drawingRoomSpot.GetComponent<RoomAnchor>() : null;
-        SpriteRenderer chairRenderer = GetDrawingRoomChairRenderer(guestState.GuestIndex);
         SpriteRenderer frontOccluderRenderer = GetDrawingRoomFrontOccluderRenderer(guestState.GuestIndex);
-        SpriteRenderer sortingCeilingRenderer = GetDrawingRoomSortingCeilingRenderer(guestState.GuestIndex);
 
-        if (seatAnchor == null || chairRenderer == null || drawingRoomTeaTableRenderer == null)
+        if (seatAnchor == null)
         {
             Debug.LogError($"Drawing Room seated occlusion is not fully wired for guest {guestState.GuestIndex + 1}.", this);
+            seatedException?.DeactivateForSeat();
+            return;
+        }
+
+        if (frontOccluderRenderer == null)
+        {
             seatedException?.DeactivateForSeat();
             return;
         }
@@ -5270,33 +5270,12 @@ public class Chapter1ArrivalController : MonoBehaviour
             seatedException = guestState.ActorState.gameObject.AddComponent<DiningRoomSeatedGuestOcclusionException>();
         }
 
-        seatedException.ActivateForSeat(
+        seatedException.ActivateFrontOccluderOnly(
             guestState.ActorState,
             seatAnchor,
-            chairRenderer.gameObject,
-            chairRenderer,
             frontOccluderRenderer,
-            sortingCeilingRenderer,
-            drawingRoomTeaTableRenderer,
             drawingRoomId,
             "Butler");
-    }
-
-    private SpriteRenderer GetDrawingRoomChairRenderer(int guestIndex)
-    {
-        switch (guestIndex)
-        {
-            case 0:
-            case 1:
-            case 3:
-                return drawingRoomSofaRenderer;
-            case 5:
-                return drawingRoomRedChairRenderer;
-            case 7:
-                return drawingRoomGreenChairRenderer;
-            default:
-                return null;
-        }
     }
 
     private SpriteRenderer GetDrawingRoomFrontOccluderRenderer(int guestIndex)
@@ -5304,20 +5283,9 @@ public class Chapter1ArrivalController : MonoBehaviour
         switch (guestIndex)
         {
             case 0:
-                return drawingRoomSofaArmrestRenderer;
+                return drawingRoomGreenChairForegroundRenderer;
             case 7:
                 return drawingRoomGreenChairArmrestRenderer;
-            default:
-                return null;
-        }
-    }
-
-    private SpriteRenderer GetDrawingRoomSortingCeilingRenderer(int guestIndex)
-    {
-        switch (guestIndex)
-        {
-            case 0:
-                return drawingRoomGreenChairRenderer;
             default:
                 return null;
         }
