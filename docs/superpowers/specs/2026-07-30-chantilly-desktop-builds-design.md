@@ -50,11 +50,13 @@ It exposes one batch-mode method that accepts a requested platform and output
 root through command-line arguments. This keeps platform-sensitive Unity API
 calls inside Unity instead of relying on fragile serialized YAML edits.
 
-The existing Fish shell launcher remains the operator-facing command. It
-locates the exact Unity version declared by the project, validates matching
-platform support modules, creates the requested folder structure, invokes the
-C# entry point once per platform, captures separate logs, and reports all
-failures at the end.
+A Bash launcher is the operator-facing command on the current Linux build
+machine because Fish is not installed. The existing Fish launcher remains in
+the repository and is kept behaviorally aligned for developers who use it.
+Both launchers locate the exact Unity version declared by the project, validate
+matching platform support modules, create the requested folder structure,
+invoke the C# entry point once per platform, capture separate logs, and report
+all failures at the end.
 
 ## Player Identity
 
