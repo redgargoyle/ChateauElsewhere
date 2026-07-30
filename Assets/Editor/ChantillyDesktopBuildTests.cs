@@ -1,6 +1,8 @@
 using System;
+using System.IO;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.Rendering;
 
 public sealed class ChantillyDesktopBuildTests
@@ -45,5 +47,23 @@ public sealed class ChantillyDesktopBuildTests
         Assert.That(
             () => ChantillyDesktopBuild.GetSpecification("commodore"),
             Throws.TypeOf<ArgumentException>());
+    }
+
+    [Test]
+    public void PersistedPlayerIdentityUsesChantilly()
+    {
+        string projectRoot = Directory.GetParent(Application.dataPath).FullName;
+        string projectSettingsPath = Path.Combine(
+            projectRoot,
+            "ProjectSettings",
+            "ProjectSettings.asset");
+        string projectSettings = File.ReadAllText(projectSettingsPath);
+
+        Assert.That(projectSettings, Does.Contain("companyName: Chantilly"));
+        Assert.That(projectSettings, Does.Contain("productName: Chantilly"));
+        Assert.That(projectSettings, Does.Contain("projectName: Chantilly"));
+        Assert.That(
+            projectSettings,
+            Does.Not.Contain("projectName: dreadforge_2022"));
     }
 }
