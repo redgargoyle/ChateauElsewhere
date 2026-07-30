@@ -694,10 +694,10 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         Assert.That(skipStageMethodBody, Does.Match(@"PlaceGuestAt\(guest, drawingRoomSpot[\s\S]*ApplyDrawingRoomSeatedOcclusion\(guest, drawingRoomSpot\)"), "Chapter 2 skip staging should use the identical sorting path.");
         Assert.That(seatedMethodBody, Does.Contain("ShouldUseStandingDrawingRoomPose(guestState)"), "Standing guests must remain on ordinary Y sorting.");
         Assert.That(seatedMethodBody, Does.Contain("ActivateFrontOccluderOnly"), "Drawing Room cutouts should be applied after ordinary actor and blocker Y sorting.");
-        Assert.That(seatedMethodBody, Does.Match(@"ActivateBehindOccluder\([\s\S]*drawingRoomGreenChairRenderer[\s\S]*drawingRoomGreenChairForegroundRenderer"), "The yellow-dress guest must be bracketed immediately behind the full green chair and its foreground rail.");
+        Assert.That(seatedMethodBody, Does.Match(@"ActivateBehindOccluder\([\s\S]*drawingRoomGreenChairRenderer[\s\S]*drawingRoomGreenChairForegroundRenderer"), "The selected full green chair and its foreground rail must render directly over the yellow-dress guest.");
         Assert.That(seatedMethodBody, Does.Not.Contain("ActivateForSeat"), "The invalid Drawing Room chair/table bracket must not disable the local foreground fix.");
         Assert.That(seatedMethodBody, Does.Contain("GetDrawingRoomFrontOccluderRenderer"), "The isolated armrest cutouts should participate only in the seated override that needs them.");
-        Assert.That(frontOccluderMapMethodBody, Does.Not.Contain("case 0:"), "Guest 1 uses the dedicated full-chair bracket rather than the armrest-only path.");
+        Assert.That(frontOccluderMapMethodBody, Does.Not.Contain("case 0:"), "Guest 1 uses the dedicated full-chair override rather than the armrest-only path.");
         Assert.That(frontOccluderMapMethodBody, Does.Match(@"case 7:[\s\S]*drawingRoomGreenChairArmrestRenderer"), "The green-chair guest needs its isolated armrest in front.");
         Assert.That(gameplaySceneText, Does.Contain("drawingRoomGreenChairRenderer: {fileID: 1850905446}"));
         Assert.That(gameplaySceneText, Does.Contain("drawingRoomGreenChairForegroundRenderer: {fileID: 800827573}"));
