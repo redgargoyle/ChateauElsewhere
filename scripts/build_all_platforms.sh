@@ -226,6 +226,12 @@ build_platform() {
         return 1
     fi
 
+    find "$stage_dir" \
+        -maxdepth 1 \
+        -type d \
+        -name '*_BurstDebugInformation_DoNotShip' \
+        -exec rm -rf -- {} +
+
     local legacy_filename
     legacy_filename="$(
         find "$stage_dir" -iname '*dreadforge_2022*' -print -quit
