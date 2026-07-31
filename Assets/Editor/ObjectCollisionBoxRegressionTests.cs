@@ -980,6 +980,171 @@ public class ObjectCollisionBoxRegressionTests
     }
 
     [Test]
+    public void SeatedGuestBehindOccluderPreservesEarlierGuestOrderAndRestoresBothActors()
+    {
+        GameObject roomObject = null;
+        GameObject guest2Object = null;
+        GameObject guest4Object = null;
+        GameObject chairObject = null;
+        GameObject frontOccluderObject = null;
+
+        try
+        {
+            roomObject = new GameObject("Room_Drawing_Room");
+            RoomContentGroup room = roomObject.AddComponent<RoomContentGroup>();
+            room.SetRoomName("Drawing Room");
+            GameObject seatObject = new GameObject("DrawingRoomGuestPoint_04");
+            seatObject.transform.SetParent(roomObject.transform, false);
+            RoomAnchor seat = seatObject.AddComponent<RoomAnchor>();
+            seat.RefreshFromHierarchy();
+
+            guest2Object = new GameObject("Guest 2");
+            SpriteRenderer guest2Back = guest2Object.AddComponent<SpriteRenderer>();
+            guest2Back.sortingLayerName = "People";
+            guest2Back.sortingOrder = 1400;
+            guest2Back.spriteSortPoint = SpriteSortPoint.Center;
+            SortingGroup guest2Group = guest2Object.AddComponent<SortingGroup>();
+            guest2Group.sortingLayerName = "People";
+            guest2Group.sortingOrder = 2200;
+            guest2Group.sortAtRoot = true;
+            GameObject guest2FrontObject = new GameObject("Guest 2 Front Detail");
+            guest2FrontObject.transform.SetParent(guest2Object.transform, false);
+            SpriteRenderer guest2Front = guest2FrontObject.AddComponent<SpriteRenderer>();
+            guest2Front.sortingLayerName = "People";
+            guest2Front.sortingOrder = 1410;
+            guest2Front.spriteSortPoint = SpriteSortPoint.Center;
+            ActorRoomState guest2State = guest2Object.AddComponent<ActorRoomState>();
+            SerializedObject serializedGuest2 = new SerializedObject(guest2State);
+            serializedGuest2.FindProperty("restrictVisibilityToCurrentRoom").boolValue = false;
+            serializedGuest2.ApplyModifiedPropertiesWithoutUndo();
+            guest2State.SetCurrentRoom("Drawing Room");
+            guest2State.SetAvailableInCurrentChapter(true);
+            guest2State.SetVisibleByChapterState(true);
+            guest2State.SetSeated(true);
+
+            guest4Object = new GameObject("Guest 4");
+            SpriteRenderer guest4Back = guest4Object.AddComponent<SpriteRenderer>();
+            guest4Back.sortingLayerName = "People";
+            guest4Back.sortingOrder = 1450;
+            guest4Back.spriteSortPoint = SpriteSortPoint.Center;
+            SortingGroup guest4Group = guest4Object.AddComponent<SortingGroup>();
+            guest4Group.sortingLayerName = "People";
+            guest4Group.sortingOrder = 2400;
+            guest4Group.sortAtRoot = false;
+            GameObject guest4FrontObject = new GameObject("Guest 4 Front Detail");
+            guest4FrontObject.transform.SetParent(guest4Object.transform, false);
+            SpriteRenderer guest4Front = guest4FrontObject.AddComponent<SpriteRenderer>();
+            guest4Front.sortingLayerName = "People";
+            guest4Front.sortingOrder = 1460;
+            guest4Front.spriteSortPoint = SpriteSortPoint.Center;
+            ActorRoomState guest4State = guest4Object.AddComponent<ActorRoomState>();
+            SerializedObject serializedGuest4 = new SerializedObject(guest4State);
+            serializedGuest4.FindProperty("restrictVisibilityToCurrentRoom").boolValue = false;
+            serializedGuest4.ApplyModifiedPropertiesWithoutUndo();
+            guest4State.SetCurrentRoom("Drawing Room");
+            guest4State.SetAvailableInCurrentChapter(true);
+            guest4State.SetVisibleByChapterState(true);
+            guest4State.SetSeated(true);
+
+            chairObject = new GameObject("drawingroomgreenchair_0");
+            SpriteRenderer chairRenderer = chairObject.AddComponent<SpriteRenderer>();
+            chairRenderer.sortingLayerName = "People";
+            chairRenderer.sortingOrder = 1050;
+            frontOccluderObject = new GameObject("drawingroomgreenchair[_0");
+            SpriteRenderer frontOccluderRenderer = frontOccluderObject.AddComponent<SpriteRenderer>();
+            frontOccluderRenderer.sortingLayerName = "People";
+            frontOccluderRenderer.sortingOrder = 1100;
+
+            DiningRoomSeatedGuestOcclusionException seatedException =
+                guest4Object.AddComponent<DiningRoomSeatedGuestOcclusionException>();
+            MethodInfo companionOverload = typeof(DiningRoomSeatedGuestOcclusionException).GetMethod(
+                "ActivateBehindOccluder",
+                new System.Type[]
+                {
+                    typeof(ActorRoomState),
+                    typeof(ActorRoomState),
+                    typeof(RoomAnchor),
+                    typeof(SpriteRenderer),
+                    typeof(SpriteRenderer),
+                    typeof(string),
+                    typeof(string)
+                });
+
+            Assert.That(companionOverload, Is.Not.Null,
+                "The selected-chair exception needs one explicit companion actor to preserve Guest 2 behind Guest 4.");
+
+            companionOverload.Invoke(
+                seatedException,
+                new object[]
+                {
+                    guest4State,
+                    guest2State,
+                    seat,
+                    chairRenderer,
+                    frontOccluderRenderer,
+                    "Drawing Room",
+                    "Butler"
+                });
+
+            Assert.That(seatedException.IsExceptionActive, Is.True);
+            Assert.That(guest2Group.enabled, Is.False);
+            Assert.That(guest4Group.enabled, Is.False);
+            Assert.That(guest2Front.sortingLayerID, Is.EqualTo(guest4Back.sortingLayerID));
+            Assert.That(guest2Front.sortingOrder, Is.LessThan(guest4Back.sortingOrder),
+                "Guest 2 must remain completely behind Guest 4 after the chair override is packed.");
+            Assert.That(guest4Front.sortingOrder, Is.LessThan(chairRenderer.sortingOrder));
+            Assert.That(frontOccluderRenderer.sortingOrder, Is.EqualTo(chairRenderer.sortingOrder + 1));
+            Assert.That(chairRenderer.sortingOrder, Is.EqualTo(1050),
+                "The local actor chain must not take sorting ownership away from the chair.");
+
+            seatedException.DeactivateForSeat();
+
+            Assert.That(guest2Group.enabled, Is.True);
+            Assert.That(guest2Group.sortingOrder, Is.EqualTo(2200));
+            Assert.That(guest2Group.sortAtRoot, Is.True);
+            Assert.That(guest2Back.sortingOrder, Is.EqualTo(1400));
+            Assert.That(guest2Back.spriteSortPoint, Is.EqualTo(SpriteSortPoint.Center));
+            Assert.That(guest2Front.sortingOrder, Is.EqualTo(1410));
+            Assert.That(guest2Front.spriteSortPoint, Is.EqualTo(SpriteSortPoint.Center));
+            Assert.That(guest4Group.enabled, Is.True);
+            Assert.That(guest4Group.sortingOrder, Is.EqualTo(2400));
+            Assert.That(guest4Group.sortAtRoot, Is.False);
+            Assert.That(guest4Back.sortingOrder, Is.EqualTo(1450));
+            Assert.That(guest4Back.spriteSortPoint, Is.EqualTo(SpriteSortPoint.Center));
+            Assert.That(guest4Front.sortingOrder, Is.EqualTo(1460));
+            Assert.That(guest4Front.spriteSortPoint, Is.EqualTo(SpriteSortPoint.Center));
+            Assert.That(frontOccluderRenderer.sortingOrder, Is.EqualTo(1100));
+        }
+        finally
+        {
+            if (frontOccluderObject != null)
+            {
+                Object.DestroyImmediate(frontOccluderObject);
+            }
+
+            if (chairObject != null)
+            {
+                Object.DestroyImmediate(chairObject);
+            }
+
+            if (guest4Object != null)
+            {
+                Object.DestroyImmediate(guest4Object);
+            }
+
+            if (guest2Object != null)
+            {
+                Object.DestroyImmediate(guest2Object);
+            }
+
+            if (roomObject != null)
+            {
+                Object.DestroyImmediate(roomObject);
+            }
+        }
+    }
+
+    [Test]
     public void DiningSeatSixUsesOnlyTheLocalRightBackChairOverlayAsItsFrontOccluder()
     {
         string gameplaySceneText = File.ReadAllText(GameplayScenePath);
@@ -1515,6 +1680,27 @@ public class ObjectCollisionBoxRegressionTests
         }
 
         Assert.That(drawingRoomGuests.Count, Is.EqualTo(8), "Skip to Chapter 2 should stage the complete guest roster.");
+        ActorRoomState guest2 = null;
+        ActorRoomState guest4 = null;
+
+        for (int guestIndex = 0; guestIndex < drawingRoomGuests.Count; guestIndex++)
+        {
+            ActorRoomState guest = drawingRoomGuests[guestIndex];
+
+            if (string.Equals(guest.ActorId, "guest_2", System.StringComparison.OrdinalIgnoreCase))
+            {
+                guest2 = guest;
+            }
+            else if (string.Equals(guest.ActorId, "guest_4", System.StringComparison.OrdinalIgnoreCase))
+            {
+                guest4 = guest;
+            }
+        }
+
+        Assert.That(guest2, Is.Not.Null);
+        Assert.That(guest4, Is.Not.Null);
+        Assert.That(guest2.IsSeated, Is.True);
+        Assert.That(guest4.IsSeated, Is.True);
 
         float[] verticalPans = { -1f, 0f, 1f };
 
@@ -1634,6 +1820,32 @@ public class ObjectCollisionBoxRegressionTests
                     }
                 }
             }
+
+            DiningRoomSeatedGuestOcclusionException guest4Exception =
+                guest4.GetComponent<DiningRoomSeatedGuestOcclusionException>();
+            Assert.That(guest4Exception, Is.Not.Null);
+            int tableOrderBeforeGuestException = tableRenderer.sortingOrder;
+            guest4Exception.ApplyOcclusionNow();
+
+            SpriteRenderer guest2Front = FindFrontmostActiveRenderer(guest2.gameObject);
+            SpriteRenderer guest4Back = FindBackmostActiveRenderer(guest4.gameObject);
+            SpriteRenderer guest4Front = FindFrontmostActiveRenderer(guest4.gameObject);
+
+            Assert.That(guest2Front, Is.Not.Null);
+            Assert.That(guest4Back, Is.Not.Null);
+            Assert.That(guest4Front, Is.Not.Null);
+            Assert.That(guest2Front.sortingLayerID, Is.EqualTo(guest4Back.sortingLayerID));
+            Assert.That(guest2Front.sortingOrder, Is.LessThan(guest4Back.sortingOrder),
+                $"Guest 2 must remain behind Guest 4 at vertical pan {verticalPans[panIndex]}. " +
+                $"guest2={DescribeRendererSorting(guest2Front)} " +
+                $"guest4={DescribeRendererSorting(guest4Back)}");
+            Assert.That(guest4Front.sortingOrder, Is.LessThan(greenChairRenderer.sortingOrder));
+            Assert.That(greenChairForegroundRenderer.sortingOrder,
+                Is.EqualTo(greenChairRenderer.sortingOrder + 1));
+            Assert.That(tableRenderer.sortingOrder, Is.EqualTo(tableOrderBeforeGuestException),
+                "The selected-chair exception must never write to the Drawing Room tea table.");
+            Assert.That(tableRenderer.sortingOrder, Is.EqualTo(tableMarker.CurrentSortingOrder),
+                "The Drawing Room tea table must remain owned by its physical-footprint Y sorter.");
 
             Assert.That(seatedCount, Is.EqualTo(5));
             Assert.That(standingCount, Is.EqualTo(3));
@@ -2034,6 +2246,45 @@ public class ObjectCollisionBoxRegressionTests
         }
 
         return frontmostRenderer;
+    }
+
+    private static SpriteRenderer FindBackmostActiveRenderer(GameObject actorObject)
+    {
+        if (actorObject == null)
+        {
+            return null;
+        }
+
+        SpriteRenderer[] renderers = actorObject.GetComponentsInChildren<SpriteRenderer>(true);
+        SpriteRenderer backmostRenderer = null;
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            SpriteRenderer renderer = renderers[i];
+
+            if (renderer == null ||
+                !renderer.enabled ||
+                !renderer.gameObject.activeInHierarchy ||
+                renderer.sprite == null)
+            {
+                continue;
+            }
+
+            int rendererLayerValue = SortingLayer.GetLayerValueFromID(renderer.sortingLayerID);
+            int backmostLayerValue = backmostRenderer != null
+                ? SortingLayer.GetLayerValueFromID(backmostRenderer.sortingLayerID)
+                : int.MaxValue;
+
+            if (backmostRenderer == null ||
+                rendererLayerValue < backmostLayerValue ||
+                (rendererLayerValue == backmostLayerValue &&
+                renderer.sortingOrder < backmostRenderer.sortingOrder))
+            {
+                backmostRenderer = renderer;
+            }
+        }
+
+        return backmostRenderer;
     }
 
     private static void AssertAllLocalSortingGroupsDisabled(
