@@ -21,9 +21,63 @@ public class ObjectCollisionBoxRegressionTests
     private const string DrawingRoomChairName = "drawing_room_red_chair_guest6";
     private const string DrawingRoomTeaTableName = "tea_service_table";
     private const string DrawingRoomChairSpritePath = "Assets/Art/Objects/purple_armchair_front.png";
+    private const string Guest4SittingClipPath =
+        "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Sitting.anim";
     private const string LibraryFlowerSideTableName = "library_flower_side_table_0";
     private const string LibraryFlowerSideTableSpritePath = "Assets/Art/Objects/library_flower_side_table.png";
     private const string LibraryBackgroundPath = "Assets/Art/Final Images (DO NOT EDIT)/library.png";
+
+    [Test]
+    public void EveryGuest4SittingFrameUsesBottomCenterPivot()
+    {
+        AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(Guest4SittingClipPath);
+        Assert.That(clip, Is.Not.Null, $"Missing Guest 4 sitting clip at {Guest4SittingClipPath}.");
+
+        EditorCurveBinding[] spriteBindings =
+            AnimationUtility.GetObjectReferenceCurveBindings(clip);
+        List<string> spritePaths = new List<string>();
+
+        for (int bindingIndex = 0; bindingIndex < spriteBindings.Length; bindingIndex++)
+        {
+            EditorCurveBinding binding = spriteBindings[bindingIndex];
+
+            if (binding.type != typeof(SpriteRenderer) || binding.propertyName != "m_Sprite")
+            {
+                continue;
+            }
+
+            ObjectReferenceKeyframe[] keyframes =
+                AnimationUtility.GetObjectReferenceCurve(clip, binding);
+
+            for (int keyframeIndex = 0; keyframeIndex < keyframes.Length; keyframeIndex++)
+            {
+                Sprite sprite = keyframes[keyframeIndex].value as Sprite;
+                string spritePath = sprite != null ? AssetDatabase.GetAssetPath(sprite) : string.Empty;
+
+                if (!string.IsNullOrWhiteSpace(spritePath) && !spritePaths.Contains(spritePath))
+                {
+                    spritePaths.Add(spritePath);
+                }
+            }
+        }
+
+        Assert.That(spritePaths, Has.Count.EqualTo(2),
+            "Guest 4's sitting clip should expose both unique sitting frames to the pivot audit.");
+
+        for (int i = 0; i < spritePaths.Count; i++)
+        {
+            TextureImporter importer = AssetImporter.GetAtPath(spritePaths[i]) as TextureImporter;
+            Assert.That(importer, Is.Not.Null, $"Missing TextureImporter for {spritePaths[i]}.");
+            TextureImporterSettings importerSettings = new TextureImporterSettings();
+            importer.ReadTextureSettings(importerSettings);
+            Assert.That(importerSettings.spriteAlignment,
+                Is.EqualTo((int)SpriteAlignment.BottomCenter),
+                $"{spritePaths[i]} must use Unity's Bottom Center alignment.");
+            Assert.That(importerSettings.spritePivot.x, Is.EqualTo(0.5f).Within(0.0001f));
+            Assert.That(importerSettings.spritePivot.y, Is.EqualTo(0f).Within(0.0001f),
+                $"{spritePaths[i]} must keep its pivot on the bottom edge.");
+        }
+    }
 
     [Test]
     public void ChairBlockerUsesLowerFootprintInsteadOfWholeImage()
@@ -1933,33 +1987,26 @@ public class ObjectCollisionBoxRegressionTests
 
                     if (string.Equals(guest.ActorId, "guest_4", System.StringComparison.OrdinalIgnoreCase))
                     {
-                        Assert.That(seatedException.FrontOccluderRenderer, Is.SameAs(greenChairForegroundRenderer));
+                        Assert.That(seatedException.FrontOccluderRenderer,
+                            Is.SameAs(greenChairForegroundRenderer));
                         greenChairForegroundMarker.ApplySourceSortingNow();
                         greenChairSorter.ApplySorting();
+                        SpriteRenderer guestFootRenderer = sorter.ActorFootRenderer;
+                        Assert.That(guestFootRenderer, Is.Not.Null);
+                        sorter.ApplySorting();
+                        int worldYOrderBeforeException = guestFootRenderer.sortingOrder;
                         seatedException.ApplyOcclusionNow();
+                        Assert.That(guestFootRenderer.sortingOrder, Is.EqualTo(worldYOrderBeforeException),
+                            "Guest 4's seated furniture exception must not replace actor world-Y sorting.");
 
                         SpriteRenderer frontmostGuestRenderer = FindFrontmostActiveRenderer(guest.gameObject);
 
                         Assert.That(frontmostGuestRenderer, Is.Not.Null);
-                        AssertAllLocalSortingGroupsDisabled(
-                            groups,
-                            "Guest 4 must use direct renderer sorting while the selected chair is the narrow override.");
-                        Assert.That(
-                            frontmostGuestRenderer.sortingLayerID,
-                            Is.EqualTo(greenChairRenderer.sortingLayerID),
-                            "The seated Guest 4 override and green chair must use the same sorting layer.");
-                        Assert.That(
-                            greenChairRenderer.sortingOrder,
-                            Is.GreaterThan(frontmostGuestRenderer.sortingOrder),
-                            $"The selected full green chair must finish in front of the yellow-dress guest. " +
-                            $"chair={DescribeRendererSorting(greenChairRenderer)} " +
-                            $"guest={DescribeRendererSorting(frontmostGuestRenderer)}");
-                        Assert.That(
-                            greenChairForegroundRenderer.sortingOrder,
-                            Is.EqualTo(greenChairRenderer.sortingOrder + 1),
-                            $"The green chair foreground must finish immediately in front of the full chair. " +
-                            $"foreground={DescribeRendererSorting(greenChairForegroundRenderer)} " +
-                            $"chair={DescribeRendererSorting(greenChairRenderer)}");
+                        Assert.That(greenChairForegroundRenderer.sortingLayerID,
+                            Is.EqualTo(frontmostGuestRenderer.sortingLayerID));
+                        Assert.That(greenChairForegroundRenderer.sortingOrder,
+                            Is.EqualTo(frontmostGuestRenderer.sortingOrder + 1),
+                            "Only the detached green-chair foreground should be forced immediately over Guest 4.");
                     }
                     else if (string.Equals(guest.ActorId, "guest_8", System.StringComparison.OrdinalIgnoreCase))
                     {
@@ -2017,23 +2064,25 @@ public class ObjectCollisionBoxRegressionTests
             Assert.That(guest4Exception, Is.Not.Null);
             Assert.That(guest8Exception, Is.Not.Null);
             int tableOrderBeforeGuestException = tableRenderer.sortingOrder;
+            WorldYSortSpriteRenderer guest2Sorter = guest2.GetComponent<WorldYSortSpriteRenderer>();
+            WorldYSortSpriteRenderer guest4Sorter = guest4.GetComponent<WorldYSortSpriteRenderer>();
+            Assert.That(guest2Sorter, Is.Not.Null);
+            Assert.That(guest4Sorter, Is.Not.Null);
+            guest2Sorter.ApplySorting();
+            guest4Sorter.ApplySorting();
+            Assert.That(guest2Sorter.ActorFootRenderer, Is.Not.Null);
+            Assert.That(guest4Sorter.ActorFootRenderer, Is.Not.Null);
+            int guest2WorldYOrder = guest2Sorter.ActorFootRenderer.sortingOrder;
+            int guest4WorldYOrder = guest4Sorter.ActorFootRenderer.sortingOrder;
+
             guest4Exception.ApplyOcclusionNow();
 
-            SpriteRenderer guest2Front = FindFrontmostActiveRenderer(guest2.gameObject);
-            SpriteRenderer guest4Back = FindBackmostActiveRenderer(guest4.gameObject);
+            Assert.That(guest2Sorter.ActorFootRenderer.sortingOrder, Is.EqualTo(guest2WorldYOrder));
+            Assert.That(guest4Sorter.ActorFootRenderer.sortingOrder, Is.EqualTo(guest4WorldYOrder));
             SpriteRenderer guest4Front = FindFrontmostActiveRenderer(guest4.gameObject);
-
-            Assert.That(guest2Front, Is.Not.Null);
-            Assert.That(guest4Back, Is.Not.Null);
             Assert.That(guest4Front, Is.Not.Null);
-            Assert.That(guest2Front.sortingLayerID, Is.EqualTo(guest4Back.sortingLayerID));
-            Assert.That(guest2Front.sortingOrder, Is.LessThan(guest4Back.sortingOrder),
-                $"Guest 2 must remain behind Guest 4 at vertical pan {verticalPans[panIndex]}. " +
-                $"guest2={DescribeRendererSorting(guest2Front)} " +
-                $"guest4={DescribeRendererSorting(guest4Back)}");
-            Assert.That(guest4Front.sortingOrder, Is.LessThan(greenChairRenderer.sortingOrder));
             Assert.That(greenChairForegroundRenderer.sortingOrder,
-                Is.EqualTo(greenChairRenderer.sortingOrder + 1));
+                Is.EqualTo(guest4Front.sortingOrder + 1));
             Assert.That(tableRenderer.sortingOrder, Is.EqualTo(tableOrderBeforeGuestException),
                 "The selected-chair exception must never write to the Drawing Room tea table.");
             Assert.That(tableRenderer.sortingOrder, Is.EqualTo(tableMarker.CurrentSortingOrder),
@@ -2179,7 +2228,7 @@ public class ObjectCollisionBoxRegressionTests
     }
 
     [UnityTest]
-    public IEnumerator NormalChapter1ArrivalKeepsYellowDressGuestBehindSelectedGreenChair()
+    public IEnumerator NormalChapter1ArrivalKeepsYellowDressGuestOnWorldYUnderForegroundCutout()
     {
         SceneSetup[] previousSceneSetup = EditorSceneManager.GetSceneManagerSetup();
         EditorSceneManager.OpenScene(MainMenuScenePath, OpenSceneMode.Single);
@@ -2314,30 +2363,25 @@ public class ObjectCollisionBoxRegressionTests
 
         SpriteRenderer frontmostGuestRenderer =
             FindFrontmostActiveRenderer(yellowDressGuest.gameObject);
-        SortingGroup[] guestGroups = yellowDressGuest.GetComponentsInChildren<SortingGroup>(true);
         Assert.That(frontmostGuestRenderer, Is.Not.Null);
-
-        for (int groupIndex = 0; groupIndex < guestGroups.Length; groupIndex++)
-        {
-            Assert.That(guestGroups[groupIndex] == null || !guestGroups[groupIndex].enabled, Is.True,
-                $"Normal Chapter 1 arrival must neutralize every Guest 4 SortingGroup. " +
-                $"group={guestGroups[groupIndex]?.name}");
-        }
 
         Assert.That(
             AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(frontmostGuestRenderer.sprite)),
             Is.EqualTo("3c77696129c44fc49b56737e0ffdc4e9"),
             "The draw-order assertion must target the exact yellow-dress sprite from the reported frame.");
-        Assert.That(greenChairRenderer.sortingLayerID, Is.EqualTo(frontmostGuestRenderer.sortingLayerID));
-        Assert.That(greenChairRenderer.sortingOrder, Is.GreaterThan(frontmostGuestRenderer.sortingOrder),
-            $"The selected green chair must render over the yellow-dress guest after normal arrival. " +
-            $"chair={DescribeRendererSorting(greenChairRenderer)} " +
-            $"guest={DescribeRendererSorting(frontmostGuestRenderer)}");
+        SpriteRenderer guestFootRenderer = guestSorter.ActorFootRenderer;
+        Assert.That(guestFootRenderer, Is.Not.Null);
+        guestSorter.ApplySorting();
+        int worldYOrderBeforeException = guestFootRenderer.sortingOrder;
+        seatedException.ApplyOcclusionNow();
+        Assert.That(guestFootRenderer.sortingOrder, Is.EqualTo(worldYOrderBeforeException));
+        Assert.That(greenChairForegroundRenderer.sortingLayerID,
+            Is.EqualTo(frontmostGuestRenderer.sortingLayerID));
+        Assert.That(greenChairForegroundRenderer.sortingOrder,
+            Is.EqualTo(frontmostGuestRenderer.sortingOrder + 1));
         Assert.That(greenChairRenderer.sortingOrder,
             Is.EqualTo(playerMovement.GetSortingOrderForFootY(greenChair.position.y)),
             "The local Guest 4 override must not change the chair's Y-order against other actors.");
-        Assert.That(greenChairForegroundRenderer.sortingOrder,
-            Is.EqualTo(greenChairRenderer.sortingOrder + 1));
 
         yield return new ExitPlayMode();
 

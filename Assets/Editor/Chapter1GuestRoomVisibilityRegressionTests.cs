@@ -701,15 +701,23 @@ public class Chapter1GuestRoomVisibilityRegressionTests
             "Guest 8 must be pinned behind the blocker-owned green armrest.");
         Assert.That(
             seatedMethodBody,
-            Does.Not.Contain("ActivateFrontOccluderOnly"),
-            "The Drawing Room must not move a physical armrest to a raw guest order.");
-        Assert.That(
-            seatedMethodBody,
             Does.Not.Contain("GetDrawingRoomFrontOccluderRenderer"),
             "The selected armrest now has one explicit fixed-occluder branch.");
-        Assert.That(seatedMethodBody, Does.Contain("guestState.GuestIndex == 3"), "The selected green chair override must target the grey-haired yellow-dress Guest 4.");
-        Assert.That(seatedMethodBody, Does.Not.Contain("guestState.GuestIndex == 0"), "The green chair override must not target the unrelated dark-dress Guest 1.");
-        Assert.That(seatedMethodBody, Does.Match(@"ActivateBehindOccluder\([\s\S]*drawingRoomGreenChairRenderer[\s\S]*drawingRoomGreenChairForegroundRenderer"), "The selected full green chair and its foreground rail must render directly over the yellow-dress guest.");
+        Assert.That(seatedMethodBody, Does.Contain("guestState.GuestIndex == 3"),
+            "The selected green-chair exception must target Guest 4.");
+        Assert.That(
+            seatedMethodBody,
+            Does.Match(
+                @"guestState\.GuestIndex\s*==\s*3[\s\S]*" +
+                @"ActivateFrontOccluderOnly\([\s\S]*" +
+                @"drawingRoomGreenChairForegroundRenderer"),
+            "Guest 4 must keep normal actor Y sorting while only the detached foreground follows her.");
+        Assert.That(
+            seatedMethodBody,
+            Does.Not.Contain("TryFindGuestByNumber(2, out GuestRuntimeState preservedBehindGuest)"),
+            "Guest 4's furniture exception must not force Guest 2 behind her.");
+        Assert.That(seatedMethodBody, Does.Not.Contain("guestState.GuestIndex == 0"),
+            "The green-chair exception must not target Guest 1.");
         Assert.That(seatedMethodBody, Does.Not.Contain("ActivateForSeat"), "The invalid Drawing Room chair/table bracket must not disable the local foreground fix.");
         Assert.That(gameplaySceneText, Does.Contain("drawingRoomGreenChairRenderer: {fileID: 1850905446}"));
         Assert.That(gameplaySceneText, Does.Contain("drawingRoomGreenChairForegroundRenderer: {fileID: 800827573}"));
