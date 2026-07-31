@@ -687,20 +687,30 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string completeMethodBody = ExtractMethodBody(controllerText, "CompleteGuestDrawingRoomArrival");
         string skipStageMethodBody = ExtractMethodBody(controllerText, "StageGuestInDrawingRoomForChapter2");
         string seatedMethodBody = ExtractMethodBody(controllerText, "ApplyDrawingRoomSeatedOcclusion");
-        string frontOccluderMapMethodBody = ExtractMethodBody(controllerText, "GetDrawingRoomFrontOccluderRenderer");
         string gameplaySceneText = File.ReadAllText(GameplayScenePath);
 
         Assert.That(completeMethodBody, Does.Match(@"PlaceGuestAt\(guest, drawingRoomSpot[\s\S]*ApplyDrawingRoomSeatedOcclusion\(guest, drawingRoomSpot\)"), "Normal arrivals should use continuous Y sorting plus the narrow seated exception.");
         Assert.That(skipStageMethodBody, Does.Match(@"PlaceGuestAt\(guest, drawingRoomSpot[\s\S]*ApplyDrawingRoomSeatedOcclusion\(guest, drawingRoomSpot\)"), "Chapter 2 skip staging should use the identical sorting path.");
         Assert.That(seatedMethodBody, Does.Contain("ShouldUseStandingDrawingRoomPose(guestState)"), "Standing guests must remain on ordinary Y sorting.");
-        Assert.That(seatedMethodBody, Does.Contain("ActivateFrontOccluderOnly"), "Drawing Room cutouts should be applied after ordinary actor and blocker Y sorting.");
+        Assert.That(
+            seatedMethodBody,
+            Does.Match(
+                @"guestState\.GuestIndex\s*==\s*7[\s\S]*" +
+                @"ActivateBehindOccluder\([\s\S]*" +
+                @"drawingRoomGreenChairArmrestRenderer[\s\S]*null"),
+            "Guest 8 must be pinned behind the blocker-owned green armrest.");
+        Assert.That(
+            seatedMethodBody,
+            Does.Not.Contain("ActivateFrontOccluderOnly"),
+            "The Drawing Room must not move a physical armrest to a raw guest order.");
+        Assert.That(
+            seatedMethodBody,
+            Does.Not.Contain("GetDrawingRoomFrontOccluderRenderer"),
+            "The selected armrest now has one explicit fixed-occluder branch.");
         Assert.That(seatedMethodBody, Does.Contain("guestState.GuestIndex == 3"), "The selected green chair override must target the grey-haired yellow-dress Guest 4.");
         Assert.That(seatedMethodBody, Does.Not.Contain("guestState.GuestIndex == 0"), "The green chair override must not target the unrelated dark-dress Guest 1.");
         Assert.That(seatedMethodBody, Does.Match(@"ActivateBehindOccluder\([\s\S]*drawingRoomGreenChairRenderer[\s\S]*drawingRoomGreenChairForegroundRenderer"), "The selected full green chair and its foreground rail must render directly over the yellow-dress guest.");
         Assert.That(seatedMethodBody, Does.Not.Contain("ActivateForSeat"), "The invalid Drawing Room chair/table bracket must not disable the local foreground fix.");
-        Assert.That(seatedMethodBody, Does.Contain("GetDrawingRoomFrontOccluderRenderer"), "The isolated armrest cutouts should participate only in the seated override that needs them.");
-        Assert.That(frontOccluderMapMethodBody, Does.Not.Contain("case 3:"), "Guest 4 uses the dedicated full-chair override rather than the armrest-only path.");
-        Assert.That(frontOccluderMapMethodBody, Does.Match(@"case 7:[\s\S]*drawingRoomGreenChairArmrestRenderer"), "The green-chair guest needs its isolated armrest in front.");
         Assert.That(gameplaySceneText, Does.Contain("drawingRoomGreenChairRenderer: {fileID: 1850905446}"));
         Assert.That(gameplaySceneText, Does.Contain("drawingRoomGreenChairForegroundRenderer: {fileID: 800827573}"));
         Assert.That(gameplaySceneText, Does.Contain("drawingRoomGreenChairArmrestRenderer: {fileID: 362573330}"));

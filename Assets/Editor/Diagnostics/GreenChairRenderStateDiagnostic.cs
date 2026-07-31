@@ -9,6 +9,35 @@ using UnityEngine.SceneManagement;
 
 public static class GreenChairRenderStateDiagnostic
 {
+    public readonly struct PixelComparisonResult
+    {
+        public PixelComparisonResult(
+            int overlapPixelCount,
+            long actualToFrontError,
+            long actualToBehindError,
+            string actualPath,
+            string knownFrontPath,
+            string knownBehindPath)
+        {
+            OverlapPixelCount = overlapPixelCount;
+            ActualToFrontError = actualToFrontError;
+            ActualToBehindError = actualToBehindError;
+            ActualPath = actualPath;
+            KnownFrontPath = knownFrontPath;
+            KnownBehindPath = knownBehindPath;
+        }
+
+        public int OverlapPixelCount { get; }
+        public long ActualToFrontError { get; }
+        public long ActualToBehindError { get; }
+        public string ActualPath { get; }
+        public string KnownFrontPath { get; }
+        public string KnownBehindPath { get; }
+        public bool ActualMatchesKnownFront =>
+            OverlapPixelCount >= 25 &&
+            ActualToFrontError * 50L <= ActualToBehindError;
+    }
+
     public const string ReportPath = "/tmp/chantilly-green-chair-render-state.txt";
     public const string OwnershipAuditReportPath = "/tmp/chantilly-sorting-ownership-audit.txt";
 
@@ -215,6 +244,283 @@ public static class GreenChairRenderStateDiagnostic
             target.Release();
             UnityEngine.Object.DestroyImmediate(target);
         }
+    }
+
+    public static PixelComparisonResult CaptureOcclusionPixelComparisonForTests(
+        Camera camera,
+        SpriteRenderer occluder,
+        GameObject actorRoot,
+        string outputPrefix)
+    {
+        const int width = 1672;
+        const int height = 941;
+        const int isolatedLayer = 31;
+        const int forcedBehindOrder = short.MinValue;
+        const int forcedFrontOrder = short.MaxValue;
+
+        if (camera == null)
+        {
+            throw new ArgumentNullException(nameof(camera));
+        }
+
+        if (occluder == null)
+        {
+            throw new ArgumentNullException(nameof(occluder));
+        }
+
+        if (actorRoot == null)
+        {
+            throw new ArgumentNullException(nameof(actorRoot));
+        }
+
+        if (string.IsNullOrWhiteSpace(outputPrefix))
+        {
+            throw new ArgumentException("An output prefix is required.", nameof(outputPrefix));
+        }
+
+        SpriteRenderer[] actorRenderers =
+            actorRoot.GetComponentsInChildren<SpriteRenderer>(true);
+        List<SpriteRenderer> activeActorRenderers = new List<SpriteRenderer>();
+
+        for (int i = 0; i < actorRenderers.Length; i++)
+        {
+            SpriteRenderer renderer = actorRenderers[i];
+
+            if (renderer != null &&
+                renderer.enabled &&
+                renderer.gameObject.activeInHierarchy &&
+                renderer.sprite != null)
+            {
+                activeActorRenderers.Add(renderer);
+            }
+        }
+
+        string actualPath = outputPrefix + "-actual.png";
+        string knownFrontPath = outputPrefix + "-known-front.png";
+        string knownBehindPath = outputPrefix + "-known-behind.png";
+        RenderTexture target = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32);
+        Texture2D actualPixels = new Texture2D(width, height, TextureFormat.RGBA32, false);
+        Texture2D knownFrontPixels = new Texture2D(width, height, TextureFormat.RGBA32, false);
+        Texture2D knownBehindPixels = new Texture2D(width, height, TextureFormat.RGBA32, false);
+        RenderTexture previousTarget = camera.targetTexture;
+        RenderTexture previousActive = RenderTexture.active;
+        int previousCullingMask = camera.cullingMask;
+        CameraClearFlags previousClearFlags = camera.clearFlags;
+        Color previousBackgroundColor = camera.backgroundColor;
+        int previousOccluderLayer = occluder.gameObject.layer;
+        int previousOccluderOrder = occluder.sortingOrder;
+        SpriteSortPoint previousOccluderSortPoint = occluder.spriteSortPoint;
+        List<GameObject> selectedObjects = new List<GameObject>();
+        List<int> selectedLayers = new List<int>();
+
+        AddSelectedObject(occluder.gameObject, selectedObjects, selectedLayers);
+
+        for (int i = 0; i < activeActorRenderers.Count; i++)
+        {
+            AddSelectedObject(activeActorRenderers[i].gameObject, selectedObjects, selectedLayers);
+        }
+
+        try
+        {
+            for (int i = 0; i < selectedObjects.Count; i++)
+            {
+                selectedObjects[i].layer = isolatedLayer;
+            }
+
+            camera.targetTexture = target;
+            camera.cullingMask = 1 << isolatedLayer;
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = Color.clear;
+            RenderCameraToTexture(camera, target, actualPixels, actualPath);
+
+            occluder.sortingOrder = forcedBehindOrder;
+            RenderCameraToTexture(camera, target, knownBehindPixels, knownBehindPath);
+
+            occluder.sortingOrder = forcedFrontOrder;
+            RenderCameraToTexture(camera, target, knownFrontPixels, knownFrontPath);
+
+            bool hasOverlap = false;
+            RectInt overlapRect = default;
+            RectInt occluderRect = ProjectRendererBounds(camera, occluder, width, height);
+
+            for (int i = 0; i < activeActorRenderers.Count; i++)
+            {
+                RectInt actorRect = ProjectRendererBounds(camera, activeActorRenderers[i], width, height);
+                RectInt intersection = Intersect(occluderRect, actorRect);
+
+                if (intersection.width <= 0 || intersection.height <= 0)
+                {
+                    continue;
+                }
+
+                overlapRect = hasOverlap ? Union(overlapRect, intersection) : intersection;
+                hasOverlap = true;
+            }
+
+            overlapRect = ClampToTarget(overlapRect, width, height);
+            Color32[] actual = actualPixels.GetPixels32();
+            Color32[] knownFront = knownFrontPixels.GetPixels32();
+            Color32[] knownBehind = knownBehindPixels.GetPixels32();
+            int overlapPixelCount = 0;
+            long actualToFrontError = 0L;
+            long actualToBehindError = 0L;
+
+            if (hasOverlap)
+            {
+                for (int y = overlapRect.yMin; y < overlapRect.yMax; y++)
+                {
+                    for (int x = overlapRect.xMin; x < overlapRect.xMax; x++)
+                    {
+                        int pixelIndex = y * width + x;
+
+                        if (ColorDistance(knownFront[pixelIndex], knownBehind[pixelIndex]) <= 24)
+                        {
+                            continue;
+                        }
+
+                        overlapPixelCount++;
+                        actualToFrontError += ColorDistance(actual[pixelIndex], knownFront[pixelIndex]);
+                        actualToBehindError += ColorDistance(actual[pixelIndex], knownBehind[pixelIndex]);
+                    }
+                }
+            }
+
+            return new PixelComparisonResult(
+                overlapPixelCount,
+                actualToFrontError,
+                actualToBehindError,
+                actualPath,
+                knownFrontPath,
+                knownBehindPath);
+        }
+        finally
+        {
+            camera.targetTexture = previousTarget;
+            camera.cullingMask = previousCullingMask;
+            camera.clearFlags = previousClearFlags;
+            camera.backgroundColor = previousBackgroundColor;
+            RenderTexture.active = previousActive;
+            occluder.gameObject.layer = previousOccluderLayer;
+            occluder.sortingOrder = previousOccluderOrder;
+            occluder.spriteSortPoint = previousOccluderSortPoint;
+
+            for (int i = 0; i < selectedObjects.Count; i++)
+            {
+                selectedObjects[i].layer = selectedLayers[i];
+            }
+
+            UnityEngine.Object.DestroyImmediate(actualPixels);
+            UnityEngine.Object.DestroyImmediate(knownFrontPixels);
+            UnityEngine.Object.DestroyImmediate(knownBehindPixels);
+            target.Release();
+            UnityEngine.Object.DestroyImmediate(target);
+        }
+    }
+
+    private static void AddSelectedObject(
+        GameObject selectedObject,
+        List<GameObject> selectedObjects,
+        List<int> selectedLayers)
+    {
+        if (selectedObject != null && !selectedObjects.Contains(selectedObject))
+        {
+            selectedObjects.Add(selectedObject);
+            selectedLayers.Add(selectedObject.layer);
+        }
+    }
+
+    private static void RenderCameraToTexture(
+        Camera camera,
+        RenderTexture target,
+        Texture2D pixels,
+        string outputPath)
+    {
+        camera.targetTexture = target;
+        camera.Render();
+        RenderTexture.active = target;
+        pixels.ReadPixels(new Rect(0f, 0f, target.width, target.height), 0, 0);
+        pixels.Apply();
+        File.WriteAllBytes(outputPath, pixels.EncodeToPNG());
+    }
+
+    private static RectInt ProjectRendererBounds(
+        Camera camera,
+        SpriteRenderer renderer,
+        int width,
+        int height)
+    {
+        Bounds bounds = renderer.bounds;
+        Vector3 minimum = bounds.min;
+        Vector3 maximum = bounds.max;
+        float xMin = float.PositiveInfinity;
+        float yMin = float.PositiveInfinity;
+        float xMax = float.NegativeInfinity;
+        float yMax = float.NegativeInfinity;
+
+        for (int x = 0; x < 2; x++)
+        {
+            for (int y = 0; y < 2; y++)
+            {
+                for (int z = 0; z < 2; z++)
+                {
+                    Vector3 worldPoint = new Vector3(
+                        x == 0 ? minimum.x : maximum.x,
+                        y == 0 ? minimum.y : maximum.y,
+                        z == 0 ? minimum.z : maximum.z);
+                    Vector3 viewportPoint = camera.WorldToViewportPoint(worldPoint);
+                    xMin = Mathf.Min(xMin, viewportPoint.x * width);
+                    yMin = Mathf.Min(yMin, viewportPoint.y * height);
+                    xMax = Mathf.Max(xMax, viewportPoint.x * width);
+                    yMax = Mathf.Max(yMax, viewportPoint.y * height);
+                }
+            }
+        }
+
+        return CreateRectFromMinMax(
+            Mathf.FloorToInt(xMin),
+            Mathf.FloorToInt(yMin),
+            Mathf.CeilToInt(xMax),
+            Mathf.CeilToInt(yMax));
+    }
+
+    private static RectInt Intersect(RectInt left, RectInt right)
+    {
+        return CreateRectFromMinMax(
+            Mathf.Max(left.xMin, right.xMin),
+            Mathf.Max(left.yMin, right.yMin),
+            Mathf.Min(left.xMax, right.xMax),
+            Mathf.Min(left.yMax, right.yMax));
+    }
+
+    private static RectInt Union(RectInt left, RectInt right)
+    {
+        return CreateRectFromMinMax(
+            Mathf.Min(left.xMin, right.xMin),
+            Mathf.Min(left.yMin, right.yMin),
+            Mathf.Max(left.xMax, right.xMax),
+            Mathf.Max(left.yMax, right.yMax));
+    }
+
+    private static RectInt ClampToTarget(RectInt source, int width, int height)
+    {
+        return CreateRectFromMinMax(
+            Mathf.Clamp(source.xMin, 0, width),
+            Mathf.Clamp(source.yMin, 0, height),
+            Mathf.Clamp(source.xMax, 0, width),
+            Mathf.Clamp(source.yMax, 0, height));
+    }
+
+    private static RectInt CreateRectFromMinMax(int xMin, int yMin, int xMax, int yMax)
+    {
+        return new RectInt(xMin, yMin, xMax - xMin, yMax - yMin);
+    }
+
+    private static int ColorDistance(Color32 left, Color32 right)
+    {
+        return Mathf.Abs(left.r - right.r) +
+            Mathf.Abs(left.g - right.g) +
+            Mathf.Abs(left.b - right.b) +
+            Mathf.Abs(left.a - right.a);
     }
 
     private static void CaptureManagedState()

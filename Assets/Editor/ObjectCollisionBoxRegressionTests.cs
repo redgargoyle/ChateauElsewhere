@@ -1791,10 +1791,16 @@ public class ObjectCollisionBoxRegressionTests
         Transform greenChair = FindDescendant(room, "drawingroomgreenchair_0");
         Transform greenChairForeground = FindDescendant(room, "drawingroomgreenchair[_0");
         Transform greenChairForegroundBlocker = FindDescendant(room, "PlayerBlocker_drawingroomgreenchair_0");
+        Transform greenChairArmrest = FindDescendant(room, "greenchairarmrest_0");
+        Transform greenChairArmrestBlocker =
+            FindDescendant(room, "PlayerBlocker_greenchairarmrest_0");
         SpriteRenderer tableRenderer = table != null ? table.GetComponent<SpriteRenderer>() : null;
         SpriteRenderer greenChairRenderer = greenChair != null ? greenChair.GetComponent<SpriteRenderer>() : null;
         SpriteRenderer greenChairForegroundRenderer = greenChairForeground != null
             ? greenChairForeground.GetComponent<SpriteRenderer>()
+            : null;
+        SpriteRenderer greenChairArmrestRenderer = greenChairArmrest != null
+            ? greenChairArmrest.GetComponent<SpriteRenderer>()
             : null;
         WorldYSortSpriteRenderer greenChairSorter = greenChair != null
             ? greenChair.GetComponent<WorldYSortSpriteRenderer>()
@@ -1808,6 +1814,10 @@ public class ObjectCollisionBoxRegressionTests
         ObjectMovementBlocker2D greenChairForegroundMarker = greenChairForegroundBlocker != null
             ? greenChairForegroundBlocker.GetComponent<ObjectMovementBlocker2D>()
             : null;
+        ObjectMovementBlocker2D greenChairArmrestMarker =
+            greenChairArmrestBlocker != null
+                ? greenChairArmrestBlocker.GetComponent<ObjectMovementBlocker2D>()
+                : null;
 
         Assert.That(navigation, Is.Not.Null);
         Assert.That(navigation.CurrentRoom, Is.EqualTo("Drawing Room").IgnoreCase);
@@ -1822,6 +1832,9 @@ public class ObjectCollisionBoxRegressionTests
         Assert.That(greenChairForegroundRenderer, Is.Not.Null);
         Assert.That(greenChairForegroundMarker, Is.Not.Null);
         Assert.That(greenChairForegroundMarker.SourceObject, Is.SameAs(greenChairForeground.gameObject));
+        Assert.That(greenChairArmrestRenderer, Is.Not.Null);
+        Assert.That(greenChairArmrestMarker, Is.Not.Null);
+        Assert.That(greenChairArmrestMarker.SourceObject, Is.SameAs(greenChairArmrest.gameObject));
 
         ActorRoomState[] actorStates = Object.FindObjectsByType<ActorRoomState>(FindObjectsInactive.Include);
         List<ActorRoomState> drawingRoomGuests = new List<ActorRoomState>();
@@ -1841,6 +1854,7 @@ public class ObjectCollisionBoxRegressionTests
         Assert.That(drawingRoomGuests.Count, Is.EqualTo(8), "Skip to Chapter 2 should stage the complete guest roster.");
         ActorRoomState guest2 = null;
         ActorRoomState guest4 = null;
+        ActorRoomState guest8 = null;
 
         for (int guestIndex = 0; guestIndex < drawingRoomGuests.Count; guestIndex++)
         {
@@ -1854,12 +1868,18 @@ public class ObjectCollisionBoxRegressionTests
             {
                 guest4 = guest;
             }
+            else if (string.Equals(guest.ActorId, "guest_8", System.StringComparison.OrdinalIgnoreCase))
+            {
+                guest8 = guest;
+            }
         }
 
         Assert.That(guest2, Is.Not.Null);
         Assert.That(guest4, Is.Not.Null);
+        Assert.That(guest8, Is.Not.Null);
         Assert.That(guest2.IsSeated, Is.True);
         Assert.That(guest4.IsSeated, Is.True);
+        Assert.That(guest8.IsSeated, Is.True);
 
         float[] verticalPans = { -1f, 0f, 1f };
 
@@ -1871,6 +1891,7 @@ public class ObjectCollisionBoxRegressionTests
             Physics2D.SyncTransforms();
             tableMarker.ApplySourceSortingNow();
             greenChairSorter.ApplySorting();
+            greenChairArmrestMarker.ApplySourceSortingNow();
             yield return null;
             yield return null;
 
@@ -1907,7 +1928,6 @@ public class ObjectCollisionBoxRegressionTests
 
                     seatedException.ApplyOcclusionNow();
                     Assert.That(seatedException.IsExceptionActive, Is.True);
-                    Assert.That(seatedException.FrontOccluderRenderer, Is.Not.Null);
 
                     SortingGroup[] groups = guest.GetComponentsInChildren<SortingGroup>(true);
 
@@ -1941,8 +1961,18 @@ public class ObjectCollisionBoxRegressionTests
                             $"foreground={DescribeRendererSorting(greenChairForegroundRenderer)} " +
                             $"chair={DescribeRendererSorting(greenChairRenderer)}");
                     }
+                    else if (string.Equals(guest.ActorId, "guest_8", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        Assert.That(seatedException.AssignedChair,
+                            Is.SameAs(greenChairArmrestRenderer.gameObject));
+                        Assert.That(seatedException.FrontOccluderRenderer, Is.Null);
+                        AssertAllLocalSortingGroupsDisabled(
+                            groups,
+                            "Guest 8 must not retain an effective override over the green armrest.");
+                    }
                     else
                     {
+                        Assert.That(seatedException.FrontOccluderRenderer, Is.Not.Null);
                         AssertAllLocalSortingGroupsDisabled(
                             groups,
                             "Drawing Room seated exceptions must not leave a guest-local sorting group overriding their cutout.");
@@ -1982,7 +2012,10 @@ public class ObjectCollisionBoxRegressionTests
 
             DiningRoomSeatedGuestOcclusionException guest4Exception =
                 guest4.GetComponent<DiningRoomSeatedGuestOcclusionException>();
+            DiningRoomSeatedGuestOcclusionException guest8Exception =
+                guest8.GetComponent<DiningRoomSeatedGuestOcclusionException>();
             Assert.That(guest4Exception, Is.Not.Null);
+            Assert.That(guest8Exception, Is.Not.Null);
             int tableOrderBeforeGuestException = tableRenderer.sortingOrder;
             guest4Exception.ApplyOcclusionNow();
 
@@ -2005,6 +2038,68 @@ public class ObjectCollisionBoxRegressionTests
                 "The selected-chair exception must never write to the Drawing Room tea table.");
             Assert.That(tableRenderer.sortingOrder, Is.EqualTo(tableMarker.CurrentSortingOrder),
                 "The Drawing Room tea table must remain owned by its physical-footprint Y sorter.");
+
+            greenChairArmrestMarker.ApplySourceSortingNow();
+            int blockerOwnedArmrestOrder = greenChairArmrestMarker.CurrentSortingOrder;
+            int tableOrderBeforeGuest8Exception = tableRenderer.sortingOrder;
+            guest8Exception.ApplyOcclusionNow();
+
+            SpriteRenderer guest8Front = FindFrontmostActiveRenderer(guest8.gameObject);
+            Assert.That(guest8Exception.AssignedChair,
+                Is.SameAs(greenChairArmrestRenderer.gameObject));
+            Assert.That(guest8Exception.FrontOccluderRenderer, Is.Null);
+            AssertAllLocalSortingGroupsDisabled(
+                guest8.GetComponentsInChildren<SortingGroup>(true),
+                "Guest 8 must not retain an effective override over the green armrest.");
+            Assert.That(guest8Front, Is.Not.Null);
+            Assert.That(guest8Front.sortingLayerID,
+                Is.EqualTo(greenChairArmrestRenderer.sortingLayerID));
+            Assert.That(guest8Front.sortingOrder,
+                Is.LessThan(greenChairArmrestRenderer.sortingOrder));
+            Assert.That(greenChairArmrestRenderer.sortingOrder,
+                Is.EqualTo(blockerOwnedArmrestOrder));
+            Assert.That(tableRenderer.sortingOrder,
+                Is.EqualTo(tableOrderBeforeGuest8Exception));
+            Assert.That(tableRenderer.sortingOrder,
+                Is.EqualTo(tableMarker.CurrentSortingOrder));
+
+            if (Mathf.Approximately(verticalPans[panIndex], 0f))
+            {
+                SortingGroup injectedGuest8Group = guest8.gameObject.AddComponent<SortingGroup>();
+
+                try
+                {
+                    injectedGuest8Group.enabled = true;
+                    injectedGuest8Group.sortingLayerID = greenChairArmrestRenderer.sortingLayerID;
+                    injectedGuest8Group.sortingOrder = greenChairArmrestRenderer.sortingOrder + 100;
+                    guest8Exception.ApplyOcclusionNow();
+                    AssertAllLocalSortingGroupsDisabled(
+                        guest8.GetComponentsInChildren<SortingGroup>(true),
+                        "Guest 8 must disable an injected local sorting override before armrest capture.");
+                    GreenChairRenderStateDiagnostic.CaptureGameplayCameraPngForTests(
+                        Camera.main,
+                        "/tmp/chantilly-drawing-room-all-guests-after.png");
+                    GreenChairRenderStateDiagnostic.PixelComparisonResult pixels =
+                        GreenChairRenderStateDiagnostic.CaptureOcclusionPixelComparisonForTests(
+                            Camera.main,
+                            greenChairArmrestRenderer,
+                            guest8.gameObject,
+                            "/tmp/chantilly-green-armrest-guest8");
+
+                    Assert.That(pixels.OverlapPixelCount, Is.GreaterThanOrEqualTo(25));
+                    Assert.That(
+                        pixels.ActualMatchesKnownFront,
+                        Is.True,
+                        $"Actual did not match forced-front evidence. " +
+                        $"frontError={pixels.ActualToFrontError} " +
+                        $"behindError={pixels.ActualToBehindError} " +
+                        $"actual={pixels.ActualPath}");
+                }
+                finally
+                {
+                    Object.DestroyImmediate(injectedGuest8Group);
+                }
+            }
 
             Assert.That(seatedCount, Is.EqualTo(5));
             Assert.That(standingCount, Is.EqualTo(3));
