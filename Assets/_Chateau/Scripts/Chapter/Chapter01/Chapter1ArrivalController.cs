@@ -5259,11 +5259,13 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
-        if (guestState.GuestIndex == 0)
+        if (guestState.GuestIndex == 3)
         {
             if (drawingRoomGreenChairRenderer == null || drawingRoomGreenChairForegroundRenderer == null)
             {
-                Debug.LogError("Drawing Room green chair occlusion renderers are not fully wired for guest 1.", this);
+                Debug.LogError(
+                    "Drawing Room green chair occlusion renderers are not fully wired for yellow-dress guest 4.",
+                    this);
                 seatedException?.DeactivateForSeat();
                 return;
             }

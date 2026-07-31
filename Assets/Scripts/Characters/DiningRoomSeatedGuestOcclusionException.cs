@@ -14,6 +14,26 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
         public SpriteSortPoint SortPoint;
     }
 
+    private struct SortingGroupState
+    {
+        public bool Enabled;
+        public int LayerId;
+        public int Order;
+        public bool SortAtRoot;
+    }
+
+    private readonly struct EffectiveSortKey
+    {
+        public EffectiveSortKey(int layerValue, int order)
+        {
+            LayerValue = layerValue;
+            Order = order;
+        }
+
+        public int LayerValue { get; }
+        public int Order { get; }
+    }
+
     private const string InvalidOrderMessage = "Dining seat occlusion order invalid. Move chair/table sort anchors or split chair art.";
 
     [SerializeField] private ActorRoomState actorState;
@@ -35,7 +55,13 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
     private int originalSortingOrder;
     private readonly Dictionary<SpriteRenderer, RendererSortingState> actorRendererStates =
         new Dictionary<SpriteRenderer, RendererSortingState>();
+    private readonly Dictionary<SortingGroup, SortingGroupState> actorSortingGroupStates =
+        new Dictionary<SortingGroup, SortingGroupState>();
     private readonly List<SpriteRenderer> activeActorRenderers = new List<SpriteRenderer>();
+    private readonly List<EffectiveSortKey> leftEffectiveSortPath = new List<EffectiveSortKey>();
+    private readonly List<EffectiveSortKey> rightEffectiveSortPath = new List<EffectiveSortKey>();
+    private readonly List<SortingGroupState> leftSortingGroupChain = new List<SortingGroupState>();
+    private readonly List<SortingGroupState> rightSortingGroupChain = new List<SortingGroupState>();
     private bool capturedFrontOccluderState;
     private int originalFrontOccluderLayerId;
     private int originalFrontOccluderOrder;
@@ -65,6 +91,11 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
     }
 
     private void OnDisable()
+    {
+        RestoreNormalSorting();
+    }
+
+    private void OnDestroy()
     {
         RestoreNormalSorting();
     }
@@ -328,8 +359,6 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
 
     private void ApplyActorBehindOccluder()
     {
-        DisableActorRootSortingGroupForDirectRendererOverride();
-
         SpriteRenderer[] actorRenderers = actorState.GetComponentsInChildren<SpriteRenderer>(true);
         activeActorRenderers.Clear();
 
@@ -352,31 +381,20 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
         }
 
         activeActorRenderers.Sort(CompareRendererBackToFront);
-
-        int totalOrderSpan = 0;
-
-        for (int i = 1; i < activeActorRenderers.Count; i++)
-        {
-            totalOrderSpan += GetNormalizedOrderStep(
-                activeActorRenderers[i - 1],
-                activeActorRenderers[i]);
-        }
+        CaptureAndDisableActorLocalSortingGroups();
 
         int targetFrontmostActorOrder = assignedChairRenderer.sortingOrder - 1;
-        int relativeOrder = -totalOrderSpan;
+        int targetBackmostActorOrder =
+            targetFrontmostActorOrder - (activeActorRenderers.Count - 1);
 
         for (int i = 0; i < activeActorRenderers.Count; i++)
         {
             SpriteRenderer actorRenderer = activeActorRenderers[i];
-            int nextOrderStep = i + 1 < activeActorRenderers.Count
-                ? GetNormalizedOrderStep(actorRenderer, activeActorRenderers[i + 1])
-                : 0;
 
             CaptureActorRendererStateIfNeeded(actorRenderer);
             actorRenderer.sortingLayerID = assignedChairRenderer.sortingLayerID;
-            actorRenderer.sortingOrder = targetFrontmostActorOrder + relativeOrder;
+            actorRenderer.sortingOrder = targetBackmostActorOrder + i;
             actorRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
-            relativeOrder += nextOrderStep;
         }
 
         if (frontOccluderRenderer != null)
@@ -460,6 +478,7 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
     {
         if (!appliedException &&
             actorRendererStates.Count == 0 &&
+            actorSortingGroupStates.Count == 0 &&
             !capturedFrontOccluderState &&
             !capturedOriginalSortingGroupState)
         {
@@ -482,6 +501,7 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
 
         capturedOriginalSortingGroupState = false;
         RestoreActorRendererSorting();
+        RestoreActorSortingGroups();
         RestoreFrontOccluderSorting();
         appliedException = false;
     }
@@ -520,6 +540,86 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
         }
 
         actorRendererStates.Clear();
+    }
+
+    private void CaptureAndDisableActorLocalSortingGroups()
+    {
+        if (actorState == null)
+        {
+            return;
+        }
+
+        Transform actorRoot = actorState.transform;
+
+        for (int rendererIndex = 0; rendererIndex < activeActorRenderers.Count; rendererIndex++)
+        {
+            SpriteRenderer actorRenderer = activeActorRenderers[rendererIndex];
+
+            if (actorRenderer == null)
+            {
+                continue;
+            }
+
+            for (Transform cursor = actorRenderer.transform;
+                cursor != null && (cursor == actorRoot || cursor.IsChildOf(actorRoot));
+                cursor = cursor.parent)
+            {
+                SortingGroup[] groups = cursor.GetComponents<SortingGroup>();
+
+                for (int groupIndex = 0; groupIndex < groups.Length; groupIndex++)
+                {
+                    SortingGroup group = groups[groupIndex];
+
+                    if (group == null)
+                    {
+                        continue;
+                    }
+
+                    if (actorSortingGroupStates.ContainsKey(group))
+                    {
+                        group.enabled = false;
+                        continue;
+                    }
+
+                    if (!group.enabled)
+                    {
+                        continue;
+                    }
+
+                    actorSortingGroupStates.Add(
+                        group,
+                        new SortingGroupState
+                        {
+                            Enabled = true,
+                            LayerId = group.sortingLayerID,
+                            Order = group.sortingOrder,
+                            SortAtRoot = group.sortAtRoot
+                        });
+                    group.enabled = false;
+                }
+            }
+        }
+    }
+
+    private void RestoreActorSortingGroups()
+    {
+        foreach (KeyValuePair<SortingGroup, SortingGroupState> entry in actorSortingGroupStates)
+        {
+            SortingGroup group = entry.Key;
+
+            if (group == null)
+            {
+                continue;
+            }
+
+            SortingGroupState state = entry.Value;
+            group.sortingLayerID = state.LayerId;
+            group.sortingOrder = state.Order;
+            group.sortAtRoot = state.SortAtRoot;
+            group.enabled = state.Enabled;
+        }
+
+        actorSortingGroupStates.Clear();
     }
 
     private void CaptureFrontOccluderStateIfNeeded()
@@ -608,44 +708,107 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
             candidate.sortingOrder > currentFrontmost.sortingOrder);
     }
 
-    private static int CompareRendererBackToFront(SpriteRenderer left, SpriteRenderer right)
+    private int CompareRendererBackToFront(SpriteRenderer left, SpriteRenderer right)
     {
-        int leftLayerValue = SortingLayer.GetLayerValueFromID(left.sortingLayerID);
-        int rightLayerValue = SortingLayer.GetLayerValueFromID(right.sortingLayerID);
-        int layerComparison = leftLayerValue.CompareTo(rightLayerValue);
+        BuildEffectiveSortPath(left, leftEffectiveSortPath, leftSortingGroupChain);
+        BuildEffectiveSortPath(right, rightEffectiveSortPath, rightSortingGroupChain);
+        int sharedLength = Mathf.Min(leftEffectiveSortPath.Count, rightEffectiveSortPath.Count);
 
-        if (layerComparison != 0)
+        for (int i = 0; i < sharedLength; i++)
         {
-            return layerComparison;
+            int layerComparison =
+                leftEffectiveSortPath[i].LayerValue.CompareTo(rightEffectiveSortPath[i].LayerValue);
+
+            if (layerComparison != 0)
+            {
+                return layerComparison;
+            }
+
+            int orderComparison =
+                leftEffectiveSortPath[i].Order.CompareTo(rightEffectiveSortPath[i].Order);
+
+            if (orderComparison != 0)
+            {
+                return orderComparison;
+            }
         }
 
-        int orderComparison = left.sortingOrder.CompareTo(right.sortingOrder);
-        return orderComparison != 0
-            ? orderComparison
+        int pathLengthComparison = leftEffectiveSortPath.Count.CompareTo(rightEffectiveSortPath.Count);
+        return pathLengthComparison != 0
+            ? pathLengthComparison
             : left.GetInstanceID().CompareTo(right.GetInstanceID());
     }
 
-    private static int GetNormalizedOrderStep(SpriteRenderer behind, SpriteRenderer inFront)
+    private void BuildEffectiveSortPath(
+        SpriteRenderer renderer,
+        List<EffectiveSortKey> destination,
+        List<SortingGroupState> groupChain)
     {
-        return behind.sortingLayerID == inFront.sortingLayerID
-            ? Mathf.Max(1, inFront.sortingOrder - behind.sortingOrder)
-            : 1;
-    }
+        destination.Clear();
+        groupChain.Clear();
 
-    private void DisableActorRootSortingGroupForDirectRendererOverride()
-    {
-        if (sortingGroup == null)
-        {
-            sortingGroup = actorState.GetComponent<SortingGroup>();
-        }
-
-        if (sortingGroup == null)
+        if (renderer == null || actorState == null)
         {
             return;
         }
 
-        CaptureOriginalSortingGroupStateIfNeeded();
-        sortingGroup.enabled = false;
+        Transform actorRoot = actorState.transform;
+
+        for (Transform cursor = renderer.transform;
+            cursor != null && (cursor == actorRoot || cursor.IsChildOf(actorRoot));
+            cursor = cursor.parent)
+        {
+            SortingGroup[] groups = cursor.GetComponents<SortingGroup>();
+
+            for (int i = 0; i < groups.Length; i++)
+            {
+                SortingGroup group = groups[i];
+
+                if (group == null)
+                {
+                    continue;
+                }
+
+                if (group.enabled)
+                {
+                    groupChain.Add(
+                        new SortingGroupState
+                        {
+                            Enabled = true,
+                            LayerId = group.sortingLayerID,
+                            Order = group.sortingOrder,
+                            SortAtRoot = group.sortAtRoot
+                        });
+                }
+                else if (actorSortingGroupStates.TryGetValue(
+                    group,
+                    out SortingGroupState capturedState) &&
+                    capturedState.Enabled)
+                {
+                    groupChain.Add(capturedState);
+                }
+            }
+        }
+
+        for (int i = groupChain.Count - 1; i >= 0; i--)
+        {
+            SortingGroupState group = groupChain[i];
+
+            if (group.SortAtRoot)
+            {
+                destination.Clear();
+            }
+
+            destination.Add(
+                new EffectiveSortKey(
+                    SortingLayer.GetLayerValueFromID(group.LayerId),
+                    group.Order));
+        }
+
+        destination.Add(
+            new EffectiveSortKey(
+                SortingLayer.GetLayerValueFromID(renderer.sortingLayerID),
+                renderer.sortingOrder));
     }
 
 }

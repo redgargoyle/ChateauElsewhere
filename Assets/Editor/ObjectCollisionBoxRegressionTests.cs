@@ -788,13 +788,37 @@ public class ObjectCollisionBoxRegressionTests
             RoomAnchor seat = seatObject.AddComponent<RoomAnchor>();
             seat.RefreshFromHierarchy();
 
-            actorObject = new GameObject("Guest 1");
+            actorObject = new GameObject("Guest 4");
             SpriteRenderer actorRenderer = actorObject.AddComponent<SpriteRenderer>();
             actorRenderer.sortingLayerName = "People";
             actorRenderer.sortingOrder = 1500;
             SortingGroup group = actorObject.AddComponent<SortingGroup>();
             group.sortingLayerName = "People";
             group.sortingOrder = 2400;
+            group.sortAtRoot = false;
+            GameObject animationDisplayObject = new GameObject("AnimationDisplay");
+            animationDisplayObject.transform.SetParent(actorObject.transform, false);
+            SortingGroup nestedGroup = animationDisplayObject.AddComponent<SortingGroup>();
+            nestedGroup.sortingLayerName = "People";
+            nestedGroup.sortingOrder = 3200;
+            nestedGroup.sortAtRoot = true;
+            GameObject nestedVisualObject = new GameObject("Nested Body Detail");
+            nestedVisualObject.transform.SetParent(animationDisplayObject.transform, false);
+            SpriteRenderer nestedVisualRenderer = nestedVisualObject.AddComponent<SpriteRenderer>();
+            nestedVisualRenderer.sortingLayerName = "People";
+            nestedVisualRenderer.sortingOrder = 1490;
+            GameObject futureAnimationVisualObject = new GameObject("Future Animation Visual");
+            futureAnimationVisualObject.transform.SetParent(actorObject.transform, false);
+            SortingGroup futureAnimationGroup =
+                futureAnimationVisualObject.AddComponent<SortingGroup>();
+            futureAnimationGroup.sortingLayerName = "People";
+            futureAnimationGroup.sortingOrder = 3600;
+            futureAnimationGroup.sortAtRoot = true;
+            futureAnimationGroup.enabled = false;
+            SpriteRenderer futureAnimationRenderer =
+                futureAnimationVisualObject.AddComponent<SpriteRenderer>();
+            futureAnimationRenderer.sortingLayerName = "People";
+            futureAnimationRenderer.sortingOrder = 1850;
             GameObject layerOverrideObject = new GameObject("Guest Layer Override");
             layerOverrideObject.transform.SetParent(actorObject.transform, false);
             SpriteRenderer layerOverrideRenderer = layerOverrideObject.AddComponent<SpriteRenderer>();
@@ -838,14 +862,21 @@ public class ObjectCollisionBoxRegressionTests
             Assert.That(seatedException.FrontOccluderRenderer, Is.SameAs(frontOccluderRenderer));
             Assert.That(group.enabled, Is.False,
                 "Any seated-guest SortingGroup override must be neutralized while the chair exception is active.");
+            Assert.That(nestedGroup.enabled, Is.False,
+                "A nested sortAtRoot group still owns its child renderer externally and must also be neutralized.");
+            Assert.That(futureAnimationGroup.enabled, Is.False,
+                "A group that was already disabled must not be changed or captured prematurely.");
             Assert.That(actorRenderer.sortingLayerID, Is.EqualTo(fullChairRenderer.sortingLayerID));
-            Assert.That(actorRenderer.sortingOrder, Is.EqualTo(1049),
-                "The selected full chair must render directly over the yellow-dress guest.");
+            Assert.That(actorRenderer.sortingOrder, Is.LessThan(1049));
+            Assert.That(nestedVisualRenderer.sortingLayerID, Is.EqualTo(fullChairRenderer.sortingLayerID));
+            Assert.That(nestedVisualRenderer.sortingOrder, Is.EqualTo(1049),
+                "The selected full chair must render directly over the guest's originally frontmost visual.");
             Assert.That(layerOverrideRenderer.sortingLayerID, Is.EqualTo(fullChairRenderer.sortingLayerID));
             Assert.That(layerOverrideRenderer.sortingOrder, Is.LessThan(fullChairRenderer.sortingOrder),
                 "Every active guest renderer must remain behind the selected chair, even if it began on another layer.");
-            Assert.That(layerOverrideRenderer.sortingOrder, Is.LessThan(actorRenderer.sortingOrder),
-                "Normalizing layer overrides must preserve the guest's strict internal back-to-front order.");
+            Assert.That(layerOverrideRenderer.sortingOrder, Is.LessThan(actorRenderer.sortingOrder));
+            Assert.That(actorRenderer.sortingOrder, Is.LessThan(nestedVisualRenderer.sortingOrder),
+                "Normalizing nested sorting-group overrides must preserve the guest's effective back-to-front order.");
             Assert.That(fullChairRenderer.sortingOrder, Is.EqualTo(1050),
                 "The yellow-lady exception must not change the chair's order against other actors.");
             Assert.That(frontOccluderRenderer.sortingOrder, Is.EqualTo(1051));
@@ -855,20 +886,70 @@ public class ObjectCollisionBoxRegressionTests
             actorRenderer.sortingOrder = 1600;
             layerOverrideRenderer.sortingLayerName = "Background";
             layerOverrideRenderer.sortingOrder = 9100;
+            nestedVisualRenderer.sortingOrder = 1590;
+            GameObject lateNestedVisualObject = new GameObject("Late Nested Body Detail");
+            lateNestedVisualObject.transform.SetParent(animationDisplayObject.transform, false);
+            SpriteRenderer lateNestedVisualRenderer =
+                lateNestedVisualObject.AddComponent<SpriteRenderer>();
+            lateNestedVisualRenderer.sortingLayerName = "People";
+            lateNestedVisualRenderer.sortingOrder = -5000;
+            futureAnimationGroup.enabled = true;
+            GameObject lateAnimationVisualObject = new GameObject("Late Animation Visual");
+            lateAnimationVisualObject.transform.SetParent(actorObject.transform, false);
+            SortingGroup lateAnimationGroup = lateAnimationVisualObject.AddComponent<SortingGroup>();
+            lateAnimationGroup.sortingLayerName = "People";
+            lateAnimationGroup.sortingOrder = 3400;
+            lateAnimationGroup.sortAtRoot = true;
+            SpriteRenderer lateAnimationRenderer = lateAnimationVisualObject.AddComponent<SpriteRenderer>();
+            lateAnimationRenderer.sortingLayerName = "People";
+            lateAnimationRenderer.sortingOrder = 1750;
             seatedException.ApplyOcclusionNow();
 
-            Assert.That(actorRenderer.sortingOrder, Is.EqualTo(799),
-                "Only the yellow-dress guest must follow immediately behind the chair's latest WorldY order.");
+            Assert.That(nestedGroup.enabled, Is.False,
+                "The exception must keep using the captured effective order of a neutralized nested group.");
+            Assert.That(futureAnimationGroup.enabled, Is.False,
+                "A previously disabled group must be captured when animation later enables it.");
+            Assert.That(lateAnimationGroup.enabled, Is.False,
+                "The exception must capture and neutralize a visual group activated after the seat exception began.");
+            Assert.That(futureAnimationRenderer.sortingOrder, Is.EqualTo(799),
+                "The yellow-dress guest's newly enabled frontmost visual must follow immediately behind the chair.");
             Assert.That(layerOverrideRenderer.sortingOrder, Is.LessThan(fullChairRenderer.sortingOrder));
+            Assert.That(actorRenderer.sortingOrder, Is.LessThan(nestedVisualRenderer.sortingOrder));
+            Assert.That(lateNestedVisualRenderer.sortingOrder, Is.LessThan(nestedVisualRenderer.sortingOrder));
+            Assert.That(nestedVisualRenderer.sortingOrder, Is.LessThan(lateAnimationRenderer.sortingOrder));
+            Assert.That(lateAnimationRenderer.sortingOrder, Is.LessThan(futureAnimationRenderer.sortingOrder));
             Assert.That(fullChairRenderer.sortingOrder, Is.EqualTo(800),
                 "The selected chair must retain its ordinary world-Y order for every other actor.");
             Assert.That(frontOccluderRenderer.sortingOrder, Is.EqualTo(801),
                 "The detached rail must follow immediately in front of the chair.");
 
+            nestedGroup.enabled = true;
+            seatedException.ApplyOcclusionNow();
+            Assert.That(nestedGroup.enabled, Is.False,
+                "The exception must safely re-disable a captured group that another writer re-enables.");
+
             seatedException.DeactivateForSeat();
             Assert.That(group.enabled, Is.True);
             Assert.That(group.sortingOrder, Is.EqualTo(2400));
+            Assert.That(group.sortAtRoot, Is.False);
+            Assert.That(nestedGroup.enabled, Is.True);
+            Assert.That(nestedGroup.sortingLayerName, Is.EqualTo("People"));
+            Assert.That(nestedGroup.sortingOrder, Is.EqualTo(3200));
+            Assert.That(nestedGroup.sortAtRoot, Is.True);
+            Assert.That(futureAnimationGroup.enabled, Is.True,
+                "A group first altered after animation enabled it must restore to that enabled state.");
+            Assert.That(futureAnimationGroup.sortingLayerName, Is.EqualTo("People"));
+            Assert.That(futureAnimationGroup.sortingOrder, Is.EqualTo(3600));
+            Assert.That(futureAnimationGroup.sortAtRoot, Is.True);
+            Assert.That(lateAnimationGroup.enabled, Is.True);
+            Assert.That(lateAnimationGroup.sortingLayerName, Is.EqualTo("People"));
+            Assert.That(lateAnimationGroup.sortingOrder, Is.EqualTo(3400));
+            Assert.That(lateAnimationGroup.sortAtRoot, Is.True);
             Assert.That(actorRenderer.sortingOrder, Is.EqualTo(1500));
+            Assert.That(nestedVisualRenderer.sortingOrder, Is.EqualTo(1490));
+            Assert.That(lateNestedVisualRenderer.sortingOrder, Is.EqualTo(-5000));
+            Assert.That(futureAnimationRenderer.sortingOrder, Is.EqualTo(1850));
+            Assert.That(lateAnimationRenderer.sortingOrder, Is.EqualTo(1750));
             Assert.That(layerOverrideRenderer.sortingLayerName, Is.EqualTo("Background"));
             Assert.That(layerOverrideRenderer.sortingOrder, Is.EqualTo(9000));
             Assert.That(fullChairRenderer.sortingOrder, Is.EqualTo(800));
@@ -1483,9 +1564,9 @@ public class ObjectCollisionBoxRegressionTests
                     Assert.That(seatedException.IsExceptionActive, Is.True);
                     Assert.That(seatedException.FrontOccluderRenderer, Is.Not.Null);
 
-                    SortingGroup group = guest.GetComponentInChildren<SortingGroup>(true);
+                    SortingGroup[] groups = guest.GetComponentsInChildren<SortingGroup>(true);
 
-                    if (string.Equals(guest.ActorId, "guest_1", System.StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(guest.ActorId, "guest_4", System.StringComparison.OrdinalIgnoreCase))
                     {
                         Assert.That(seatedException.FrontOccluderRenderer, Is.SameAs(greenChairForegroundRenderer));
                         greenChairForegroundMarker.ApplySourceSortingNow();
@@ -1495,12 +1576,13 @@ public class ObjectCollisionBoxRegressionTests
                         SpriteRenderer frontmostGuestRenderer = FindFrontmostActiveRenderer(guest.gameObject);
 
                         Assert.That(frontmostGuestRenderer, Is.Not.Null);
-                        Assert.That(group == null || !group.enabled, Is.True,
-                            "Guest 1 must remain on ordinary actor sorting; the selected chair is the narrow override.");
+                        AssertAllLocalSortingGroupsDisabled(
+                            groups,
+                            "Guest 4 must use direct renderer sorting while the selected chair is the narrow override.");
                         Assert.That(
                             frontmostGuestRenderer.sortingLayerID,
                             Is.EqualTo(greenChairRenderer.sortingLayerID),
-                            "The seated Guest 1 override and green chair must use the same sorting layer.");
+                            "The seated Guest 4 override and green chair must use the same sorting layer.");
                         Assert.That(
                             greenChairRenderer.sortingOrder,
                             Is.GreaterThan(frontmostGuestRenderer.sortingOrder),
@@ -1516,8 +1598,9 @@ public class ObjectCollisionBoxRegressionTests
                     }
                     else
                     {
-                        Assert.That(group == null || !group.enabled, Is.True,
-                            "Only Guest 1 needs a Drawing Room sorting-group override.");
+                        AssertAllLocalSortingGroupsDisabled(
+                            groups,
+                            "Drawing Room seated exceptions must not leave a guest-local sorting group overriding their cutout.");
 
                         SpriteRenderer frontmostGuestRenderer = FindFrontmostActiveRenderer(guest.gameObject);
 
@@ -1683,15 +1766,45 @@ public class ObjectCollisionBoxRegressionTests
 
         IList guestStates = guestStatesField.GetValue(arrivalController) as IList;
         Assert.That(guestStates, Is.Not.Null);
-        Assert.That(guestStates.Count, Is.GreaterThan(0));
+        Assert.That(guestStates.Count, Is.GreaterThan(3));
 
-        completeArrival.Invoke(arrivalController, new[] { guestStates[0] });
+        completeArrival.Invoke(arrivalController, new[] { guestStates[3] });
         Assert.That(navigation.DebugTeleportToRoom("Drawing Room"), Is.True);
 
         for (int frame = 0; frame < 4; frame++)
         {
             yield return null;
         }
+
+        yield return new WaitForSecondsRealtime(0.4f);
+
+        bool capturedYellowDressFrame = false;
+
+        for (int frame = 0; frame < 180; frame++)
+        {
+            Transform diagnosticGuest =
+                FindTransformInScene(SceneManager.GetActiveScene(), "Guest 4");
+            SpriteRenderer diagnosticBody = diagnosticGuest != null
+                ? diagnosticGuest.GetComponentInChildren<SpriteRenderer>(true)
+                : null;
+            string diagnosticSpritePath = diagnosticBody != null && diagnosticBody.sprite != null
+                ? AssetDatabase.GetAssetPath(diagnosticBody.sprite)
+                : string.Empty;
+
+            if (string.Equals(
+                AssetDatabase.AssetPathToGUID(diagnosticSpritePath),
+                "3c77696129c44fc49b56737e0ffdc4e9",
+                System.StringComparison.Ordinal))
+            {
+                capturedYellowDressFrame = true;
+                break;
+            }
+
+            yield return null;
+        }
+
+        Assert.That(capturedYellowDressFrame, Is.True,
+            "The regression must inspect the actual grey-haired yellow-dress sitting sprite.");
 
         Transform room = FindTransformInScene(SceneManager.GetActiveScene(), "Room_Drawing_Room");
         Transform greenChair = FindDescendant(room, "drawingroomgreenchair_0");
@@ -1712,7 +1825,7 @@ public class ObjectCollisionBoxRegressionTests
         for (int i = 0; i < actors.Length; i++)
         {
             if (actors[i] != null &&
-                string.Equals(actors[i].ActorId, "guest_1", System.StringComparison.OrdinalIgnoreCase))
+                string.Equals(actors[i].ActorId, "guest_4", System.StringComparison.OrdinalIgnoreCase))
             {
                 yellowDressGuest = actors[i];
                 break;
@@ -1735,10 +1848,20 @@ public class ObjectCollisionBoxRegressionTests
 
         SpriteRenderer frontmostGuestRenderer =
             FindFrontmostActiveRenderer(yellowDressGuest.gameObject);
-        SortingGroup guestGroup = yellowDressGuest.GetComponent<SortingGroup>();
+        SortingGroup[] guestGroups = yellowDressGuest.GetComponentsInChildren<SortingGroup>(true);
         Assert.That(frontmostGuestRenderer, Is.Not.Null);
-        Assert.That(guestGroup == null || !guestGroup.enabled, Is.True,
-            "Normal Chapter 1 arrival must not leave a guest SortingGroup override active.");
+
+        for (int groupIndex = 0; groupIndex < guestGroups.Length; groupIndex++)
+        {
+            Assert.That(guestGroups[groupIndex] == null || !guestGroups[groupIndex].enabled, Is.True,
+                $"Normal Chapter 1 arrival must neutralize every Guest 4 SortingGroup. " +
+                $"group={guestGroups[groupIndex]?.name}");
+        }
+
+        Assert.That(
+            AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(frontmostGuestRenderer.sprite)),
+            Is.EqualTo("3c77696129c44fc49b56737e0ffdc4e9"),
+            "The draw-order assertion must target the exact yellow-dress sprite from the reported frame.");
         Assert.That(greenChairRenderer.sortingLayerID, Is.EqualTo(frontmostGuestRenderer.sortingLayerID));
         Assert.That(greenChairRenderer.sortingOrder, Is.GreaterThan(frontmostGuestRenderer.sortingOrder),
             $"The selected green chair must render over the yellow-dress guest after normal arrival. " +
@@ -1746,7 +1869,7 @@ public class ObjectCollisionBoxRegressionTests
             $"guest={DescribeRendererSorting(frontmostGuestRenderer)}");
         Assert.That(greenChairRenderer.sortingOrder,
             Is.EqualTo(playerMovement.GetSortingOrderForFootY(greenChair.position.y)),
-            "The local Guest 1 override must not change the chair's Y-order against other actors.");
+            "The local Guest 4 override must not change the chair's Y-order against other actors.");
         Assert.That(greenChairForegroundRenderer.sortingOrder,
             Is.EqualTo(greenChairRenderer.sortingOrder + 1));
 
@@ -1913,6 +2036,24 @@ public class ObjectCollisionBoxRegressionTests
         return frontmostRenderer;
     }
 
+    private static void AssertAllLocalSortingGroupsDisabled(
+        SortingGroup[] groups,
+        string message)
+    {
+        if (groups == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < groups.Length; i++)
+        {
+            Assert.That(
+                groups[i] == null || !groups[i].enabled,
+                Is.True,
+                $"{message} group={groups[i]?.name}");
+        }
+    }
+
     private static string DescribeRendererSorting(SpriteRenderer renderer)
     {
         if (renderer == null)
@@ -1920,9 +2061,23 @@ public class ObjectCollisionBoxRegressionTests
             return "<null>";
         }
 
-        SortingGroup parentGroup = renderer.GetComponentInParent<SortingGroup>();
-        string parentGroupDescription = parentGroup != null && parentGroup.enabled
-            ? $"{parentGroup.name}:{parentGroup.sortingLayerName}/{parentGroup.sortingOrder}"
+        SortingGroup[] parentGroups = renderer.GetComponentsInParent<SortingGroup>(true);
+        List<string> enabledGroupDescriptions = new List<string>();
+
+        for (int i = parentGroups.Length - 1; i >= 0; i--)
+        {
+            SortingGroup parentGroup = parentGroups[i];
+
+            if (parentGroup != null && parentGroup.enabled)
+            {
+                enabledGroupDescriptions.Add(
+                    $"{parentGroup.name}:{parentGroup.sortingLayerName}/{parentGroup.sortingOrder}" +
+                    $"/sortAtRoot={parentGroup.sortAtRoot}");
+            }
+        }
+
+        string parentGroupDescription = enabledGroupDescriptions.Count > 0
+            ? string.Join(" -> ", enabledGroupDescriptions)
             : "none";
         int renderQueue = renderer.sharedMaterial != null ? renderer.sharedMaterial.renderQueue : -1;
 
