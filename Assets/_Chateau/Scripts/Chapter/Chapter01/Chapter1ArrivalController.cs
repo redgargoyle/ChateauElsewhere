@@ -5275,8 +5275,10 @@ public class Chapter1ArrivalController : MonoBehaviour
                 seatedException = guestState.ActorState.gameObject.AddComponent<DiningRoomSeatedGuestOcclusionException>();
             }
 
+            TryFindGuestByNumber(2, out GuestRuntimeState preservedBehindGuest);
             seatedException.ActivateBehindOccluder(
                 guestState.ActorState,
+                preservedBehindGuest?.ActorState,
                 seatAnchor,
                 drawingRoomGreenChairRenderer,
                 drawingRoomGreenChairForegroundRenderer,

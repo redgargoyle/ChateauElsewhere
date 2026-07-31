@@ -1057,34 +1057,14 @@ public class ObjectCollisionBoxRegressionTests
 
             DiningRoomSeatedGuestOcclusionException seatedException =
                 guest4Object.AddComponent<DiningRoomSeatedGuestOcclusionException>();
-            MethodInfo companionOverload = typeof(DiningRoomSeatedGuestOcclusionException).GetMethod(
-                "ActivateBehindOccluder",
-                new System.Type[]
-                {
-                    typeof(ActorRoomState),
-                    typeof(ActorRoomState),
-                    typeof(RoomAnchor),
-                    typeof(SpriteRenderer),
-                    typeof(SpriteRenderer),
-                    typeof(string),
-                    typeof(string)
-                });
-
-            Assert.That(companionOverload, Is.Not.Null,
-                "The selected-chair exception needs one explicit companion actor to preserve Guest 2 behind Guest 4.");
-
-            companionOverload.Invoke(
-                seatedException,
-                new object[]
-                {
-                    guest4State,
-                    guest2State,
-                    seat,
-                    chairRenderer,
-                    frontOccluderRenderer,
-                    "Drawing Room",
-                    "Butler"
-                });
+            seatedException.ActivateBehindOccluder(
+                guest4State,
+                guest2State,
+                seat,
+                chairRenderer,
+                frontOccluderRenderer,
+                "Drawing Room",
+                "Butler");
 
             Assert.That(seatedException.IsExceptionActive, Is.True);
             Assert.That(guest2Group.enabled, Is.False);
@@ -1097,20 +1077,41 @@ public class ObjectCollisionBoxRegressionTests
             Assert.That(chairRenderer.sortingOrder, Is.EqualTo(1050),
                 "The local actor chain must not take sorting ownership away from the chair.");
 
+            guest2State.SetSeated(false);
+            seatedException.ApplyOcclusionNow();
+
+            Assert.That(seatedException.IsExceptionActive, Is.True,
+                "Guest 4's chair exception must remain active when Guest 2 leaves the seated cluster.");
+            Assert.That(guest2Group.enabled, Is.True);
+            Assert.That(guest2Back.sortingOrder, Is.EqualTo(1400));
+            Assert.That(guest2Front.sortingOrder, Is.EqualTo(1410));
+            Assert.That(guest4Group.enabled, Is.False);
+            Assert.That(guest4Front.sortingOrder, Is.LessThan(chairRenderer.sortingOrder));
+
+            guest2State.SetSeated(true);
+            seatedException.ApplyOcclusionNow();
+
+            Assert.That(guest2Group.enabled, Is.False);
+            Assert.That(guest2Front.sortingOrder, Is.LessThan(guest4Back.sortingOrder));
+
             seatedException.DeactivateForSeat();
 
             Assert.That(guest2Group.enabled, Is.True);
             Assert.That(guest2Group.sortingOrder, Is.EqualTo(2200));
             Assert.That(guest2Group.sortAtRoot, Is.True);
+            Assert.That(guest2Back.sortingLayerName, Is.EqualTo("People"));
             Assert.That(guest2Back.sortingOrder, Is.EqualTo(1400));
             Assert.That(guest2Back.spriteSortPoint, Is.EqualTo(SpriteSortPoint.Center));
+            Assert.That(guest2Front.sortingLayerName, Is.EqualTo("People"));
             Assert.That(guest2Front.sortingOrder, Is.EqualTo(1410));
             Assert.That(guest2Front.spriteSortPoint, Is.EqualTo(SpriteSortPoint.Center));
             Assert.That(guest4Group.enabled, Is.True);
             Assert.That(guest4Group.sortingOrder, Is.EqualTo(2400));
             Assert.That(guest4Group.sortAtRoot, Is.False);
+            Assert.That(guest4Back.sortingLayerName, Is.EqualTo("People"));
             Assert.That(guest4Back.sortingOrder, Is.EqualTo(1450));
             Assert.That(guest4Back.spriteSortPoint, Is.EqualTo(SpriteSortPoint.Center));
+            Assert.That(guest4Front.sortingLayerName, Is.EqualTo("People"));
             Assert.That(guest4Front.sortingOrder, Is.EqualTo(1460));
             Assert.That(guest4Front.spriteSortPoint, Is.EqualTo(SpriteSortPoint.Center));
             Assert.That(frontOccluderRenderer.sortingOrder, Is.EqualTo(1100));
