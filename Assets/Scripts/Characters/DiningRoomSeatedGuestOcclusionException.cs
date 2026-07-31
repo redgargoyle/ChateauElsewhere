@@ -293,7 +293,7 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
     {
         if (!ShouldApplyException())
         {
-            RestoreNormalSorting();
+            ReleaseNormalSortingToWorldY();
             return;
         }
 
@@ -604,6 +604,27 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
         appliedException = false;
     }
 
+    private void ReleaseNormalSortingToWorldY()
+    {
+        bool releasedActorState =
+            actorRendererStates.Count > 0 ||
+            actorSortingGroupStates.Count > 0;
+        bool releasedPreservedBehindState =
+            preservedBehindRendererStates.Count > 0 ||
+            preservedBehindSortingGroupStates.Count > 0;
+        RestoreNormalSorting();
+
+        if (releasedActorState)
+        {
+            ReapplyWorldYSorting(actorState);
+        }
+
+        if (releasedPreservedBehindState)
+        {
+            ReapplyWorldYSorting(preservedBehindActorState);
+        }
+    }
+
     private static void CaptureActorRendererStateIfNeeded(
         SpriteRenderer actorRenderer,
         Dictionary<SpriteRenderer, RendererSortingState> rendererStates)
@@ -745,8 +766,14 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
             return;
         }
 
-        WorldYSortSpriteRenderer worldYSorter =
-            preservedBehindActorState.GetComponent<WorldYSortSpriteRenderer>();
+        ReapplyWorldYSorting(preservedBehindActorState);
+    }
+
+    private static void ReapplyWorldYSorting(ActorRoomState targetActorState)
+    {
+        WorldYSortSpriteRenderer worldYSorter = targetActorState != null
+            ? targetActorState.GetComponent<WorldYSortSpriteRenderer>()
+            : null;
 
         if (worldYSorter != null &&
             worldYSorter.isActiveAndEnabled &&

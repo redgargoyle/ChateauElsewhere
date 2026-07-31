@@ -1253,6 +1253,21 @@ public class ObjectCollisionBoxRegressionTests
             Assert.That(guest4Renderer.sortingOrder, Is.LessThan(chairRenderer.sortingOrder));
             Assert.That(chairRenderer.sortingOrder, Is.EqualTo(1050));
             Assert.That(frontOccluderRenderer.sortingOrder, Is.EqualTo(1051));
+
+            guest2State.SetSeated(true);
+            seatedException.ApplyOcclusionNow();
+            guest2Object.transform.position = new Vector3(0f, -7f, 0f);
+            guest2Sorter.ApplySorting();
+            int worldYOrderWhenPrimaryLeaves =
+                guest2Sorter.CurrentBaseSortingOrder + guest2Sorter.CurrentTieBreakOffset;
+            guest4State.SetSeated(false);
+            seatedException.ApplyOcclusionNow();
+
+            Assert.That(seatedException.IsExceptionActive, Is.False);
+            Assert.That(guest2Renderer.sortingOrder, Is.EqualTo(worldYOrderWhenPrimaryLeaves),
+                "Ending Guest 4's exception must preserve Guest 2's current world-Y order in the same late frame.");
+            Assert.That(chairRenderer.sortingOrder, Is.EqualTo(1050));
+            Assert.That(frontOccluderRenderer.sortingOrder, Is.EqualTo(1100));
         }
         finally
         {
