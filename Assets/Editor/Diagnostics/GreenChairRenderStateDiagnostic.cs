@@ -10,6 +10,7 @@ using UnityEngine.SceneManagement;
 public static class GreenChairRenderStateDiagnostic
 {
     public const string ReportPath = "/tmp/chantilly-green-chair-render-state.txt";
+    public const string OwnershipAuditReportPath = "/tmp/chantilly-sorting-ownership-audit.txt";
 
     private const string GuestActorId = "guest_4";
     private const string ChairName = "drawingroomgreenchair_0";
@@ -44,6 +45,131 @@ public static class GreenChairRenderStateDiagnostic
 
         ArmForNextFrame();
         Debug.Log($"Green-chair render capture armed for the next Gameplay-camera frame: {ReportPath}");
+    }
+
+    [MenuItem("Tools/Chantilly/Diagnostics/Audit Selected Sorting Ownership")]
+    public static void AuditSelectedSortingOwnership()
+    {
+        GameObject selectedObject = Selection.activeGameObject;
+
+        if (selectedObject == null)
+        {
+            Debug.LogWarning(
+                "Select an actor or environment prop, then run the sorting-ownership audit again.");
+            return;
+        }
+
+        string report = BuildSelectedSortingOwnershipAuditForTests(selectedObject);
+        File.WriteAllText(OwnershipAuditReportPath, report);
+
+        if (report.Contains("CONFLICT renderer="))
+        {
+            Debug.LogError(
+                $"Sorting-ownership conflicts found under {selectedObject.name}. " +
+                $"Inspector values can be overwritten by the listed owners. Report: {OwnershipAuditReportPath}",
+                selectedObject);
+        }
+        else
+        {
+            Debug.Log(
+                $"Sorting ownership audited under {selectedObject.name}. Report: {OwnershipAuditReportPath}",
+                selectedObject);
+        }
+    }
+
+    public static string BuildSelectedSortingOwnershipAuditForTests(GameObject selectedObject)
+    {
+        StringBuilder report = new StringBuilder(8192);
+        report.AppendLine("CHANTILLY SELECTED SORTING OWNERSHIP AUDIT");
+        report.AppendLine($"capturedUtc={DateTime.UtcNow:O}");
+
+        if (selectedObject == null)
+        {
+            report.AppendLine("ERROR: no GameObject selected.");
+            return report.ToString();
+        }
+
+        ActorRoomState selectedActor = selectedObject.GetComponentInParent<ActorRoomState>(true);
+        GameObject auditRoot = selectedActor != null
+            ? selectedActor.gameObject
+            : selectedObject;
+        report.AppendLine($"selected={GetPath(selectedObject.transform)}");
+        report.AppendLine($"auditRoot={GetPath(auditRoot.transform)}");
+        report.AppendLine(
+            "Inspector sorting values are overwritten by active owners listed for each renderer; " +
+            "edit the owning component instead of repeatedly editing SpriteRenderer values.");
+        report.AppendLine();
+
+        SpriteRenderer[] renderers = auditRoot.GetComponentsInChildren<SpriteRenderer>(true);
+        ObjectMovementBlocker2D[] blockers =
+            UnityEngine.Object.FindObjectsByType<ObjectMovementBlocker2D>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+        int conflictCount = 0;
+
+        for (int rendererIndex = 0; rendererIndex < renderers.Length; rendererIndex++)
+        {
+            SpriteRenderer renderer = renderers[rendererIndex];
+
+            if (renderer == null)
+            {
+                continue;
+            }
+
+            List<string> normalOwners = new List<string>();
+            List<string> narrowOwners = new List<string>();
+            List<string> relatedWriters = new List<string>();
+            CollectNormalSortingOwners(renderer, auditRoot, blockers, normalOwners);
+            CollectNarrowSortingOwners(renderer, narrowOwners);
+            CollectRelatedVisualWriters(renderer, auditRoot, relatedWriters);
+
+            report.AppendLine(
+                $"RENDERER path={GetPath(renderer.transform)} enabled={renderer.enabled} " +
+                $"active={renderer.gameObject.activeInHierarchy} layer={renderer.sortingLayerName} " +
+                $"order={renderer.sortingOrder}");
+            AppendOwnerList(report, "  normalSortingOwners", normalOwners);
+            AppendOwnerList(report, "  narrowExceptionOwners", narrowOwners);
+            AppendOwnerList(report, "  relatedVisualWriters", relatedWriters);
+            AppendRendererSortingGroups(report, renderer, "  ");
+
+            bool activeRenderer = renderer.enabled && renderer.gameObject.activeInHierarchy;
+            bool allowedNarrowException =
+                activeRenderer &&
+                narrowOwners.Count == 1 &&
+                normalOwners.Count == 1 &&
+                normalOwners[0].Contains(nameof(WorldYSortSpriteRenderer));
+            bool conflict =
+                activeRenderer &&
+                (normalOwners.Count > 1 ||
+                narrowOwners.Count > 1 ||
+                (narrowOwners.Count == 1 &&
+                normalOwners.Count == 1 &&
+                !allowedNarrowException));
+
+            if (conflict)
+            {
+                conflictCount++;
+                report.AppendLine(
+                    $"  CONFLICT renderer={GetPath(renderer.transform)} " +
+                    $"normalOwners={normalOwners.Count} narrowOwners={narrowOwners.Count}");
+            }
+            else if (allowedNarrowException)
+            {
+                report.AppendLine(
+                    $"  ALLOWED_NARROW_EXCEPTION renderer={GetPath(renderer.transform)} " +
+                    $"{nameof(WorldYSortSpriteRenderer)} + " +
+                    $"{nameof(DiningRoomSeatedGuestOcclusionException)}");
+            }
+            else
+            {
+                report.AppendLine($"  ownershipStatus=OK");
+            }
+
+            report.AppendLine();
+        }
+
+        report.AppendLine($"SUMMARY renderers={renderers.Length} conflicts={conflictCount}");
+        return report.ToString();
     }
 
     public static void ArmForNextFrame()
@@ -123,6 +249,234 @@ public static class GreenChairRenderStateDiagnostic
         armed = false;
         Application.onBeforeRender -= CaptureManagedState;
         RenderPipelineManager.beginCameraRendering -= CaptureAtBeginCameraRendering;
+    }
+
+    private static void CollectNormalSortingOwners(
+        SpriteRenderer renderer,
+        GameObject auditRoot,
+        ObjectMovementBlocker2D[] blockers,
+        List<string> destination)
+    {
+        WorldYSortSpriteRenderer[] worldSorters =
+            auditRoot.GetComponentsInChildren<WorldYSortSpriteRenderer>(true);
+
+        for (int i = 0; i < worldSorters.Length; i++)
+        {
+            WorldYSortSpriteRenderer sorter = worldSorters[i];
+
+            if (IsActiveWriter(sorter) && WorldSorterOwnsRenderer(sorter, renderer))
+            {
+                AddUnique(destination, DescribeOwner(sorter));
+            }
+        }
+
+        PointClickPlayerMovement[] pointClickOwners =
+            auditRoot.GetComponentsInChildren<PointClickPlayerMovement>(true);
+
+        for (int i = 0; i < pointClickOwners.Length; i++)
+        {
+            PointClickPlayerMovement owner = pointClickOwners[i];
+
+            if (IsActiveWriter(owner) &&
+                owner.AppliesPlayerSorting &&
+                IsAtOrBelow(renderer.transform, owner.transform))
+            {
+                AddUnique(destination, DescribeOwner(owner));
+            }
+        }
+
+        for (int i = 0; i < blockers.Length; i++)
+        {
+            ObjectMovementBlocker2D blocker = blockers[i];
+
+            if (!IsActiveWriter(blocker) ||
+                !blocker.SortSourceRenderers ||
+                blocker.BlockingCollider == null ||
+                !blocker.BlockingCollider.enabled ||
+                !BlockerOwnsRenderer(blocker, renderer))
+            {
+                continue;
+            }
+
+            AddUnique(destination, DescribeOwner(blocker));
+        }
+    }
+
+    private static void CollectNarrowSortingOwners(
+        SpriteRenderer renderer,
+        List<string> destination)
+    {
+        DiningRoomSeatedGuestOcclusionException[] exceptions =
+            UnityEngine.Object.FindObjectsByType<DiningRoomSeatedGuestOcclusionException>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+
+        for (int i = 0; i < exceptions.Length; i++)
+        {
+            DiningRoomSeatedGuestOcclusionException exception = exceptions[i];
+
+            if (IsActiveWriter(exception) &&
+                exception.IsExceptionActive &&
+                (IsAtOrBelow(renderer.transform, exception.transform) ||
+                renderer == exception.FrontOccluderRenderer))
+            {
+                AddUnique(destination, DescribeOwner(exception));
+            }
+        }
+    }
+
+    private static void CollectRelatedVisualWriters(
+        SpriteRenderer renderer,
+        GameObject auditRoot,
+        List<string> destination)
+    {
+        MonoBehaviour[] behaviours = auditRoot.GetComponentsInChildren<MonoBehaviour>(true);
+
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            MonoBehaviour behaviour = behaviours[i];
+
+            if (!IsActiveWriter(behaviour) ||
+                !IsAtOrBelow(renderer.transform, behaviour.transform))
+            {
+                continue;
+            }
+
+            if (behaviour is CharacterAnimationDisplay ||
+                behaviour is CharacterAnimationPresenter)
+            {
+                AddUnique(destination, DescribeOwner(behaviour));
+            }
+        }
+
+        for (Transform cursor = renderer.transform;
+            cursor != null && IsAtOrBelow(cursor, auditRoot.transform);
+            cursor = cursor.parent)
+        {
+            Animator[] animators = cursor.GetComponents<Animator>();
+
+            for (int i = 0; i < animators.Length; i++)
+            {
+                if (IsActiveWriter(animators[i]))
+                {
+                    AddUnique(destination, DescribeOwner(animators[i]));
+                }
+            }
+        }
+    }
+
+    private static void AppendOwnerList(
+        StringBuilder report,
+        string label,
+        List<string> owners)
+    {
+        report.AppendLine($"{label}={owners.Count}");
+
+        for (int i = 0; i < owners.Count; i++)
+        {
+            report.AppendLine($"    {owners[i]}");
+        }
+    }
+
+    private static void AppendRendererSortingGroups(
+        StringBuilder report,
+        SpriteRenderer renderer,
+        string indent)
+    {
+        report.AppendLine($"{indent}enabledSortingGroups:");
+        bool foundGroup = false;
+
+        for (Transform cursor = renderer.transform; cursor != null; cursor = cursor.parent)
+        {
+            SortingGroup[] groups = cursor.GetComponents<SortingGroup>();
+
+            for (int i = 0; i < groups.Length; i++)
+            {
+                SortingGroup group = groups[i];
+
+                if (group == null || !group.enabled)
+                {
+                    continue;
+                }
+
+                foundGroup = true;
+                report.AppendLine(
+                    $"{indent}  {GetPath(group.transform)} layer={group.sortingLayerName} " +
+                    $"order={group.sortingOrder} sortAtRoot={group.sortAtRoot}");
+            }
+        }
+
+        if (!foundGroup)
+        {
+            report.AppendLine($"{indent}  <none>");
+        }
+    }
+
+    private static bool BlockerOwnsRenderer(
+        ObjectMovementBlocker2D blocker,
+        SpriteRenderer renderer)
+    {
+        GameObject sourceObject = null;
+
+        if (blocker.SourceObject is GameObject gameObjectSource)
+        {
+            sourceObject = gameObjectSource;
+        }
+        else if (blocker.SourceObject is Component componentSource)
+        {
+            sourceObject = componentSource.gameObject;
+        }
+
+        return sourceObject != null &&
+            IsAtOrBelow(renderer.transform, sourceObject.transform);
+    }
+
+    private static bool WorldSorterOwnsRenderer(
+        WorldYSortSpriteRenderer sorter,
+        SpriteRenderer renderer)
+    {
+        if (sorter == null || renderer == null)
+        {
+            return false;
+        }
+
+        if (renderer.transform == sorter.transform)
+        {
+            return true;
+        }
+
+        SerializedObject serializedSorter = new SerializedObject(sorter);
+        SerializedProperty includeChildren = serializedSorter.FindProperty("includeChildren");
+        return includeChildren != null &&
+            includeChildren.boolValue &&
+            renderer.transform.IsChildOf(sorter.transform);
+    }
+
+    private static bool IsActiveWriter(Behaviour behaviour)
+    {
+        return behaviour != null &&
+            behaviour.enabled &&
+            behaviour.gameObject.activeInHierarchy;
+    }
+
+    private static bool IsAtOrBelow(Transform candidate, Transform root)
+    {
+        return candidate != null &&
+            root != null &&
+            (candidate == root || candidate.IsChildOf(root));
+    }
+
+    private static string DescribeOwner(Component owner)
+    {
+        return $"{owner.GetType().Name} path={GetPath(owner.transform)} instanceId={owner.GetInstanceID()}";
+    }
+
+    private static void AddUnique(List<string> destination, string value)
+    {
+        if (!destination.Contains(value))
+        {
+            destination.Add(value);
+        }
     }
 
     private static void WriteReport(string phase, Camera camera, bool append)
