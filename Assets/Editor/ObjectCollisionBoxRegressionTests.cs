@@ -1009,6 +1009,10 @@ public class ObjectCollisionBoxRegressionTests
             guest2Group.sortAtRoot = true;
             GameObject guest2FrontObject = new GameObject("Guest 2 Front Detail");
             guest2FrontObject.transform.SetParent(guest2Object.transform, false);
+            SortingGroup guest2NestedGroup = guest2FrontObject.AddComponent<SortingGroup>();
+            guest2NestedGroup.sortingLayerName = "People";
+            guest2NestedGroup.sortingOrder = 2250;
+            guest2NestedGroup.sortAtRoot = false;
             SpriteRenderer guest2Front = guest2FrontObject.AddComponent<SpriteRenderer>();
             guest2Front.sortingLayerName = "People";
             guest2Front.sortingOrder = 1410;
@@ -1068,6 +1072,7 @@ public class ObjectCollisionBoxRegressionTests
 
             Assert.That(seatedException.IsExceptionActive, Is.True);
             Assert.That(guest2Group.enabled, Is.False);
+            Assert.That(guest2NestedGroup.enabled, Is.False);
             Assert.That(guest4Group.enabled, Is.False);
             Assert.That(guest2Front.sortingLayerID, Is.EqualTo(guest4Back.sortingLayerID));
             Assert.That(guest2Front.sortingOrder, Is.LessThan(guest4Back.sortingOrder),
@@ -1083,6 +1088,9 @@ public class ObjectCollisionBoxRegressionTests
             Assert.That(seatedException.IsExceptionActive, Is.True,
                 "Guest 4's chair exception must remain active when Guest 2 leaves the seated cluster.");
             Assert.That(guest2Group.enabled, Is.True);
+            Assert.That(guest2NestedGroup.enabled, Is.True);
+            Assert.That(guest2NestedGroup.sortingOrder, Is.EqualTo(2250));
+            Assert.That(guest2NestedGroup.sortAtRoot, Is.False);
             Assert.That(guest2Back.sortingOrder, Is.EqualTo(1400));
             Assert.That(guest2Front.sortingOrder, Is.EqualTo(1410));
             Assert.That(guest4Group.enabled, Is.False);
@@ -1092,6 +1100,7 @@ public class ObjectCollisionBoxRegressionTests
             seatedException.ApplyOcclusionNow();
 
             Assert.That(guest2Group.enabled, Is.False);
+            Assert.That(guest2NestedGroup.enabled, Is.False);
             Assert.That(guest2Front.sortingOrder, Is.LessThan(guest4Back.sortingOrder));
 
             seatedException.DeactivateForSeat();
@@ -1099,6 +1108,10 @@ public class ObjectCollisionBoxRegressionTests
             Assert.That(guest2Group.enabled, Is.True);
             Assert.That(guest2Group.sortingOrder, Is.EqualTo(2200));
             Assert.That(guest2Group.sortAtRoot, Is.True);
+            Assert.That(guest2NestedGroup.enabled, Is.True);
+            Assert.That(guest2NestedGroup.sortingLayerName, Is.EqualTo("People"));
+            Assert.That(guest2NestedGroup.sortingOrder, Is.EqualTo(2250));
+            Assert.That(guest2NestedGroup.sortAtRoot, Is.False);
             Assert.That(guest2Back.sortingLayerName, Is.EqualTo("People"));
             Assert.That(guest2Back.sortingOrder, Is.EqualTo(1400));
             Assert.That(guest2Back.spriteSortPoint, Is.EqualTo(SpriteSortPoint.Center));
@@ -1136,6 +1149,136 @@ public class ObjectCollisionBoxRegressionTests
             if (guest2Object != null)
             {
                 Object.DestroyImmediate(guest2Object);
+            }
+
+            if (roomObject != null)
+            {
+                Object.DestroyImmediate(roomObject);
+            }
+        }
+    }
+
+    [Test]
+    public void CompanionReleaseKeepsCurrentWorldYOrderInTheSameLateFrame()
+    {
+        GameObject roomObject = null;
+        GameObject sortingSourceObject = null;
+        GameObject guest2Object = null;
+        GameObject guest4Object = null;
+        GameObject chairObject = null;
+        GameObject frontOccluderObject = null;
+
+        try
+        {
+            roomObject = new GameObject("Room_Drawing_Room");
+            RoomContentGroup room = roomObject.AddComponent<RoomContentGroup>();
+            room.SetRoomName("Drawing Room");
+            GameObject seatObject = new GameObject("DrawingRoomGuestPoint_04");
+            seatObject.transform.SetParent(roomObject.transform, false);
+            RoomAnchor seat = seatObject.AddComponent<RoomAnchor>();
+            seat.RefreshFromHierarchy();
+
+            sortingSourceObject = new GameObject("ButlerSortingSource");
+            PointClickPlayerMovement sortingSource =
+                sortingSourceObject.AddComponent<PointClickPlayerMovement>();
+
+            guest2Object = new GameObject("Guest 2");
+            SpriteRenderer guest2Renderer = guest2Object.AddComponent<SpriteRenderer>();
+            guest2Renderer.sortingLayerName = "People";
+            guest2Renderer.sortingOrder = 1400;
+            ActorRoomState guest2State = guest2Object.AddComponent<ActorRoomState>();
+            SerializedObject serializedGuest2 = new SerializedObject(guest2State);
+            serializedGuest2.FindProperty("restrictVisibilityToCurrentRoom").boolValue = false;
+            serializedGuest2.ApplyModifiedPropertiesWithoutUndo();
+            guest2State.SetActorId("guest_2");
+            guest2State.SetCurrentRoom("Drawing Room");
+            guest2State.SetAvailableInCurrentChapter(true);
+            guest2State.SetVisibleByChapterState(true);
+            guest2State.SetSeated(true);
+            WorldYSortSpriteRenderer guest2Sorter =
+                guest2Object.AddComponent<WorldYSortSpriteRenderer>();
+            guest2Sorter.ConfigureForActor(sortingSource, guest2Renderer);
+
+            guest4Object = new GameObject("Guest 4");
+            SpriteRenderer guest4Renderer = guest4Object.AddComponent<SpriteRenderer>();
+            guest4Renderer.sortingLayerName = "People";
+            guest4Renderer.sortingOrder = 1450;
+            ActorRoomState guest4State = guest4Object.AddComponent<ActorRoomState>();
+            SerializedObject serializedGuest4 = new SerializedObject(guest4State);
+            serializedGuest4.FindProperty("restrictVisibilityToCurrentRoom").boolValue = false;
+            serializedGuest4.ApplyModifiedPropertiesWithoutUndo();
+            guest4State.SetActorId("guest_4");
+            guest4State.SetCurrentRoom("Drawing Room");
+            guest4State.SetAvailableInCurrentChapter(true);
+            guest4State.SetVisibleByChapterState(true);
+            guest4State.SetSeated(true);
+
+            chairObject = new GameObject("drawingroomgreenchair_0");
+            SpriteRenderer chairRenderer = chairObject.AddComponent<SpriteRenderer>();
+            chairRenderer.sortingLayerName = "People";
+            chairRenderer.sortingOrder = 1050;
+            frontOccluderObject = new GameObject("drawingroomgreenchair[_0");
+            SpriteRenderer frontOccluderRenderer = frontOccluderObject.AddComponent<SpriteRenderer>();
+            frontOccluderRenderer.sortingLayerName = "People";
+            frontOccluderRenderer.sortingOrder = 1100;
+
+            DiningRoomSeatedGuestOcclusionException seatedException =
+                guest4Object.AddComponent<DiningRoomSeatedGuestOcclusionException>();
+            seatedException.ActivateBehindOccluder(
+                guest4State,
+                guest2State,
+                seat,
+                chairRenderer,
+                frontOccluderRenderer,
+                "Drawing Room",
+                "Butler");
+
+            int packedGuest2Order = guest2Renderer.sortingOrder;
+            guest2Object.transform.position = new Vector3(0f, -5f, 0f);
+            guest2Sorter.ApplySorting();
+            int currentWorldYOrder =
+                guest2Sorter.CurrentBaseSortingOrder + guest2Sorter.CurrentTieBreakOffset;
+
+            Assert.That(currentWorldYOrder, Is.Not.EqualTo(packedGuest2Order),
+                "The transition regression must exercise a genuinely different standing depth.");
+            Assert.That(guest2Renderer.sortingOrder, Is.EqualTo(currentWorldYOrder));
+
+            guest2State.SetSeated(false);
+            seatedException.ApplyOcclusionNow();
+
+            Assert.That(seatedException.IsExceptionActive, Is.True,
+                "Guest 4 remains seated behind the selected chair during Guest 2's release.");
+            Assert.That(guest2Renderer.sortingOrder, Is.EqualTo(currentWorldYOrder),
+                "The late chair exception must not overwrite Guest 2's current standing world-Y order.");
+            Assert.That(guest4Renderer.sortingOrder, Is.LessThan(chairRenderer.sortingOrder));
+            Assert.That(chairRenderer.sortingOrder, Is.EqualTo(1050));
+            Assert.That(frontOccluderRenderer.sortingOrder, Is.EqualTo(1051));
+        }
+        finally
+        {
+            if (frontOccluderObject != null)
+            {
+                Object.DestroyImmediate(frontOccluderObject);
+            }
+
+            if (chairObject != null)
+            {
+                Object.DestroyImmediate(chairObject);
+            }
+
+            if (guest4Object != null)
+            {
+                Object.DestroyImmediate(guest4Object);
+            }
+
+            if (guest2Object != null)
+            {
+                Object.DestroyImmediate(guest2Object);
+            }
+
+            if (sortingSourceObject != null)
+            {
+                Object.DestroyImmediate(sortingSourceObject);
             }
 
             if (roomObject != null)

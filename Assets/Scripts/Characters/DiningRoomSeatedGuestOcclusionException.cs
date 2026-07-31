@@ -412,12 +412,12 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
                 targetBackmostActorOrder - 1,
                 out _))
             {
-                RestorePreservedBehindActorSorting();
+                ReleasePreservedBehindActorToWorldYSorting();
             }
         }
         else
         {
-            RestorePreservedBehindActorSorting();
+            ReleasePreservedBehindActorToWorldYSorting();
         }
 
         if (frontOccluderRenderer != null)
@@ -731,6 +731,29 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
     {
         RestoreActorRendererSorting(preservedBehindRendererStates);
         RestoreActorSortingGroups(preservedBehindSortingGroupStates);
+    }
+
+    private void ReleasePreservedBehindActorToWorldYSorting()
+    {
+        bool releasedCapturedState =
+            preservedBehindRendererStates.Count > 0 ||
+            preservedBehindSortingGroupStates.Count > 0;
+        RestorePreservedBehindActorSorting();
+
+        if (!releasedCapturedState || preservedBehindActorState == null)
+        {
+            return;
+        }
+
+        WorldYSortSpriteRenderer worldYSorter =
+            preservedBehindActorState.GetComponent<WorldYSortSpriteRenderer>();
+
+        if (worldYSorter != null &&
+            worldYSorter.isActiveAndEnabled &&
+            worldYSorter.IsConfiguredForActor)
+        {
+            worldYSorter.ApplySorting();
+        }
     }
 
     private void CaptureFrontOccluderStateIfNeeded()
