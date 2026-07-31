@@ -254,7 +254,6 @@ public static class GreenChairRenderStateDiagnostic
     {
         const int width = 1672;
         const int height = 941;
-        const int isolatedLayer = 31;
         const int forcedBehindOrder = short.MinValue;
         const int forcedFrontOrder = short.MaxValue;
 
@@ -304,33 +303,14 @@ public static class GreenChairRenderStateDiagnostic
         Texture2D knownBehindPixels = new Texture2D(width, height, TextureFormat.RGBA32, false);
         RenderTexture previousTarget = camera.targetTexture;
         RenderTexture previousActive = RenderTexture.active;
-        int previousCullingMask = camera.cullingMask;
-        CameraClearFlags previousClearFlags = camera.clearFlags;
-        Color previousBackgroundColor = camera.backgroundColor;
-        int previousOccluderLayer = occluder.gameObject.layer;
         int previousOccluderOrder = occluder.sortingOrder;
         SpriteSortPoint previousOccluderSortPoint = occluder.spriteSortPoint;
-        List<GameObject> selectedObjects = new List<GameObject>();
-        List<int> selectedLayers = new List<int>();
-
-        AddSelectedObject(occluder.gameObject, selectedObjects, selectedLayers);
-
-        for (int i = 0; i < activeActorRenderers.Count; i++)
-        {
-            AddSelectedObject(activeActorRenderers[i].gameObject, selectedObjects, selectedLayers);
-        }
+        List<SpriteRenderer> disabledNonTargetRenderers = new List<SpriteRenderer>();
 
         try
         {
-            for (int i = 0; i < selectedObjects.Count; i++)
-            {
-                selectedObjects[i].layer = isolatedLayer;
-            }
-
-            camera.targetTexture = target;
-            camera.cullingMask = 1 << isolatedLayer;
-            camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = Color.clear;
+            disabledNonTargetRenderers =
+                DisableNonTargetSpriteRenderers(occluder, activeActorRenderers);
             RenderCameraToTexture(camera, target, actualPixels, actualPath);
 
             occluder.sortingOrder = forcedBehindOrder;
@@ -396,18 +376,10 @@ public static class GreenChairRenderStateDiagnostic
         finally
         {
             camera.targetTexture = previousTarget;
-            camera.cullingMask = previousCullingMask;
-            camera.clearFlags = previousClearFlags;
-            camera.backgroundColor = previousBackgroundColor;
             RenderTexture.active = previousActive;
-            occluder.gameObject.layer = previousOccluderLayer;
             occluder.sortingOrder = previousOccluderOrder;
             occluder.spriteSortPoint = previousOccluderSortPoint;
-
-            for (int i = 0; i < selectedObjects.Count; i++)
-            {
-                selectedObjects[i].layer = selectedLayers[i];
-            }
+            RestoreSpriteRenderers(disabledNonTargetRenderers);
 
             UnityEngine.Object.DestroyImmediate(actualPixels);
             UnityEngine.Object.DestroyImmediate(knownFrontPixels);
@@ -417,15 +389,43 @@ public static class GreenChairRenderStateDiagnostic
         }
     }
 
-    private static void AddSelectedObject(
-        GameObject selectedObject,
-        List<GameObject> selectedObjects,
-        List<int> selectedLayers)
+    private static List<SpriteRenderer> DisableNonTargetSpriteRenderers(
+        SpriteRenderer occluder,
+        List<SpriteRenderer> activeActorRenderers)
     {
-        if (selectedObject != null && !selectedObjects.Contains(selectedObject))
+        SpriteRenderer[] sceneRenderers =
+            UnityEngine.Object.FindObjectsByType<SpriteRenderer>(
+                FindObjectsInactive.Exclude,
+                FindObjectsSortMode.None);
+        List<SpriteRenderer> disabledRenderers = new List<SpriteRenderer>();
+
+        for (int i = 0; i < sceneRenderers.Length; i++)
         {
-            selectedObjects.Add(selectedObject);
-            selectedLayers.Add(selectedObject.layer);
+            SpriteRenderer renderer = sceneRenderers[i];
+
+            if (renderer == null ||
+                !renderer.enabled ||
+                renderer == occluder ||
+                activeActorRenderers.Contains(renderer))
+            {
+                continue;
+            }
+
+            renderer.enabled = false;
+            disabledRenderers.Add(renderer);
+        }
+
+        return disabledRenderers;
+    }
+
+    private static void RestoreSpriteRenderers(List<SpriteRenderer> renderers)
+    {
+        for (int i = 0; i < renderers.Count; i++)
+        {
+            if (renderers[i] != null)
+            {
+                renderers[i].enabled = true;
+            }
         }
     }
 

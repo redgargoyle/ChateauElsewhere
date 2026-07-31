@@ -5287,36 +5287,34 @@ public class Chapter1ArrivalController : MonoBehaviour
             return;
         }
 
-        SpriteRenderer frontOccluderRenderer = GetDrawingRoomFrontOccluderRenderer(guestState.GuestIndex);
-
-        if (frontOccluderRenderer == null)
+        if (guestState.GuestIndex == 7)
         {
-            seatedException?.DeactivateForSeat();
+            if (drawingRoomGreenChairArmrestRenderer == null)
+            {
+                Debug.LogError(
+                    "Drawing Room green armrest occlusion is not wired for seated guest 8.",
+                    this);
+                seatedException?.DeactivateForSeat();
+                return;
+            }
+
+            if (seatedException == null)
+            {
+                seatedException = guestState.ActorState.gameObject
+                    .AddComponent<DiningRoomSeatedGuestOcclusionException>();
+            }
+
+            seatedException.ActivateBehindOccluder(
+                guestState.ActorState,
+                seatAnchor,
+                drawingRoomGreenChairArmrestRenderer,
+                null,
+                drawingRoomId,
+                "Butler");
             return;
         }
 
-        if (seatedException == null)
-        {
-            seatedException = guestState.ActorState.gameObject.AddComponent<DiningRoomSeatedGuestOcclusionException>();
-        }
-
-        seatedException.ActivateFrontOccluderOnly(
-            guestState.ActorState,
-            seatAnchor,
-            frontOccluderRenderer,
-            drawingRoomId,
-            "Butler");
-    }
-
-    private SpriteRenderer GetDrawingRoomFrontOccluderRenderer(int guestIndex)
-    {
-        switch (guestIndex)
-        {
-            case 7:
-                return drawingRoomGreenChairArmrestRenderer;
-            default:
-                return null;
-        }
+        seatedException?.DeactivateForSeat();
     }
 
     private void DisableAmbientWalkers(GameObject guestObject)
