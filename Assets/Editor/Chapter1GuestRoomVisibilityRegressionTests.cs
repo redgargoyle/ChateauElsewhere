@@ -322,7 +322,10 @@ public class Chapter1GuestRoomVisibilityRegressionTests
             Assert.That(roomAnchorBlock, Does.Contain($"anchorId: {anchorName}"), $"{anchorName} should be an authored RoomAnchor.");
             Assert.That(roomAnchorBlock, Does.Contain("roomId: Grand Entrance Hall"), $"{anchorName} should remain on the Entrance Hall stage.");
             Assert.That(roomAnchorBlock, Does.Contain("showSceneGizmo: 1"), $"{anchorName} should remain visible and draggable in the Scene view.");
-            Assert.That(anchorBlock, Does.Match(@"SpriteRenderer:[\s\S]*?m_Enabled: 0"), $"{anchorName}'s placement marker must not render during gameplay.");
+            Assert.That(
+                anchorBlock,
+                Does.Match(@"SpriteRenderer:[\s\S]*?(?:m_Enabled: 0|m_Color: \{r: [^,]+, g: [^,]+, b: [^,]+, a: 0\})"),
+                $"{anchorName}'s placement marker must be disabled or fully transparent during gameplay.");
         }
 
         MatchCollection sceneSpotNames = Regex.Matches(sceneText, @"m_Name: EntranceGuestSpot_(\d{2})");
@@ -413,12 +416,16 @@ public class Chapter1GuestRoomVisibilityRegressionTests
 
         Match guestSevenAnchor = Regex.Match(
             sceneText,
-            @"(?s)m_Name: DrawingRoomGuestPoint_07\s+.*?m_LocalPosition: \{x: -257, y: (?<y>-?[0-9.]+), z: -7691\.114\}.*?anchorId: DrawingRoomGuestPoint_07");
+            @"(?s)m_Name: DrawingRoomGuestPoint_07\s+.*?m_LocalPosition: \{x: (?<x>-?[0-9.]+), y: (?<y>-?[0-9.]+), z: -7691\.114\}.*?anchorId: DrawingRoomGuestPoint_07");
         Assert.That(guestSevenAnchor.Success, Is.True, "Guest 7's calibrated Drawing Room anchor should remain authored in Gameplay.");
         Assert.That(
+            float.Parse(guestSevenAnchor.Groups["x"].Value, CultureInfo.InvariantCulture),
+            Is.EqualTo(-203f).Within(0.01f),
+            "Guest 7's latest hand-authored Drawing Room X must remain stable.");
+        Assert.That(
             float.Parse(guestSevenAnchor.Groups["y"].Value, CultureInfo.InvariantCulture),
-            Is.EqualTo(-265f).Within(0.01f),
-            "Guest 7 uses bottom-pivot locomotion art, so point 07 must preserve his pre-normalization visible floor line instead of the old root Y -72.");
+            Is.EqualTo(-173f).Within(0.01f),
+            "Guest 7's latest hand-authored Drawing Room Y must remain stable.");
     }
 
     [Test]
@@ -593,6 +600,7 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string controllerText = File.ReadAllText(Chapter1ArrivalControllerPath);
         string playerMovementText = File.ReadAllText(PointClickPlayerMovementPath);
         string awakeMethodBody = ExtractMethodBody(playerMovementText, "private void Awake");
+        string startMethodBody = ExtractMethodBody(playerMovementText, "private IEnumerator Start");
         string playerSortingMethodBody = ExtractMethodBody(playerMovementText, "private void ApplyPlayerSorting");
         string playerSortingSetterBody = ExtractMethodBody(playerMovementText, "public void SetPlayerSortingEnabled");
         string prepareMethodBody = ExtractMethodBody(controllerText, "PrepareSceneGuestObject");
@@ -601,7 +609,10 @@ public class Chapter1GuestRoomVisibilityRegressionTests
         string ensureSorterBody = ExtractMethodBody(controllerText, "EnsureGuestYSorter");
 
         Assert.That(playerMovementText, Does.Contain("applyPlayerSorting"), "Player movement should have an explicit switch for runtime y-axis sorting.");
-        Assert.That(awakeMethodBody, Does.Match(@"CacheReferences\(\);[\s\S]*CaptureAuthoredRendererSortingIfNeeded\(\);[\s\S]*InitializeVisualStateFromTransform\(\);"), "Player movement must capture Edit Mode sorting before its Awake-time y-sort can overwrite it.");
+        Assert.That(awakeMethodBody, Does.Match(@"CacheReferences\(\);[\s\S]*CaptureAuthoredRendererSortingIfNeeded\(\);"),
+            "Player movement must capture Edit Mode sorting during Awake before any runtime y-sort can overwrite it.");
+        Assert.That(startMethodBody, Does.Contain("InitializeVisualStateFromTransform();"),
+            "Player movement should initialize visual position after the first room-canvas layout pass.");
         Assert.That(playerSortingMethodBody, Does.Match(@"if \(!applyPlayerSorting\)[\s\S]*return;"), "Disabled player sorting should stop PointClickPlayerMovement from writing SpriteRenderer sorting.");
         Assert.That(playerSortingSetterBody, Does.Contain("RestoreAuthoredRendererSorting()"), "Guests cloned from the player prefab need their Edit Mode sorting restored after player sorting is disabled.");
         Assert.That(disablePlayerMethodBody, Does.Contain("SetPlayerSortingEnabled(false)"), "Scene guests should turn off inherited player y-sorting before player-only movement is disabled.");

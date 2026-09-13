@@ -21,48 +21,62 @@ public class ObjectCollisionBoxRegressionTests
     private const string DrawingRoomChairName = "drawing_room_red_chair_guest6";
     private const string DrawingRoomTeaTableName = "tea_service_table";
     private const string DrawingRoomChairSpritePath = "Assets/Art/Objects/purple_armchair_front.png";
-    private const string Guest4SittingClipPath =
-        "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Sitting.anim";
+    private static readonly string[] Guest4FloorAlignedClipPaths =
+    {
+        "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Idle_Down.anim",
+        "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Idle_Left.anim",
+        "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Idle_Right.anim",
+        "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Idle_Up.anim",
+        "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Walk_Down.anim",
+        "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Walk_Left.anim",
+        "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Walk_Right.anim",
+        "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Walk_Up.anim",
+        "Assets/Animation/CountessElowenDusk/CountessElowenDusk_Sitting.anim"
+    };
     private const string LibraryFlowerSideTableName = "library_flower_side_table_0";
     private const string LibraryFlowerSideTableSpritePath = "Assets/Art/Objects/library_flower_side_table.png";
     private const string LibraryBackgroundPath = "Assets/Art/Final Images (DO NOT EDIT)/library.png";
 
     [Test]
-    public void EveryGuest4SittingFrameUsesBottomCenterPivot()
+    public void EveryGuest4LocomotionAndSittingFrameUsesBottomCenterPivot()
     {
-        AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(Guest4SittingClipPath);
-        Assert.That(clip, Is.Not.Null, $"Missing Guest 4 sitting clip at {Guest4SittingClipPath}.");
-
-        EditorCurveBinding[] spriteBindings =
-            AnimationUtility.GetObjectReferenceCurveBindings(clip);
         List<string> spritePaths = new List<string>();
 
-        for (int bindingIndex = 0; bindingIndex < spriteBindings.Length; bindingIndex++)
+        for (int clipIndex = 0; clipIndex < Guest4FloorAlignedClipPaths.Length; clipIndex++)
         {
-            EditorCurveBinding binding = spriteBindings[bindingIndex];
+            string clipPath = Guest4FloorAlignedClipPaths[clipIndex];
+            AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(clipPath);
+            Assert.That(clip, Is.Not.Null, $"Missing Guest 4 animation clip at {clipPath}.");
+            EditorCurveBinding[] spriteBindings =
+                AnimationUtility.GetObjectReferenceCurveBindings(clip);
 
-            if (binding.type != typeof(SpriteRenderer) || binding.propertyName != "m_Sprite")
+            for (int bindingIndex = 0; bindingIndex < spriteBindings.Length; bindingIndex++)
             {
-                continue;
-            }
+                EditorCurveBinding binding = spriteBindings[bindingIndex];
 
-            ObjectReferenceKeyframe[] keyframes =
-                AnimationUtility.GetObjectReferenceCurve(clip, binding);
-
-            for (int keyframeIndex = 0; keyframeIndex < keyframes.Length; keyframeIndex++)
-            {
-                Sprite sprite = keyframes[keyframeIndex].value as Sprite;
-                string spritePath = sprite != null ? AssetDatabase.GetAssetPath(sprite) : string.Empty;
-
-                if (!string.IsNullOrWhiteSpace(spritePath) && !spritePaths.Contains(spritePath))
+                if (binding.type != typeof(SpriteRenderer) || binding.propertyName != "m_Sprite")
                 {
-                    spritePaths.Add(spritePath);
+                    continue;
+                }
+
+                ObjectReferenceKeyframe[] keyframes =
+                    AnimationUtility.GetObjectReferenceCurve(clip, binding);
+
+                for (int keyframeIndex = 0; keyframeIndex < keyframes.Length; keyframeIndex++)
+                {
+                    Sprite sprite = keyframes[keyframeIndex].value as Sprite;
+                    string spritePath = sprite != null ? AssetDatabase.GetAssetPath(sprite) : string.Empty;
+
+                    if (!string.IsNullOrWhiteSpace(spritePath) && !spritePaths.Contains(spritePath))
+                    {
+                        spritePaths.Add(spritePath);
+                    }
                 }
             }
         }
 
-        Assert.That(spritePaths, Has.Count.EqualTo(2),
-            "Guest 4's sitting clip should expose both unique sitting frames to the pivot audit.");
+        Assert.That(spritePaths, Has.Count.EqualTo(50),
+            "Guest 4's four-direction idle, walk, and sitting clips should expose every unique frame to the floor-pivot audit.");
 
         for (int i = 0; i < spritePaths.Count; i++)
         {
@@ -529,7 +543,7 @@ public class ObjectCollisionBoxRegressionTests
     }
 
     [Test]
-    public void EqualYActorsKeepDeterministicOrderWhenTheirAnimationFramesSwap()
+    public void EqualYActorsShareTheSamePivotDepthWhenTheirAnimationFramesSwap()
     {
         GameObject sortingSourceObject = null;
         GameObject firstActorObject = null;
@@ -578,10 +592,14 @@ public class ObjectCollisionBoxRegressionTests
 
             Assert.That(firstSorter.CurrentBaseSortingOrder, Is.EqualTo(secondSorter.CurrentBaseSortingOrder));
             Assert.That(firstSorter.CurrentActorSortingY, Is.EqualTo(secondSorter.CurrentActorSortingY).Within(0.0001f));
-            Assert.That(firstSorter.CurrentTieBreakOffset, Is.Not.EqualTo(secondSorter.CurrentTieBreakOffset));
+            Assert.That(firstSorter.CurrentTieBreakOffset, Is.Zero);
+            Assert.That(secondSorter.CurrentTieBreakOffset, Is.Zero);
             int firstStableOrder = firstRenderer.sortingOrder;
             int secondStableOrder = secondRenderer.sortingOrder;
-            Assert.That(firstStableOrder, Is.Not.EqualTo(secondStableOrder), "Equal-Y guests need a deterministic render order instead of an engine tie.");
+            Assert.That(firstStableOrder, Is.EqualTo(secondStableOrder),
+                "Equal floor points must remain in the same depth band instead of receiving actor-name offsets.");
+            Assert.That(firstRenderer.spriteSortPoint, Is.EqualTo(SpriteSortPoint.Pivot));
+            Assert.That(secondRenderer.spriteSortPoint, Is.EqualTo(SpriteSortPoint.Pivot));
 
             for (int frame = 0; frame < 4; frame++)
             {
@@ -631,6 +649,110 @@ public class ObjectCollisionBoxRegressionTests
                 Object.DestroyImmediate(texture);
             }
         }
+    }
+
+    [Test]
+    public void CloseUnequalActorsStayInOneBandForSharedYAxisPivotSorting()
+    {
+        GameObject sortingSourceObject = null;
+        GameObject upperActorObject = null;
+        GameObject lowerActorObject = null;
+        Texture2D texture = null;
+        Sprite sprite = null;
+
+        try
+        {
+            sortingSourceObject = new GameObject("SharedButlerSortingSource");
+            PointClickPlayerMovement sortingSource = sortingSourceObject.AddComponent<PointClickPlayerMovement>();
+
+            // Deliberately choose ids in the opposite order to physical depth.
+            // The old tie breaker put Guest99 behind Guest01 even though Guest99's
+            // floor point is lower and should therefore cover it.
+            upperActorObject = new GameObject("Guest01");
+            ActorRoomState upperState = upperActorObject.AddComponent<ActorRoomState>();
+            upperState.SetActorId("Guest01");
+            SpriteRenderer upperRenderer = upperActorObject.AddComponent<SpriteRenderer>();
+
+            lowerActorObject = new GameObject("Guest99");
+            ActorRoomState lowerState = lowerActorObject.AddComponent<ActorRoomState>();
+            lowerState.SetActorId("Guest99");
+            SpriteRenderer lowerRenderer = lowerActorObject.AddComponent<SpriteRenderer>();
+
+            texture = new Texture2D(8, 8);
+            sprite = Sprite.Create(
+                texture,
+                new Rect(0f, 0f, 8f, 8f),
+                new Vector2(0.5f, 0f),
+                8f);
+            upperRenderer.sprite = sprite;
+            lowerRenderer.sprite = sprite;
+
+            WorldYSortSpriteRenderer upperSorter = upperActorObject.AddComponent<WorldYSortSpriteRenderer>();
+            WorldYSortSpriteRenderer lowerSorter = lowerActorObject.AddComponent<WorldYSortSpriteRenderer>();
+            upperSorter.ConfigureForActor(sortingSource, upperRenderer);
+            lowerSorter.ConfigureForActor(sortingSource, lowerRenderer);
+            upperSorter.ActorFloorReference.CaptureWorldPoint(new Vector3(0f, 0f, 0f));
+            lowerSorter.ActorFloorReference.CaptureWorldPoint(new Vector3(0f, -0.0005f, 0f));
+
+            // Reverse update order to ensure no last-writer behavior is involved.
+            lowerSorter.ApplySorting();
+            upperSorter.ApplySorting();
+
+            Assert.That(lowerSorter.CurrentActorSortingY, Is.LessThan(upperSorter.CurrentActorSortingY));
+            Assert.That(lowerSorter.CurrentBaseSortingOrder, Is.EqualTo(upperSorter.CurrentBaseSortingOrder),
+                "This reproducer must keep both actors inside the same rounded integer band.");
+            Assert.That(lowerSorter.CurrentTieBreakOffset, Is.Zero);
+            Assert.That(upperSorter.CurrentTieBreakOffset, Is.Zero);
+            Assert.That(lowerRenderer.sortingOrder, Is.EqualTo(upperRenderer.sortingOrder));
+            Assert.That(lowerRenderer.sortingLayerID, Is.EqualTo(upperRenderer.sortingLayerID));
+            Assert.That(lowerRenderer.spriteSortPoint, Is.EqualTo(SpriteSortPoint.Pivot));
+            Assert.That(upperRenderer.spriteSortPoint, Is.EqualTo(SpriteSortPoint.Pivot));
+        }
+        finally
+        {
+            if (lowerActorObject != null)
+            {
+                Object.DestroyImmediate(lowerActorObject);
+            }
+
+            if (upperActorObject != null)
+            {
+                Object.DestroyImmediate(upperActorObject);
+            }
+
+            if (sortingSourceObject != null)
+            {
+                Object.DestroyImmediate(sortingSourceObject);
+            }
+
+            if (sprite != null)
+            {
+                Object.DestroyImmediate(sprite);
+            }
+
+            if (texture != null)
+            {
+                Object.DestroyImmediate(texture);
+            }
+        }
+    }
+
+    [Test]
+    public void ActiveRendererUsesCustomYAxisTransparencySorting()
+    {
+        Object rendererData = AssetDatabase.LoadMainAssetAtPath("Assets/Settings/Renderer2D.asset");
+        Assert.That(rendererData, Is.Not.Null);
+
+        SerializedObject serializedRendererData = new SerializedObject(rendererData);
+        SerializedProperty sortMode = serializedRendererData.FindProperty("m_TransparencySortMode");
+        SerializedProperty sortAxis = serializedRendererData.FindProperty("m_TransparencySortAxis");
+
+        Assert.That(sortMode, Is.Not.Null);
+        Assert.That(sortAxis, Is.Not.Null);
+        Assert.That(sortMode.intValue, Is.EqualTo((int)TransparencySortMode.CustomAxis));
+        Assert.That(sortAxis.vector3Value.x, Is.EqualTo(0f).Within(0.0001f));
+        Assert.That(sortAxis.vector3Value.y, Is.EqualTo(-1f).Within(0.0001f));
+        Assert.That(sortAxis.vector3Value.z, Is.EqualTo(0f).Within(0.0001f));
     }
 
     [Test]
