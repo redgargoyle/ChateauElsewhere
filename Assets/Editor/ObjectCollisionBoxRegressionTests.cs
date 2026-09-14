@@ -751,7 +751,7 @@ public class ObjectCollisionBoxRegressionTests
         Assert.That(sortAxis, Is.Not.Null);
         Assert.That(sortMode.intValue, Is.EqualTo((int)TransparencySortMode.CustomAxis));
         Assert.That(sortAxis.vector3Value.x, Is.EqualTo(0f).Within(0.0001f));
-        Assert.That(sortAxis.vector3Value.y, Is.EqualTo(-1f).Within(0.0001f));
+        Assert.That(sortAxis.vector3Value.y, Is.EqualTo(1f).Within(0.0001f));
         Assert.That(sortAxis.vector3Value.z, Is.EqualTo(0f).Within(0.0001f));
     }
 

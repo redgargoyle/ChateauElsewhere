@@ -780,6 +780,10 @@ public sealed class DiningRoomSeatedGuestOcclusionException : MonoBehaviour
             worldYSorter.IsConfiguredForActor)
         {
             worldYSorter.ApplySorting();
+            // This release runs after CharacterDepthGroup.LateUpdate. Refresh
+            // the external group too, otherwise its restored seated order can
+            // survive for one rendered frame after the actor stands or leaves.
+            targetActorState.GetComponent<CharacterDepthGroup>()?.RefreshDepth();
         }
     }
 

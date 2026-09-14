@@ -45,13 +45,15 @@ public class Chapter2MonsterStingerController : MonoBehaviour
     [SerializeField, Min(0f)] private float maximumRunSeconds = 2f;
     [SerializeField, Min(0f)] private float minimumFreezeSeconds = 1f;
     [SerializeField, Min(0f)] private float maximumFreezeSeconds = 2f;
-    [SerializeField, Range(0.1f, 1f)] private float runSegmentDistanceScale = 0.65f;
     [SerializeField, Min(0.1f)] private float fallbackRunRightDistance = 4f;
     [SerializeField] private float maxVisibleSeconds = 12f;
     [SerializeField] private bool createPlaceholderMonsterIfMissing = true;
 
     private Coroutine stingerRoutine;
     private bool isRunning;
+    private bool isRunBeat;
+    private Vector3 runPathStartPosition;
+    private Vector3 runPathEndPosition;
     private bool subscribedToRoomChanges;
     private float visibleElapsedSeconds;
     private float monsterRunAnimationElapsedSeconds;
@@ -88,6 +90,9 @@ public class Chapter2MonsterStingerController : MonoBehaviour
 
     public void StopStinger()
     {
+        isRunBeat = false;
+        isRunning = false;
+
         if (stingerRoutine != null)
         {
             StopCoroutine(stingerRoutine);
@@ -101,7 +106,6 @@ public class Chapter2MonsterStingerController : MonoBehaviour
 
         HideMonster();
         UnsubscribeFromRoomChanges();
-        isRunning = false;
     }
 
     private void OnDisable()
@@ -122,6 +126,7 @@ public class Chapter2MonsterStingerController : MonoBehaviour
         }
 
         isRunning = true;
+        isRunBeat = false;
         visibleElapsedSeconds = 0f;
         monsterRunAnimationElapsedSeconds = 0f;
         ResolveReferences();
@@ -132,25 +137,30 @@ public class Chapter2MonsterStingerController : MonoBehaviour
             monsterObject.transform.position = runStart.position;
         }
 
+        CaptureRunPath();
         ResetMonsterRunAnimation();
 
         StingerCycleTiming[] cycleTimings = BuildCycleTimings();
 
-        for (int i = 0; i < cycleTimings.Length && HasVisibleTimeRemaining(); i++)
+        for (int i = 0; i < cycleTimings.Length && isRunning && HasVisibleTimeRemaining(); i++)
         {
+            isRunBeat = true;
             ApplyMonsterRoomVisibility();
             PlayViolinAudioIfVisible(true);
 
-            yield return MoveMonsterToNextFreezeTarget(cycleTimings[i].RunSeconds);
+            yield return MoveMonsterToNextFreezeTarget(cycleTimings[i].RunSeconds, i);
 
+            isRunBeat = false;
+            StopViolinAudio();
             ApplyMonsterRoomVisibility();
 
-            if (cycleTimings[i].FreezeSeconds > 0f && HasVisibleTimeRemaining())
+            if (cycleTimings[i].FreezeSeconds > 0f && isRunning && HasVisibleTimeRemaining())
             {
                 yield return WaitForFreezeSeconds(cycleTimings[i].FreezeSeconds);
             }
         }
 
+        isRunBeat = false;
         StopViolinAudio();
         HideMonster();
         UnsubscribeFromRoomChanges();
@@ -158,8 +168,13 @@ public class Chapter2MonsterStingerController : MonoBehaviour
         stingerRoutine = null;
     }
 
-    private IEnumerator MoveMonsterToNextFreezeTarget(float duration)
+    private IEnumerator MoveMonsterToNextFreezeTarget(float duration, int cycleIndex)
     {
+        if (!isRunning)
+        {
+            yield break;
+        }
+
         duration = Mathf.Max(0f, duration);
 
         if (monsterObject == null)
@@ -169,7 +184,7 @@ public class Chapter2MonsterStingerController : MonoBehaviour
         }
 
         Vector3 startPosition = monsterObject.transform.position;
-        Vector3 targetPosition = GetForwardRunTargetPosition(startPosition);
+        Vector3 targetPosition = GetRunTargetPosition(cycleIndex);
 
         if (duration <= 0f)
         {
@@ -180,7 +195,7 @@ public class Chapter2MonsterStingerController : MonoBehaviour
 
         float elapsed = 0f;
 
-        while (elapsed < duration && HasVisibleTimeRemaining())
+        while (elapsed < duration && isRunning && HasVisibleTimeRemaining())
         {
             float deltaTime = Time.deltaTime;
             elapsed += deltaTime;
@@ -188,22 +203,30 @@ public class Chapter2MonsterStingerController : MonoBehaviour
             float progress = Mathf.Clamp01(elapsed / duration);
             Vector3 basePosition = Vector3.Lerp(startPosition, targetPosition, progress);
             UpdateMonsterRunAnimation(monsterRunAnimationElapsedSeconds);
-            monsterObject.transform.position = basePosition + GetMonsterRunShakeOffset(monsterRunAnimationElapsedSeconds);
+            Vector3 shakenPosition = basePosition + GetMonsterRunShakeOffset(monsterRunAnimationElapsedSeconds);
+            shakenPosition.x = Mathf.Clamp(shakenPosition.x,
+                Mathf.Min(startPosition.x, targetPosition.x), Mathf.Max(startPosition.x, targetPosition.x));
+            monsterObject.transform.position = shakenPosition;
             TickVisibleElapsed();
             ApplyMonsterRoomVisibility();
             PlayViolinAudioIfVisible();
             yield return null;
         }
 
-        monsterObject.transform.position = targetPosition;
-        ApplyNextMonsterFreezePose();
+        if (isRunning)
+        {
+            monsterObject.transform.position = targetPosition;
+            ApplyNextMonsterFreezePose();
+        }
     }
 
     private IEnumerator WaitForFreezeSeconds(float duration)
     {
+        isRunBeat = false;
+        StopViolinAudio();
         float elapsed = 0f;
 
-        while (elapsed < duration && HasVisibleTimeRemaining())
+        while (elapsed < duration && isRunning && HasVisibleTimeRemaining())
         {
             float deltaTime = Time.deltaTime;
             elapsed += deltaTime;
@@ -211,7 +234,6 @@ public class Chapter2MonsterStingerController : MonoBehaviour
             UpdateMonsterFreezeAnimation(monsterRunAnimationElapsedSeconds);
             TickVisibleElapsed();
             ApplyMonsterRoomVisibility();
-            PlayViolinAudioIfVisible();
             yield return null;
         }
     }
@@ -237,32 +259,30 @@ public class Chapter2MonsterStingerController : MonoBehaviour
         return Mathf.Approximately(minimum, maximum) ? minimum : Random.Range(minimum, maximum);
     }
 
-    private Vector3 GetForwardRunTargetPosition(Vector3 startPosition)
+    private void CaptureRunPath()
     {
-        return startPosition + Vector3.right * GetRunSegmentDistance(startPosition);
+        runPathStartPosition = monsterObject != null
+            ? monsterObject.transform.position
+            : runStart != null ? runStart.position : transform.position;
+        runPathEndPosition = runPathStartPosition;
+        runPathEndPosition.x = runTarget != null
+            ? runTarget.position.x
+            : runPathStartPosition.x + Mathf.Max(0.1f, fallbackRunRightDistance);
     }
 
-    private float GetRunSegmentDistance(Vector3 startPosition)
+    private Vector3 GetRunTargetPosition(int cycleIndex)
     {
-        float rightDistance = fallbackRunRightDistance;
-
-        if (runStart != null && runTarget != null)
-        {
-            rightDistance = Mathf.Abs(runTarget.position.x - runStart.position.x);
-        }
-        else if (runTarget != null)
-        {
-            rightDistance = Mathf.Abs(runTarget.position.x - startPosition.x);
-        }
-
-        return Mathf.Max(0.1f, rightDistance * runSegmentDistanceScale);
+        // Snapshot one authored span for the whole effect. Each run advances one
+        // third, rather than repeating a fraction of the full distance three times.
+        float progress = Mathf.Clamp01((cycleIndex + 1f) / RunFreezeCycleCount);
+        return Vector3.Lerp(runPathStartPosition, runPathEndPosition, progress);
     }
 
     private IEnumerator WaitForStingerSeconds(float duration)
     {
         float elapsed = 0f;
 
-        while (elapsed < duration && HasVisibleTimeRemaining())
+        while (elapsed < duration && isRunning && HasVisibleTimeRemaining())
         {
             elapsed += Time.deltaTime;
             TickVisibleElapsed();
@@ -858,7 +878,7 @@ public class Chapter2MonsterStingerController : MonoBehaviour
 
     private void PlayViolinAudioIfVisible(bool restart = false)
     {
-        if (!CanShowMonster() || violinAudioSource == null || violinAudioSource.clip == null)
+        if (!isRunBeat || !CanShowMonster() || violinAudioSource == null || violinAudioSource.clip == null)
         {
             return;
         }

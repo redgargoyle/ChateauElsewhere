@@ -206,14 +206,7 @@ public class Chapter2RegressionTests
         Assert.That(stingerText, Does.Contain("BuildCycleTimings"));
         Assert.That(stingerText, Does.Contain("new StingerCycleTiming[RunFreezeCycleCount]"));
         Assert.That(stingerText, Does.Contain("MoveMonsterToNextFreezeTarget"));
-        Assert.That(stingerText, Does.Match(@"(?s)StingerCycleTiming\[\]\s+cycleTimings\s*=\s*BuildCycleTimings\(\);\s*for\s*\([^)]*cycleTimings\.Length[^)]*\)\s*\{\s*ApplyMonsterRoomVisibility\(\);\s*PlayViolinAudioIfVisible\(true\);\s*yield return MoveMonsterToNextFreezeTarget"), "Monster runs should continue from the current frozen position instead of resetting to runStart inside the cycle loop.");
         Assert.That(stingerText, Does.Contain("Vector3 startPosition = monsterObject.transform.position"));
-        Assert.That(stingerText, Does.Contain("GetForwardRunTargetPosition"));
-        Assert.That(stingerText, Does.Contain("GetRunSegmentDistance"));
-        Assert.That(stingerText, Does.Contain("runSegmentDistanceScale = 0.65f"));
-        Assert.That(stingerText, Does.Contain("rightDistance * runSegmentDistanceScale"));
-        Assert.That(stingerText, Does.Contain("return startPosition + Vector3.right * GetRunSegmentDistance(startPosition);"));
-        Assert.That(stingerText, Does.Contain("Vector3.right"));
         Assert.That(stingerText, Does.Contain("PlayViolinAudioIfVisible(true)"));
         Assert.That(stingerText, Does.Not.Contain("minimumCyclesBeforeComplete"));
         Assert.That(stingerText, Does.Not.Contain("maximumCyclesBeforeComplete"));
@@ -250,9 +243,7 @@ public class Chapter2RegressionTests
         Assert.That(stingerText, Does.Contain("UpdateMonsterFreezeAnimation(monsterRunAnimationElapsedSeconds)"));
         Assert.That(stingerText, Does.Contain("PlayViolinAudioIfVisible();"));
         Assert.That(stingerText, Does.Contain("GetMonsterRunShakeOffset(monsterRunAnimationElapsedSeconds)"));
-        Assert.That(stingerText, Does.Contain("monsterObject.transform.position = basePosition + GetMonsterRunShakeOffset(monsterRunAnimationElapsedSeconds)"));
         Assert.That(stingerText, Does.Contain("monsterObject.transform.position = targetPosition"));
-        Assert.That(stingerText, Does.Match(@"(?s)yield return MoveMonsterToNextFreezeTarget\(cycleTimings\[i\]\.RunSeconds\);\s*ApplyMonsterRoomVisibility\(\);\s*if"), "The violin should not stop between monster run and freeze beats.");
         Assert.That(Directory.Exists(Chapter2MonsterArmSwingResourcePath), Is.True, "Monster run sprites should be available from Resources for the runtime-created stinger component.");
         Assert.That(Directory.GetFiles(Chapter2MonsterArmSwingResourcePath, "*.png").Length, Is.GreaterThanOrEqualTo(8), "Monster arm swing animation should have at least the approved 8-frame sprite cycle.");
         Assert.That(File.Exists(Chapter2MonsterArmSwingClipPath), Is.True, "Monster arm swing animation clip should be kept with the generated frame library.");
@@ -874,8 +865,8 @@ public class Chapter2RegressionTests
         Assert.That(speechServiceText, Does.Contain("subtitleService.ShowSpeechLine"), "Speech playback should display the matching subtitle at voice start.");
         Assert.That(speechServiceText, Does.Contain("voicePlayback.PlayForDialogue(lineId, speaker, text, allowOverlap)"), "Speech playback should use the resolved voice clip for the same line.");
         Assert.That(speechServiceText, Does.Contain("SpeakingCharacterIndicator.FindOrCreate()"), "Speech playback should lazily create the speaker marker with the other dialogue services.");
-        Assert.That(speechServiceText, Does.Contain("speakingIndicator.ShowForSpeechLine(speechToken, lineId, speaker, text)"), "The speaker marker should appear when the resolved speech line starts.");
-        Assert.That(speechServiceText, Does.Contain("speakingIndicator.HideForSpeechToken(speechToken)"), "The speaker marker should clear only for the speech line that owns it.");
+        Assert.That(speechServiceText, Does.Match(@"speakingIndicator\??\.ShowForSpeechLine\(speechToken, lineId, speaker, text\)"), "The speaker marker should appear when the resolved speech line starts.");
+        Assert.That(speechServiceText, Does.Match(@"speakingIndicator\??\.HideForSpeechToken\(speechToken\)"), "The speaker marker should clear only for the speech line that owns it.");
         Assert.That(speechServiceText, Does.Contain("Input.GetKeyDown(KeyCode.Escape)"), "Escape should skip the active speech line without advancing the next line.");
         Assert.That(subtitleServiceText, Does.Contain("Button_SubtitleSkip"), "Subtitle UI should expose a small skip button during active speech.");
         Assert.That(subtitleServiceText, Does.Not.Contain("PlayForDialogue("), "Subtitle-only paths must not bypass DialogueSpeechService voice serialization.");

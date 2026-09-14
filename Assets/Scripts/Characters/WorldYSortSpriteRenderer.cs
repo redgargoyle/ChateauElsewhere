@@ -112,10 +112,8 @@ public sealed class WorldYSortSpriteRenderer : MonoBehaviour
 
         CurrentActorSortingY = sortActorFromVisibleFeet ? sortingY : 0f;
         CurrentBaseSortingOrder = sortingOrder;
-        // Do not add per-character ordering offsets here. Characters share the
-        // same integer depth band and SpriteSortPoint.Pivot, so Renderer2D's
-        // custom Y axis resolves sub-band differences for Butler, guests, and
-        // props alike. A name/id offset can reverse two unequal floor points.
+        // No name/id offsets: CharacterDepthGroup supplies a common floor-based
+        // external pivot for sub-band actor depth, independent of art pivots.
         CurrentTieBreakOffset = 0;
         sortingOrder = ResolveOcclusionSafeSortingOrder(sortingOrder);
 

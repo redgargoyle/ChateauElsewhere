@@ -26,11 +26,13 @@ public sealed class CharacterAnimationDisplay : MonoBehaviour
     private void Awake()
     {
         ResolveReferences();
+        PrepareDepthGroup();
     }
 
     private void OnEnable()
     {
         ResolveReferences();
+        PrepareDepthGroup();
     }
 
     private void Reset()
@@ -46,6 +48,7 @@ public sealed class CharacterAnimationDisplay : MonoBehaviour
     private void LateUpdate()
     {
         TryApplyCurrentRoomScale();
+        PrepareDepthGroup();
     }
 
     public void Configure(Transform displayRoot, CharacterScaleCatalog scaleCatalog = null)
@@ -58,6 +61,13 @@ public sealed class CharacterAnimationDisplay : MonoBehaviour
         }
 
         ResolveReferences();
+        PrepareDepthGroup();
+    }
+
+    private void PrepareDepthGroup()
+    {
+        if (Application.isPlaying)
+            CharacterDepthGroup.EnsureForActor(this)?.RefreshDepth();
     }
 
     public bool TryApplyCurrentRoomScale()
