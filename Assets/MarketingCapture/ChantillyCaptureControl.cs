@@ -1,4 +1,4 @@
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || CHANTILLY_CAPTURE
 using System;
 using System.Collections;
 using System.IO;
@@ -9,8 +9,9 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
 
-// Adapted from the September 11 production helper. Explicit development/editor
-// capture only. No checkpoint, teleport, clock skip, or dialogue skip commands.
+// Explicit opt-in capture tooling. Release builds include it only when the film
+// build adds CHANTILLY_CAPTURE, and it remains inert without -chantilly-capture.
+// No checkpoint, teleport, clock skip, or dialogue skip commands.
 public sealed class ChantillyCaptureControl : MonoBehaviour
 {
     private string directory;
@@ -48,7 +49,7 @@ public sealed class ChantillyCaptureControl : MonoBehaviour
         Application.runInBackground = true;
         Application.targetFrameRate = 60;
         QualitySettings.vSyncCount = 0;
-        control.WriteResult("ready.json", "", "", "ready", "Development capture enabled; normal gameplay progression only.");
+        control.WriteResult("ready.json", "", "", "ready", "Film capture enabled; normal gameplay progression only.");
     }
 
     private T One<T>() where T : UnityEngine.Object => FindFirstObjectByType<T>();

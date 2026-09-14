@@ -5,7 +5,9 @@ using System.Linq;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 
-// Explicit production build only. Does not change saved PlayerSettings or scenes.
+// Explicit film-capture build only. It keeps the command-line capture helper
+// while producing a release player with no Unity Development Build watermark.
+// Saved PlayerSettings and scenes are not changed.
 public static class ChantillyFilmBuild
 {
     public static void BuildFromCommandLine()
@@ -23,11 +25,12 @@ public static class ChantillyFilmBuild
             scenes = scenes, locationPathName = Path.Combine(root, "Chantilly.x86_64"),
             target = BuildTarget.StandaloneLinux64,
             subtarget = (int)StandaloneBuildSubtarget.Player,
-            options = BuildOptions.Development
+            options = BuildOptions.None,
+            extraScriptingDefines = new[] { "CHANTILLY_CAPTURE" }
         });
         if (report.summary.result != BuildResult.Succeeded)
             throw new InvalidOperationException("Film build failed: " + report.summary.result + "; errors=" + report.summary.totalErrors);
-        UnityEngine.Debug.Log("[ChantillyFilm] Development capture build succeeded at " + root);
+        UnityEngine.Debug.Log("[ChantillyFilm] Watermark-free capture build succeeded at " + root);
     }
 }
 #endif
